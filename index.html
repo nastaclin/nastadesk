@@ -686,7 +686,16 @@ async function onbSalvarHorarios() {
 
 async function onbConcluir() {
   await db.from('clinicas').update({ onboarding_completo: true }).eq('id', clinicaId);
-  document.getElementById('onb-wrap').classList.remove('visivel');
+  const onbWrap = document.getElementById('onb-wrap');
+  onbWrap.classList.remove('visivel');
+  onbWrap.style.display = 'none';
+  // Garantir que o app está visível
+  document.getElementById('app-wrap').classList.add('visivel');
+  document.getElementById('auth-wrap').style.display = 'none';
+  // Recarregar dados frescos
+  await carregarConsultas();
+  await carregarAlertas();
+  await carregarPacientes();
   toast('Bem-vindo ao NastaDesk! 🎉');
 }
 
