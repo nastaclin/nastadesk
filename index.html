@@ -742,10 +742,18 @@ function mostrarOnboarding(clinica) {
 
 // INIT — verificar sessão
 async function init() {
-  const { data: { session } } = await db.auth.getSession();
-  if (session) {
-    await entrarNoApp(session.user);
-  } else {
+  // Timeout de segurança — se algo falhar, o splash some em 5s
+  setTimeout(() => ocultarSplash(), 5000);
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) {
+      await entrarNoApp(session.user);
+    } else {
+      ocultarSplash();
+      document.getElementById('auth-wrap').style.display = 'flex';
+    }
+  } catch(e) {
+    console.error('Erro no init:', e);
     ocultarSplash();
     document.getElementById('auth-wrap').style.display = 'flex';
   }
@@ -757,10 +765,15 @@ async function init() {
 }
 
 async function entrarNoApp(user) {
-  document.getElementById('auth-wrap').style.display = 'none';
-  document.getElementById('app-wrap').classList.add('visivel');
-  await carregarDados(user);
-  ocultarSplash();
+  try {
+    document.getElementById('auth-wrap').style.display = 'none';
+    document.getElementById('app-wrap').classList.add('visivel');
+    await carregarDados(user);
+  } catch(e) {
+    console.error('Erro ao carregar dados:', e);
+  } finally {
+    ocultarSplash();
+  }
 }
 
 function voltarParaLogin() {
@@ -770,7 +783,10 @@ function voltarParaLogin() {
 }
 
 function ocultarSplash() {
-  setTimeout(() => document.getElementById('splash').classList.add('oculto'), 300);
+  setTimeout(() => {
+    const s = document.getElementById('splash');
+    if (s) s.classList.add('oculto');
+  }, 300);
 }
 
 // AUTH
