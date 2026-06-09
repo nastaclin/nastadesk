@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NastaDesk — by Nastaclin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --verde: #0B6E4F; --verde-medio: #1A9E72; --verde-claro: #D4F0E5;
+  --verde-suave: #F0FAF6; --creme: #FAF8F4; --cinza-escuro: #1C1C1A;
+  --cinza-medio: #6B6B65; --cinza-claro: #E8E6E0; --branco: #FFFFFF;
+  --laranja: #E87040; --azul: #3B6FD4; --vermelho: #D44545; --amarelo: #E8A820;
+  --sombra: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cinza-escuro); min-height: 100vh; }
+
+/* ONBOARDING */
+.onb-wrap { position: fixed; inset: 0; background: var(--creme); z-index: 500; display: none; overflow-y: auto; }
+.onb-wrap.visivel { display: block; }
+.onb-inner { max-width: 640px; margin: 0 auto; padding: 48px 24px 80px; }
+.onb-header { text-align: center; margin-bottom: 48px; }
+.onb-logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--verde); margin-bottom: 24px; }
+.onb-steps { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 40px; }
+.onb-step { display: flex; align-items: center; gap: 8px; }
+.onb-step-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; transition: all .3s; flex-shrink: 0; }
+.onb-step-num.ativo { background: var(--verde); color: white; }
+.onb-step-num.completo { background: var(--verde-claro); color: var(--verde); }
+.onb-step-num.inativo { background: var(--cinza-claro); color: var(--cinza-medio); }
+.onb-step-label { font-size: 12px; font-weight: 500; color: var(--cinza-medio); white-space: nowrap; }
+.onb-step-label.ativo { color: var(--verde); }
+.onb-step-linha { width: 40px; height: 2px; background: var(--cinza-claro); margin: 0 4px; flex-shrink: 0; }
+.onb-step-linha.completo { background: var(--verde-claro); }
+.onb-card { background: white; border-radius: 18px; border: 1px solid var(--cinza-claro); padding: 36px; box-shadow: var(--sombra); margin-bottom: 20px; }
+.onb-titulo { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--cinza-escuro); margin-bottom: 8px; }
+.onb-sub { font-size: 15px; color: var(--cinza-medio); margin-bottom: 28px; line-height: 1.6; }
+.onb-campo { margin-bottom: 18px; }
+.onb-campo label { display: block; font-size: 12px; font-weight: 500; color: var(--cinza-medio); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.onb-campo input, .onb-campo select { width: 100%; padding: 12px 14px; border: 1.5px solid var(--cinza-claro); border-radius: 9px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); background: var(--creme); outline: none; transition: border-color .15s; }
+.onb-campo input:focus, .onb-campo select:focus { border-color: var(--verde-medio); background: white; }
+.onb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.onb-dias { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.dia-btn { padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--cinza-claro); background: white; font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; color: var(--cinza-medio); transition: all .15s; }
+.dia-btn.selecionado { background: var(--verde-claro); border-color: var(--verde-medio); color: var(--verde); }
+.onb-nav { display: flex; gap: 12px; margin-top: 8px; }
+.onb-nav .btn { flex: 1; padding: 14px; font-size: 15px; }
+.onb-feature-lista { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+.onb-feature { display: flex; align-items: flex-start; gap: 14px; padding: 16px; background: var(--verde-suave); border-radius: 12px; border: 1px solid var(--verde-claro); }
+.onb-feature-icon { width: 40px; height: 40px; background: var(--verde); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.onb-feature-icon svg { width: 20px; height: 20px; color: white; }
+.onb-feature-info h4 { font-size: 14px; font-weight: 600; color: var(--cinza-escuro); margin-bottom: 3px; }
+.onb-feature-info p { font-size: 13px; color: var(--cinza-medio); line-height: 1.5; }
+.onb-bem-vindo { text-align: center; padding: 20px 0; }
+.onb-bem-vindo-icon { width: 72px; height: 72px; background: var(--verde-claro); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.onb-bem-vindo-icon svg { width: 36px; height: 36px; color: var(--verde); }
+.onb-progresso { height: 4px; background: var(--cinza-claro); border-radius: 2px; margin-bottom: 32px; overflow: hidden; }
+.onb-progresso-fill { height: 100%; background: var(--verde-medio); border-radius: 2px; transition: width .4s ease; }
+
+/* AUTH */
+.auth-wrap { min-height: 100vh; display: flex; }
+.auth-lado { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; }
+.auth-lado.esquerdo { background: var(--verde); flex-direction: column; gap: 32px; }
+.auth-logo { font-family: 'DM Serif Display', serif; font-size: 36px; color: white; letter-spacing: -0.5px; }
+.auth-logo span { display: block; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.55); margin-top: 4px; letter-spacing: 0; }
+.auth-features { display: flex; flex-direction: column; gap: 16px; max-width: 320px; }
+.auth-feature { display: flex; align-items: flex-start; gap: 12px; }
+.auth-feature-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.12); border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.auth-feature-icon svg { width: 18px; height: 18px; color: #7DEFC0; }
+.auth-feature-texto { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+.auth-feature-titulo { font-size: 13px; font-weight: 500; color: white; margin-bottom: 2px; }
+
+.auth-form-wrap { width: 100%; max-width: 400px; }
+.auth-form-titulo { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--cinza-escuro); margin-bottom: 6px; }
+.auth-form-sub { font-size: 14px; color: var(--cinza-medio); margin-bottom: 32px; }
+.auth-campo { margin-bottom: 16px; }
+.auth-campo label { display: block; font-size: 12px; font-weight: 500; color: var(--cinza-medio); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.auth-campo input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--cinza-claro); border-radius: 9px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); background: white; outline: none; transition: border-color .15s; }
+.auth-campo input:focus { border-color: var(--verde-medio); }
+.auth-btn { width: 100%; padding: 13px; background: var(--verde); color: white; border: none; border-radius: 9px; font-size: 15px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .18s; margin-top: 8px; }
+.auth-btn:hover { background: #0a5c41; }
+.auth-btn:disabled { opacity: .6; cursor: not-allowed; }
+.auth-troca { text-align: center; margin-top: 20px; font-size: 14px; color: var(--cinza-medio); }
+.auth-troca a { color: var(--verde); font-weight: 500; cursor: pointer; text-decoration: none; }
+.auth-erro { background: #FAE0E0; color: var(--vermelho); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
+.auth-erro.visivel { display: block; }
+.auth-sucesso { background: var(--verde-claro); color: var(--verde); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
+.auth-sucesso.visivel { display: block; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+.auth-divider-linha { flex: 1; height: 1px; background: var(--cinza-claro); }
+.auth-divider span { font-size: 12px; color: var(--cinza-medio); }
+
+/* APP */
+.app-wrap { display: none; min-height: 100vh; }
+.app-wrap.visivel { display: flex; }
+.sidebar { width: 220px; min-height: 100vh; background: var(--verde); display: flex; flex-direction: column; padding: 28px 0; position: fixed; top: 0; left: 0; z-index: 100; }
+.logo { padding: 0 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+.logo-nome { font-family: 'DM Serif Display', serif; font-size: 20px; color: white; letter-spacing: -0.3px; }
+.logo-tag { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.nav { padding: 20px 0; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 24px; font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.65); cursor: pointer; transition: all .18s; border-left: 3px solid transparent; }
+.nav-item:hover { color: white; background: rgba(255,255,255,0.07); }
+.nav-item.ativo { color: white; background: rgba(255,255,255,0.12); border-left-color: #7DEFC0; font-weight: 500; }
+.nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+.clinica-info { padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.12); }
+.clinica-nome { font-size: 13px; font-weight: 500; color: white; }
+.clinica-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.plano-badge { display: inline-block; font-size: 10px; font-weight: 500; background: #7DEFC0; color: var(--verde); padding: 1px 7px; border-radius: 20px; margin-top: 4px; }
+.sidebar-footer { padding: 12px 24px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.sidebar-footer:hover .logout-txt { color: white; }
+.logout-txt { font-size: 12px; color: rgba(255,255,255,0.4); transition: color .15s; }
+.dot-live { width: 7px; height: 7px; background: #7DEFC0; border-radius: 50%; animation: pulse 2s infinite; }
+
+/* MAIN */
+.main { margin-left: 220px; flex: 1; padding: 36px 40px; min-height: 100vh; }
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+.topbar-titulo h1 { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--cinza-escuro); letter-spacing: -0.4px; }
+.topbar-titulo p { font-size: 14px; color: var(--cinza-medio); margin-top: 4px; }
+.topbar-acoes { display: flex; align-items: center; gap: 10px; }
+.btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all .18s; }
+.btn-primario { background: var(--verde); color: white; }
+.btn-primario:hover { background: #0a5c41; }
+.btn-secundario { background: white; color: var(--cinza-escuro); border: 1px solid var(--cinza-claro); box-shadow: var(--sombra); }
+.btn-secundario:hover { background: var(--verde-suave); }
+
+/* MÉTRICAS */
+.metricas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.metrica-card { background: white; border-radius: 14px; padding: 20px 22px; border: 1px solid var(--cinza-claro); box-shadow: var(--sombra); position: relative; overflow: hidden; }
+.metrica-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.metrica-card.verde::before { background: var(--verde-medio); }
+.metrica-card.laranja::before { background: var(--laranja); }
+.metrica-card.azul::before { background: var(--azul); }
+.metrica-card.vermelho::before { background: var(--vermelho); }
+.metrica-label { font-size: 11px; color: var(--cinza-medio); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+.metrica-valor { font-family: 'DM Serif Display', serif; font-size: 34px; color: var(--cinza-escuro); letter-spacing: -1px; line-height: 1; }
+.metrica-badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; margin-top: 8px; }
+.badge-verde { background: var(--verde-claro); color: var(--verde); }
+.badge-vermelho { background: #FAE0E0; color: var(--vermelho); }
+.badge-amarelo { background: #FEF3D8; color: #A0680A; }
+
+/* GRID */
+.grid-principal { display: grid; grid-template-columns: 1fr 330px; gap: 18px; }
+.lado-direito { display: flex; flex-direction: column; gap: 16px; }
+.card { background: white; border-radius: 14px; border: 1px solid var(--cinza-claro); box-shadow: var(--sombra); overflow: hidden; }
+.card-header { padding: 18px 22px; border-bottom: 1px solid var(--cinza-claro); display: flex; justify-content: space-between; align-items: center; }
+.card-titulo { font-size: 14px; font-weight: 600; color: var(--cinza-escuro); }
+.card-sub { font-size: 12px; color: var(--cinza-medio); margin-top: 2px; }
+
+/* CONSULTAS */
+.consulta-item { display: flex; align-items: center; gap: 14px; padding: 14px 22px; border-bottom: 1px solid var(--cinza-claro); cursor: pointer; transition: background .15s; }
+.consulta-item:last-child { border-bottom: none; }
+.consulta-item:hover { background: var(--verde-suave); }
+.consulta-hora { font-size: 13px; font-weight: 600; color: var(--verde); min-width: 46px; font-variant-numeric: tabular-nums; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; flex-shrink: 0; }
+.consulta-info { flex: 1; min-width: 0; }
+.consulta-nome { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.consulta-queixa { font-size: 12px; color: var(--cinza-medio); margin-top: 1px; }
+.status-pill { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.status-confirmado { background: var(--verde-claro); color: var(--verde); }
+.status-aguardando { background: #FEF3D8; color: #A0680A; }
+.status-cancelado { background: #FAE0E0; color: var(--vermelho); }
+.status-atendido { background: #E8E6E0; color: var(--cinza-medio); }
+.status-agendado { background: #E8EEFE; color: var(--azul); }
+.consulta-acoes { display: flex; gap: 5px; }
+.btn-icone { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--cinza-claro); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; color: var(--cinza-medio); }
+.btn-icone:hover { background: var(--verde-suave); color: var(--verde); border-color: var(--verde-claro); }
+.btn-icone svg { width: 13px; height: 13px; }
+
+/* ALERTAS */
+.alerta-item { display: flex; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--cinza-claro); }
+.alerta-item:last-child { border-bottom: none; }
+.alerta-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.dot-vermelho { background: var(--vermelho); }
+.dot-amarelo { background: var(--amarelo); }
+.dot-verde { background: var(--verde-medio); }
+.alerta-texto { font-size: 13px; color: var(--cinza-escuro); line-height: 1.5; }
+.alerta-tempo { font-size: 11px; color: var(--cinza-medio); margin-top: 2px; }
+
+/* CALENDÁRIO */
+.mini-cal { padding: 18px 22px; }
+.cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.cal-mes { font-size: 14px; font-weight: 600; }
+.cal-nav { background: none; border: none; cursor: pointer; color: var(--cinza-medio); font-size: 16px; padding: 2px 6px; border-radius: 5px; }
+.cal-nav:hover { background: var(--verde-suave); color: var(--verde); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
+.cal-dia-semana { font-size: 10px; color: var(--cinza-medio); padding: 4px 0; font-weight: 500; }
+.cal-dia { font-size: 13px; padding: 5px 3px; border-radius: 7px; cursor: pointer; transition: background .15s; position: relative; }
+.cal-dia:hover { background: var(--verde-suave); }
+.cal-dia.hoje { background: var(--verde); color: white; font-weight: 600; }
+.cal-dia.tem-consulta::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--verde-medio); border-radius: 50%; }
+.cal-dia.hoje.tem-consulta::after { background: rgba(255,255,255,0.7); }
+.cal-dia.outro-mes { color: var(--cinza-claro); }
+
+/* SATISFAÇÃO */
+.satis-barra { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.satis-label { font-size: 12px; color: var(--cinza-medio); min-width: 56px; }
+.barra-track { flex: 1; height: 5px; background: var(--cinza-claro); border-radius: 3px; overflow: hidden; }
+.barra-fill { height: 100%; border-radius: 3px; transition: width .8s ease; }
+.satis-pct { font-size: 12px; font-weight: 500; color: var(--cinza-escuro); min-width: 30px; text-align: right; }
+
+/* TABS */
+.tabs { display: flex; border-bottom: 1px solid var(--cinza-claro); padding: 0 22px; }
+.tab { font-size: 13px; font-weight: 500; padding: 12px 14px; cursor: pointer; color: var(--cinza-medio); border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+.tab.ativa { color: var(--verde); border-bottom-color: var(--verde); }
+
+/* PACIENTES */
+.paciente-row { display: flex; align-items: center; gap: 12px; padding: 13px 22px; border-bottom: 1px solid var(--cinza-claro); cursor: pointer; transition: background .15s; }
+.paciente-row:last-child { border-bottom: none; }
+.paciente-row:hover { background: var(--verde-suave); }
+.paciente-dados { flex: 1; min-width: 0; }
+.paciente-nome { font-size: 14px; font-weight: 500; }
+.paciente-info { font-size: 12px; color: var(--cinza-medio); margin-top: 2px; }
+
+/* RELATÓRIO */
+.resumo-box { background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 10px; padding: 20px 22px; margin: 20px; }
+.resumo-texto { font-size: 14px; color: var(--cinza-escuro); line-height: 1.8; }
+
+/* CONFIG */
+.config-campo { margin-bottom: 16px; }
+.config-campo label { display: block; font-size: 11px; font-weight: 500; color: var(--cinza-medio); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.config-campo input, .config-campo select, .config-campo textarea { width: 100%; padding: 10px 13px; border: 1px solid var(--cinza-claro); border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); background: var(--creme); outline: none; transition: border-color .15s; }
+.config-campo input:focus, .config-campo select:focus, .config-campo textarea:focus { border-color: var(--verde-medio); background: white; }
+.config-campo textarea { height: 72px; resize: none; }
+
+/* MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: none; align-items: center; justify-content: center; }
+.overlay.aberto { display: flex; }
+.modal { background: white; border-radius: 18px; padding: 30px; width: 460px; max-width: 92vw; animation: slideUp .2s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+@keyframes slideUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+.modal-titulo { font-family: 'DM Serif Display', serif; font-size: 20px; }
+.modal-fechar { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--cinza-claro); background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--cinza-medio); font-size: 16px; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-acoes { display: flex; gap: 10px; margin-top: 22px; }
+.modal-acoes .btn { flex: 1; padding: 11px; font-size: 14px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 28px; right: 28px; background: var(--cinza-escuro); color: white; padding: 13px 18px; border-radius: 10px; font-size: 13px; z-index: 300; transform: translateY(20px); opacity: 0; transition: all .3s; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+.toast.visivel { transform: translateY(0); opacity: 1; }
+.toast-dot { width: 7px; height: 7px; border-radius: 50%; background: #7DEFC0; flex-shrink: 0; }
+
+/* SEÇÕES */
+.sec { display: none; }
+.sec.ativa { display: block; }
+
+/* LOADING */
+.loading { text-align: center; padding: 48px; color: var(--cinza-medio); font-size: 14px; }
+.loading-spinner { width: 28px; height: 28px; border: 2px solid var(--cinza-claro); border-top-color: var(--verde-medio); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.empty { padding: 40px; text-align: center; color: var(--cinza-medio); font-size: 14px; }
+.av-1{background:#1A9E72} .av-2{background:#3B6FD4} .av-3{background:#E87040}
+.av-4{background:#7B5CF0} .av-5{background:#D44598} .av-6{background:#E8A820}
+
+/* TELA INICIAL LOADING */
+.splash { position: fixed; inset: 0; background: var(--verde); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; transition: opacity .4s; }
+.splash.oculto { opacity: 0; pointer-events: none; }
+.splash-logo { font-family: 'DM Serif Display', serif; font-size: 42px; color: white; letter-spacing: -0.5px; margin-bottom: 8px; }
+.splash-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 40px; }
+.splash-spinner { width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #7DEFC0; border-radius: 50%; animation: spin .7s linear infinite; }
+
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 20px; }
+  .metricas { grid-template-columns: repeat(2, 1fr); }
+  .grid-principal { grid-template-columns: 1fr; }
+  .auth-lado.esquerdo { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+  <div class="splash-logo">NastaDesk</div>
+  <div class="splash-sub">by Nastaclin</div>
+  <div class="splash-spinner"></div>
+</div>
+
+<!-- AUTH -->
+<div class="auth-wrap" id="auth-wrap">
+  <div class="auth-lado esquerdo">
+    <div>
+      <div class="auth-logo">NastaDesk <span>by Nastaclin</span></div>
+    </div>
+    <div class="auth-features">
+      <div class="auth-feature">
+        <div class="auth-feature-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <div><div class="auth-feature-titulo">Agenda em tempo real</div><div class="auth-feature-texto">Veja todas as consultas do dia atualizadas automaticamente</div></div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></div>
+        <div><div class="auth-feature-titulo">WhatsApp automático</div><div class="auth-feature-texto">Lembretes e confirmações enviados sem você fazer nada</div></div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+        <div><div class="auth-feature-titulo">Relatório mensal</div><div class="auth-feature-texto">Taxa de comparecimento, novos pacientes e satisfação</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-lado">
+    <!-- LOGIN -->
+    <div class="auth-form-wrap" id="form-login">
+      <div class="auth-form-titulo">Entrar na conta</div>
+      <div class="auth-form-sub">Acesse seu painel NastaDesk</div>
+      <div class="auth-erro" id="login-erro"></div>
+      <div class="auth-campo"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
+      <div class="auth-campo"><label>Senha</label><input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+      <button class="auth-btn" id="login-btn" onclick="fazerLogin()">Entrar</button>
+      <div class="auth-troca">Não tem conta? <a onclick="alternarForm('cadastro')">Criar conta grátis</a></div>
+    </div>
+    <!-- CADASTRO -->
+    <div class="auth-form-wrap" id="form-cadastro" style="display:none">
+      <div class="auth-form-titulo">Criar conta</div>
+      <div class="auth-form-sub">Configure sua clínica em minutos</div>
+      <div class="auth-erro" id="cadastro-erro"></div>
+      <div class="auth-sucesso" id="cadastro-sucesso"></div>
+      <div class="auth-campo"><label>Nome da clínica</label><input type="text" id="cad-clinica" placeholder="Ex: Clínica Saúde e Movimento"></div>
+      <div class="auth-campo"><label>Seu nome (responsável)</label><input type="text" id="cad-nome" placeholder="Ex: Dr. Carlos Mendes"></div>
+      <div class="auth-campo"><label>WhatsApp da clínica</label><input type="text" id="cad-wpp" placeholder="Ex: 11999990001"></div>
+      <div class="auth-campo"><label>E-mail</label><input type="email" id="cad-email" placeholder="seu@email.com"></div>
+      <div class="auth-campo"><label>Senha</label><input type="password" id="cad-senha" placeholder="Mínimo 6 caracteres"></div>
+      <button class="auth-btn" id="cadastro-btn" onclick="fazerCadastro()">Criar minha conta</button>
+      <div class="auth-troca">Já tem conta? <a onclick="alternarForm('login')">Entrar</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="onb-wrap" id="onb-wrap">
+  <div class="onb-inner">
+    <div class="onb-logo">NastaDesk</div>
+    <div class="onb-progresso"><div class="onb-progresso-fill" id="onb-progresso-fill" style="width:25%"></div></div>
+    <div class="onb-steps" id="onb-steps">
+      <div class="onb-step">
+        <div class="onb-step-num ativo" id="step-num-1">1</div>
+        <span class="onb-step-label ativo">Boas-vindas</span>
+      </div>
+      <div class="onb-step-linha" id="step-linha-1"></div>
+      <div class="onb-step">
+        <div class="onb-step-num inativo" id="step-num-2">2</div>
+        <span class="onb-step-label" id="step-label-2">Sua clínica</span>
+      </div>
+      <div class="onb-step-linha" id="step-linha-2"></div>
+      <div class="onb-step">
+        <div class="onb-step-num inativo" id="step-num-3">3</div>
+        <span class="onb-step-label" id="step-label-3">Atendimento</span>
+      </div>
+      <div class="onb-step-linha" id="step-linha-3"></div>
+      <div class="onb-step">
+        <div class="onb-step-num inativo" id="step-num-4">4</div>
+        <span class="onb-step-label" id="step-label-4">Pronto!</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: BOAS-VINDAS -->
+    <div id="onb-step-1">
+      <div class="onb-card">
+        <div class="onb-bem-vindo">
+          <div class="onb-bem-vindo-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          </div>
+          <div class="onb-titulo" id="onb-titulo-bv">Bem-vindo ao NastaDesk!</div>
+          <div class="onb-sub">Sua clínica está quase pronta. Vamos configurar tudo em menos de 2 minutos para você começar a usar hoje mesmo.</div>
+        </div>
+        <div class="onb-feature-lista">
+          <div class="onb-feature">
+            <div class="onb-feature-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+            <div class="onb-feature-info"><h4>Agenda do dia sempre organizada</h4><p>Veja todas as consultas, status de confirmação e alertas em um só lugar.</p></div>
+          </div>
+          <div class="onb-feature">
+            <div class="onb-feature-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></div>
+            <div class="onb-feature-info"><h4>Lembretes automáticos pelo WhatsApp</h4><p>Seus pacientes recebem lembretes 24h e 1h antes sem você fazer nada.</p></div>
+          </div>
+          <div class="onb-feature">
+            <div class="onb-feature-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+            <div class="onb-feature-info"><h4>Relatório mensal automático</h4><p>Taxa de comparecimento, novos pacientes e satisfação — sem planilha.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="onb-nav">
+        <button class="btn btn-primario" onclick="onbProximo(2)">Vamos começar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: DADOS DA CLÍNICA -->
+    <div id="onb-step-2" style="display:none">
+      <div class="onb-card">
+        <div class="onb-titulo">Dados da sua clínica</div>
+        <div class="onb-sub">Confirme as informações da sua clínica. Elas aparecem nas mensagens enviadas aos pacientes.</div>
+        <div class="onb-campo"><label>Nome da clínica</label><input type="text" id="onb-nome-clinica" placeholder="Ex: Clínica Saúde e Movimento"></div>
+        <div class="onb-campo"><label>Seu nome (responsável)</label><input type="text" id="onb-responsavel" placeholder="Ex: Dr. Carlos Mendes"></div>
+        <div class="onb-campo"><label>WhatsApp da clínica</label><input type="text" id="onb-whatsapp" placeholder="Ex: 11999990001"></div>
+        <div class="onb-campo"><label>Endereço (opcional)</label><input type="text" id="onb-endereco" placeholder="Ex: Rua das Flores, 123 — São Paulo"></div>
+      </div>
+      <div class="onb-nav">
+        <button class="btn btn-secundario" onclick="onbProximo(1)">← Voltar</button>
+        <button class="btn btn-primario" onclick="onbSalvarClinica()">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: HORÁRIOS DE ATENDIMENTO -->
+    <div id="onb-step-3" style="display:none">
+      <div class="onb-card">
+        <div class="onb-titulo">Horários de atendimento</div>
+        <div class="onb-sub">Configure quando você atende. O sistema vai usar essas informações para organizar os agendamentos.</div>
+        <div class="onb-campo">
+          <label>Dias de atendimento</label>
+          <div class="onb-dias">
+            <button class="dia-btn selecionado" data-dia="seg" onclick="toggleDia(this)">Seg</button>
+            <button class="dia-btn selecionado" data-dia="ter" onclick="toggleDia(this)">Ter</button>
+            <button class="dia-btn selecionado" data-dia="qua" onclick="toggleDia(this)">Qua</button>
+            <button class="dia-btn selecionado" data-dia="qui" onclick="toggleDia(this)">Qui</button>
+            <button class="dia-btn selecionado" data-dia="sex" onclick="toggleDia(this)">Sex</button>
+            <button class="dia-btn" data-dia="sab" onclick="toggleDia(this)">Sáb</button>
+            <button class="dia-btn" data-dia="dom" onclick="toggleDia(this)">Dom</button>
+          </div>
+        </div>
+        <div class="onb-grid">
+          <div class="onb-campo"><label>Horário de início</label><input type="time" id="onb-inicio" value="08:00"></div>
+          <div class="onb-campo"><label>Horário de término</label><input type="time" id="onb-fim" value="18:00"></div>
+        </div>
+        <div class="onb-campo">
+          <label>Duração padrão de cada consulta</label>
+          <select id="onb-intervalo">
+            <option value="30">30 minutos</option>
+            <option value="45">45 minutos</option>
+            <option value="60" selected>1 hora</option>
+            <option value="90">1 hora e 30 minutos</option>
+            <option value="120">2 horas</option>
+          </select>
+        </div>
+      </div>
+      <div class="onb-nav">
+        <button class="btn btn-secundario" onclick="onbProximo(2)">← Voltar</button>
+        <button class="btn btn-primario" onclick="onbSalvarHorarios()">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: PRONTO -->
+    <div id="onb-step-4" style="display:none">
+      <div class="onb-card">
+        <div class="onb-bem-vindo">
+          <div class="onb-bem-vindo-icon" style="background:var(--verde);width:80px;height:80px">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="40" height="40" style="color:white"><path d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div class="onb-titulo" style="margin-top:8px">Tudo pronto!</div>
+          <div class="onb-sub">Sua clínica está configurada. A partir de agora, a equipe Nastaclin vai ativar as automações do WhatsApp e você começa a receber agendamentos automaticamente.</div>
+        </div>
+        <div class="onb-feature-lista">
+          <div class="onb-feature">
+            <div class="onb-feature-icon" style="background:var(--azul)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
+            <div class="onb-feature-info"><h4>Próximo passo</h4><p>A equipe Nastaclin vai entrar em contato em até 24h para ativar as automações do WhatsApp.</p></div>
+          </div>
+          <div class="onb-feature">
+            <div class="onb-feature-icon" style="background:var(--laranja)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="onb-feature-info"><h4>Enquanto isso</h4><p>Você já pode agendar consultas manualmente e acompanhar tudo pelo NastaDesk.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="onb-nav">
+        <button class="btn btn-primario" onclick="onbConcluir()" style="font-size:16px">Acessar meu painel →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app-wrap" id="app-wrap">
+  <aside class="sidebar">
+    <div class="logo"><div class="logo-nome">NastaDesk</div><div class="logo-tag">by Nastaclin</div></div>
+    <nav class="nav">
+      <div class="nav-item ativo" onclick="irPara('agenda')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda do Dia
+      </div>
+      <div class="nav-item" onclick="irPara('pacientes')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M16 11a4 4 0 100-8"/></svg>Pacientes
+      </div>
+      <div class="nav-item" onclick="irPara('relatorio')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Relatório
+      </div>
+      <div class="nav-item" onclick="irPara('configuracoes')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configurações
+      </div>
+    </nav>
+    <div class="clinica-info">
+      <div class="clinica-nome" id="sb-nome">—</div>
+      <div class="clinica-sub" id="sb-sub">—</div>
+      <div class="plano-badge" id="sb-plano">—</div>
+    </div>
+    <div class="sidebar-footer" onclick="fazerLogout()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="15" height="15" style="color:rgba(255,255,255,0.4)"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      <span class="logout-txt">Sair da conta</span>
+      <div class="dot-live" style="margin-left:auto"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- AGENDA -->
+    <section id="sec-agenda" class="sec ativa">
+      <div class="topbar">
+        <div class="topbar-titulo"><h1>Agenda de Hoje</h1><p id="topbar-data">—</p></div>
+        <div class="topbar-acoes"><button class="btn btn-secundario" onclick="abrirModal()">+ Agendar</button></div>
+      </div>
+      <div class="metricas">
+        <div class="metrica-card verde"><div class="metrica-label">Confirmadas</div><div class="metrica-valor" id="m-confirmadas">—</div><span class="metrica-badge badge-verde" id="m-confirmadas-sub">de hoje</span></div>
+        <div class="metrica-card laranja"><div class="metrica-label">Aguardando</div><div class="metrica-valor" id="m-aguardando">—</div><span class="metrica-badge badge-amarelo">Lembrete enviado</span></div>
+        <div class="metrica-card vermelho"><div class="metrica-label">Canceladas</div><div class="metrica-valor" id="m-canceladas">—</div><span class="metrica-badge badge-vermelho" id="m-canceladas-sub">hoje</span></div>
+        <div class="metrica-card azul"><div class="metrica-label">Total hoje</div><div class="metrica-valor" id="m-total">—</div><span class="metrica-badge badge-verde">Agendamentos</span></div>
+      </div>
+      <div class="grid-principal">
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-titulo">Consultas de hoje</div><div class="card-sub">Atualizado em tempo real</div></div>
+              <div style="display:flex;align-items:center;gap:6px"><div class="dot-live"></div><span style="font-size:12px;color:var(--cinza-medio)">Ao vivo</span></div>
+            </div>
+            <div id="lista-consultas"><div class="loading"><div class="loading-spinner"></div>Carregando consultas...</div></div>
+          </div>
+        </div>
+        <div class="lado-direito">
+          <div class="card">
+            <div class="mini-cal">
+              <div class="cal-header"><span class="cal-mes" id="cal-mes-ano">—</span><div><button class="cal-nav" onclick="navCal(-1)">‹</button><button class="cal-nav" onclick="navCal(1)">›</button></div></div>
+              <div class="cal-grid" id="cal-grid"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-titulo">Alertas</div></div>
+            <div id="lista-alertas"><div class="loading"><div class="loading-spinner"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-titulo">Satisfação</div><span style="font-size:12px;color:var(--cinza-medio)" id="satis-mes">—</span></div>
+            <div style="padding:14px 22px">
+              <div class="satis-barra"><span class="satis-label">Ótimo</span><div class="barra-track"><div class="barra-fill" style="width:72%;background:var(--verde-medio)"></div></div><span class="satis-pct">72%</span></div>
+              <div class="satis-barra"><span class="satis-label">Bom</span><div class="barra-track"><div class="barra-fill" style="width:20%;background:var(--azul)"></div></div><span class="satis-pct">20%</span></div>
+              <div class="satis-barra"><span class="satis-label">Regular</span><div class="barra-track"><div class="barra-fill" style="width:6%;background:var(--amarelo)"></div></div><span class="satis-pct">6%</span></div>
+              <div class="satis-barra"><span class="satis-label">Ruim</span><div class="barra-track"><div class="barra-fill" style="width:2%;background:var(--vermelho)"></div></div><span class="satis-pct">2%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PACIENTES -->
+    <section id="sec-pacientes" class="sec">
+      <div class="topbar">
+        <div class="topbar-titulo"><h1>Pacientes</h1><p id="total-pacientes">—</p></div>
+        <div class="topbar-acoes"><button class="btn btn-primario" onclick="abrirModal()">+ Novo agendamento</button></div>
+      </div>
+      <div class="card">
+        <div class="tabs">
+          <div class="tab ativa" onclick="filtrarPacientes('todos',this)">Todos</div>
+          <div class="tab" onclick="filtrarPacientes('ativo',this)">Ativos</div>
+          <div class="tab" onclick="filtrarPacientes('inativo',this)">Sem retorno</div>
+        </div>
+        <div id="lista-pacientes"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
+      </div>
+    </section>
+
+    <!-- RELATÓRIO -->
+    <section id="sec-relatorio" class="sec">
+      <div class="topbar"><div class="topbar-titulo"><h1>Relatório Mensal</h1><p id="rel-periodo">—</p></div></div>
+      <div class="metricas">
+        <div class="metrica-card verde"><div class="metrica-label">Consultas realizadas</div><div class="metrica-valor" id="rel-realizadas">—</div><span class="metrica-badge badge-verde">este mês</span></div>
+        <div class="metrica-card azul"><div class="metrica-label">Novos pacientes</div><div class="metrica-valor" id="rel-novos">—</div><span class="metrica-badge badge-verde">Via WhatsApp</span></div>
+        <div class="metrica-card laranja"><div class="metrica-label">Comparecimento</div><div class="metrica-valor" id="rel-taxa">—</div><span class="metrica-badge badge-verde">do total</span></div>
+        <div class="metrica-card vermelho"><div class="metrica-label">Cancelamentos</div><div class="metrica-valor" id="rel-cancelamentos">—</div><span class="metrica-badge badge-amarelo">este mês</span></div>
+      </div>
+      <div class="card"><div class="resumo-box"><div class="card-titulo" style="margin-bottom:10px">Resumo do mês</div><div class="resumo-texto" id="rel-resumo">Carregando...</div></div></div>
+    </section>
+
+    <!-- CONFIGURAÇÕES -->
+    <section id="sec-configuracoes" class="sec">
+      <div class="topbar"><div class="topbar-titulo"><h1>Configurações</h1><p>Personalize as mensagens automáticas</p></div></div>
+      <div class="card" style="padding:28px;max-width:580px">
+        <div class="card-titulo" style="margin-bottom:20px">Lembretes automáticos</div>
+        <div class="config-campo"><label>Lembrete 1 — antecedência</label><select id="cfg-l1"><option value="24">24 horas antes</option><option value="48">48 horas antes</option><option value="12">12 horas antes</option></select></div>
+        <div class="config-campo"><label>Lembrete 2 — antecedência</label><select id="cfg-l2"><option value="1">1 hora antes</option><option value="2">2 horas antes</option><option value="0.5">30 minutos antes</option></select></div>
+        <div class="config-campo"><label>Mensagem de confirmação</label><textarea id="cfg-confirmacao"></textarea></div>
+        <div class="config-campo"><label>Mensagem lembrete 24h</label><textarea id="cfg-24h"></textarea></div>
+        <div class="config-campo"><label>Mensagem lembrete 1h</label><textarea id="cfg-1h"></textarea></div>
+        <button class="btn btn-primario" onclick="salvarConfigs()">Salvar configurações</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal" onclick="fecharModalClick(event)">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-titulo">Nova consulta</div><button class="modal-fechar" onclick="fecharModal()">×</button></div>
+    <div class="config-campo"><label>Nome do paciente</label><input type="text" id="novo-nome" placeholder="Ex: Maria Silva"></div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Data</label><input type="date" id="novo-data"></div>
+      <div class="config-campo"><label>Horário</label><input type="time" id="novo-hora" value="09:00"></div>
+    </div>
+    <div class="config-campo"><label>WhatsApp do paciente</label><input type="text" id="novo-wpp" placeholder="Ex: 11999990001"></div>
+    <div class="config-campo"><label>Queixa principal</label><input type="text" id="novo-queixa" placeholder="Ex: Dor no joelho direito"></div>
+    <div class="modal-acoes">
+      <button class="btn btn-secundario" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primario" onclick="salvarConsulta()">Agendar e confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
+
+<script>
+const SUPA_URL = 'https://zrkadblxozddreiwruhv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpya2FkYmx4b3pkZHJlaXdydWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NjA4MjEsImV4cCI6MjA5NjUzNjgyMX0.BQkXr831MlctUk-FhfEYkrgs6Amdpho5yDWcR3BtXok';
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const CORES = ['av-1','av-2','av-3','av-4','av-5','av-6'];
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+let clinicaId = null;
+let calData = new Date();
+let todosOsPacientes = [];
+let onbStepAtual = 1;
+
+// ONBOARDING
+function onbProximo(step) {
+  document.getElementById(`onb-step-${onbStepAtual}`).style.display = 'none';
+  onbStepAtual = step;
+  document.getElementById(`onb-step-${step}`).style.display = 'block';
+  // Atualizar steps visuais
+  for (let i = 1; i <= 4; i++) {
+    const num = document.getElementById(`step-num-${i}`);
+    const label = document.getElementById(`step-label-${i}`);
+    const linha = document.getElementById(`step-linha-${i}`);
+    if (!num) continue;
+    if (i < step) { num.className = 'onb-step-num completo'; num.innerHTML = '✓'; }
+    else if (i === step) { num.className = 'onb-step-num ativo'; num.textContent = i; if(label) label.className='onb-step-label ativo'; }
+    else { num.className = 'onb-step-num inativo'; num.textContent = i; if(label) label.className='onb-step-label'; }
+    if (linha) linha.className = i < step ? 'onb-step-linha completo' : 'onb-step-linha';
+  }
+  const progresso = { 1: 25, 2: 50, 3: 75, 4: 100 };
+  document.getElementById('onb-progresso-fill').style.width = progresso[step] + '%';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function onbSalvarClinica() {
+  const nome = document.getElementById('onb-nome-clinica').value.trim();
+  const responsavel = document.getElementById('onb-responsavel').value.trim();
+  const whatsapp = document.getElementById('onb-whatsapp').value.trim();
+  if (!nome || !responsavel) { toast('Preencha o nome da clínica e o responsável'); return; }
+  const { error } = await db.from('clinicas').update({ nome, responsavel, whatsapp }).eq('id', clinicaId);
+  if (error) { toast('Erro ao salvar. Tente novamente.'); return; }
+  document.getElementById('sb-nome').textContent = responsavel;
+  document.getElementById('sb-sub').textContent = nome;
+  onbProximo(3);
+}
+
+async function onbSalvarHorarios() {
+  const inicio = document.getElementById('onb-inicio').value;
+  const fim = document.getElementById('onb-fim').value;
+  const intervalo = parseInt(document.getElementById('onb-intervalo').value);
+  const dias = Array.from(document.querySelectorAll('.dia-btn.selecionado')).map(b => b.dataset.dia);
+  if (!dias.length) { toast('Selecione pelo menos um dia de atendimento'); return; }
+  const { error } = await db.from('clinicas').update({
+    horario_inicio: inicio, horario_fim: fim,
+    intervalo_consulta: intervalo, dias_atendimento: dias
+  }).eq('id', clinicaId);
+  if (error) { toast('Erro ao salvar. Tente novamente.'); return; }
+  onbProximo(4);
+}
+
+async function onbConcluir() {
+  await db.from('clinicas').update({ onboarding_completo: true }).eq('id', clinicaId);
+  document.getElementById('onb-wrap').classList.remove('visivel');
+  toast('Bem-vindo ao NastaDesk! 🎉');
+}
+
+function toggleDia(btn) {
+  btn.classList.toggle('selecionado');
+}
+
+function mostrarOnboarding(clinica) {
+  // Pré-preencher campos com dados existentes
+  if (clinica.nome) document.getElementById('onb-nome-clinica').value = clinica.nome;
+  if (clinica.responsavel) document.getElementById('onb-responsavel').value = clinica.responsavel;
+  if (clinica.whatsapp) document.getElementById('onb-whatsapp').value = clinica.whatsapp;
+  if (clinica.horario_inicio) document.getElementById('onb-inicio').value = clinica.horario_inicio.substring(0,5);
+  if (clinica.horario_fim) document.getElementById('onb-fim').value = clinica.horario_fim.substring(0,5);
+  if (clinica.intervalo_consulta) document.getElementById('onb-intervalo').value = clinica.intervalo_consulta;
+  // Atualizar título
+  const nome = clinica.responsavel ? clinica.responsavel.split(' ')[0] : '';
+  if (nome) document.getElementById('onb-titulo-bv').textContent = `Bem-vindo, ${nome}!`;
+  document.getElementById('onb-wrap').classList.add('visivel');
+}
+
+// INIT — verificar sessão
+async function init() {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) {
+    await entrarNoApp(session.user);
+  } else {
+    ocultarSplash();
+    document.getElementById('auth-wrap').style.display = 'flex';
+  }
+  // Ouvir mudanças de auth
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) await entrarNoApp(session.user);
+    if (event === 'SIGNED_OUT') voltarParaLogin();
+  });
+}
+
+async function entrarNoApp(user) {
+  document.getElementById('auth-wrap').style.display = 'none';
+  document.getElementById('app-wrap').classList.add('visivel');
+  await carregarDados(user);
+  ocultarSplash();
+}
+
+function voltarParaLogin() {
+  document.getElementById('app-wrap').classList.remove('visivel');
+  document.getElementById('auth-wrap').style.display = 'flex';
+  clinicaId = null;
+}
+
+function ocultarSplash() {
+  setTimeout(() => document.getElementById('splash').classList.add('oculto'), 300);
+}
+
+// AUTH
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const erro = document.getElementById('login-erro');
+  const btn = document.getElementById('login-btn');
+  erro.classList.remove('visivel');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  const { error } = await db.auth.signInWithPassword({ email, password: senha });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (error) { erro.textContent = traduzirErro(error.message); erro.classList.add('visivel'); }
+}
+
+async function fazerCadastro() {
+  const clinica = document.getElementById('cad-clinica').value.trim();
+  const nome = document.getElementById('cad-nome').value.trim();
+  const wpp = document.getElementById('cad-wpp').value.trim();
+  const email = document.getElementById('cad-email').value.trim();
+  const senha = document.getElementById('cad-senha').value;
+  const erro = document.getElementById('cadastro-erro');
+  const sucesso = document.getElementById('cadastro-sucesso');
+  const btn = document.getElementById('cadastro-btn');
+  erro.classList.remove('visivel'); sucesso.classList.remove('visivel');
+  if (!clinica || !nome || !email || !senha) { erro.textContent = 'Preencha todos os campos obrigatórios.'; erro.classList.add('visivel'); return; }
+  btn.disabled = true; btn.textContent = 'Criando conta...';
+  const { error } = await db.auth.signUp({
+    email, password: senha,
+    options: { data: { nome_clinica: clinica, responsavel: nome, whatsapp: wpp } }
+  });
+  btn.disabled = false; btn.textContent = 'Criar minha conta';
+  if (error) { erro.textContent = traduzirErro(error.message); erro.classList.add('visivel'); }
+  else { sucesso.textContent = 'Conta criada! Verifique seu e-mail para confirmar o cadastro.'; sucesso.classList.add('visivel'); }
+}
+
+async function fazerLogout() {
+  await db.auth.signOut();
+  toast('Até logo!');
+}
+
+function alternarForm(qual) {
+  document.getElementById('form-login').style.display = qual === 'login' ? 'block' : 'none';
+  document.getElementById('form-cadastro').style.display = qual === 'cadastro' ? 'block' : 'none';
+}
+
+function traduzirErro(msg) {
+  if (msg.includes('Invalid login')) return 'E-mail ou senha incorretos.';
+  if (msg.includes('Email not confirmed')) return 'Confirme seu e-mail antes de entrar.';
+  if (msg.includes('already registered')) return 'Este e-mail já está cadastrado.';
+  if (msg.includes('Password should')) return 'A senha deve ter pelo menos 6 caracteres.';
+  return 'Ocorreu um erro. Tente novamente.';
+}
+
+// CARREGAR DADOS
+async function carregarDados(user) {
+  const hoje = new Date();
+  document.getElementById('topbar-data').textContent = hoje.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('satis-mes').textContent = MESES[hoje.getMonth()];
+  document.getElementById('rel-periodo').textContent = `${MESES[hoje.getMonth()]} ${hoje.getFullYear()}`;
+  document.getElementById('novo-data').value = hoje.toISOString().split('T')[0];
+
+  // Buscar clínica do usuário
+  const { data: clinica } = await db.from('clinicas').select('*').eq('user_id', user.id).single();
+  if (clinica) {
+    clinicaId = clinica.id;
+    document.getElementById('sb-nome').textContent = clinica.responsavel;
+    document.getElementById('sb-sub').textContent = clinica.nome;
+    const planos = { basico:'Plano Básico', profissional:'Plano Profissional', premium:'Plano Premium' };
+    document.getElementById('sb-plano').textContent = planos[clinica.plano] || clinica.plano;
+    // Mostrar onboarding se não completou ainda
+    if (!clinica.onboarding_completo) {
+      mostrarOnboarding(clinica);
+    }
+  }
+
+  await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
+  renderCalendario();
+  carregarRelatorio();
+  carregarConfigs();
+
+  // Realtime
+  db.channel('nastadesk-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas' }, () => { carregarConsultas(); carregarRelatorio(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alertas' }, () => carregarAlertas())
+    .subscribe();
+}
+
+// CONSULTAS
+async function carregarConsultas() {
+  if (!clinicaId) return;
+  const hoje = new Date();
+  const inicio = new Date(hoje); inicio.setHours(0,0,0,0);
+  const fim = new Date(hoje); fim.setHours(23,59,59,999);
+  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp)').eq('clinica_id', clinicaId).gte('data_hora', inicio.toISOString()).lte('data_hora', fim.toISOString()).order('data_hora');
+  renderConsultas(data || []);
+  atualizarMetricas(data || []);
+}
+
+function renderConsultas(lista) {
+  const el = document.getElementById('lista-consultas');
+  if (!lista.length) { el.innerHTML = '<div class="empty">Nenhuma consulta agendada para hoje.<br>Clique em "+ Agendar" para adicionar.</div>'; return; }
+  const stClass = { confirmado:'status-confirmado', aguardando:'status-aguardando', cancelado:'status-cancelado', atendido:'status-atendido', agendado:'status-agendado' };
+  const stLabel = { confirmado:'Confirmado', aguardando:'Aguardando', cancelado:'Cancelado', atendido:'Atendido', agendado:'Agendado' };
+  el.innerHTML = lista.map((c,i) => {
+    const hora = new Date(c.data_hora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const nome = c.pacientes?.nome || '—';
+    const iniciais = nome.split(' ').map(n=>n[0]).slice(0,2).join('');
+    const cor = c.status==='cancelado' ? 'style="background:var(--cinza-claro);color:var(--cinza-medio)"' : `class="avatar ${CORES[i%CORES.length]}"`;
+    const wpp = c.pacientes?.whatsapp ? `55${c.pacientes.whatsapp.replace(/\D/g,'')}` : '';
+    return `<div class="consulta-item">
+      <span class="consulta-hora">${hora}</span>
+      <div ${c.status==='cancelado'?cor:`class="avatar ${CORES[i%CORES.length]}"`}>${iniciais}</div>
+      <div class="consulta-info">
+        <div class="consulta-nome" style="${c.status==='cancelado'?'color:var(--cinza-medio)':''}">${nome}</div>
+        <div class="consulta-queixa">${c.queixa||'—'}</div>
+      </div>
+      <span class="status-pill ${stClass[c.status]||'status-agendado'}">${stLabel[c.status]||c.status}</span>
+      <div class="consulta-acoes">
+        ${c.status!=='cancelado'&&c.status!=='atendido'?`<button class="btn-icone" title="Marcar atendido" onclick="atualizarStatus('${c.id}','atendido')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></button>`:''}
+        ${wpp?`<button class="btn-icone" title="WhatsApp" onclick="window.open('https://wa.me/${wpp}','_blank')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></button>`:''}
+        ${c.status!=='cancelado'?`<button class="btn-icone" title="Cancelar" onclick="atualizarStatus('${c.id}','cancelado')" style="color:var(--vermelho)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function atualizarMetricas(lista) {
+  document.getElementById('m-confirmadas').textContent = lista.filter(c=>c.status==='confirmado').length;
+  document.getElementById('m-aguardando').textContent = lista.filter(c=>['aguardando','agendado'].includes(c.status)).length;
+  document.getElementById('m-canceladas').textContent = lista.filter(c=>c.status==='cancelado').length;
+  document.getElementById('m-total').textContent = lista.length;
+  document.getElementById('m-confirmadas-sub').textContent = `de ${lista.length} hoje`;
+}
+
+async function atualizarStatus(id, status) {
+  await db.from('consultas').update({status}).eq('id',id);
+  toast(status==='atendido'?'Marcado como atendido ✓':'Consulta cancelada');
+  if (status==='cancelado') await db.from('alertas').insert({clinica_id:clinicaId, tipo:'cancelamento', mensagem:'Consulta cancelada'});
+  carregarConsultas();
+}
+
+// ALERTAS
+async function carregarAlertas() {
+  if (!clinicaId) return;
+  const { data } = await db.from('alertas').select('*').eq('clinica_id',clinicaId).eq('lido',false).order('criado_em',{ascending:false}).limit(5);
+  const el = document.getElementById('lista-alertas');
+  if (!data?.length) { el.innerHTML = '<div class="empty">Nenhum alerta no momento</div>'; return; }
+  const cores = { cancelamento:'dot-vermelho', sem_resposta:'dot-amarelo', novo_agendamento:'dot-verde', lista_espera:'dot-amarelo', retorno:'dot-verde' };
+  el.innerHTML = data.map(a=>`<div class="alerta-item"><div class="alerta-dot ${cores[a.tipo]||'dot-amarelo'}"></div><div><div class="alerta-texto">${a.mensagem}</div><div class="alerta-tempo">${formatarTempo(a.criado_em)}</div></div></div>`).join('');
+}
+
+// PACIENTES
+async function carregarPacientes() {
+  if (!clinicaId) return;
+  const { data } = await db.from('pacientes').select('*').eq('clinica_id',clinicaId).order('nome');
+  todosOsPacientes = data || [];
+  document.getElementById('total-pacientes').textContent = `${todosOsPacientes.length} paciente${todosOsPacientes.length!==1?'s':''} cadastrado${todosOsPacientes.length!==1?'s':''}`;
+  renderPacientes(todosOsPacientes);
+}
+
+function renderPacientes(lista) {
+  const el = document.getElementById('lista-pacientes');
+  if (!lista.length) { el.innerHTML = '<div class="empty">Nenhum paciente cadastrado ainda</div>'; return; }
+  el.innerHTML = lista.map((p,i)=>{
+    const iniciais = p.nome.split(' ').map(n=>n[0]).slice(0,2).join('');
+    const ultima = p.ultima_consulta ? new Date(p.ultima_consulta).toLocaleDateString('pt-BR') : '—';
+    return `<div class="paciente-row" onclick="toast('Ficha completa — em breve')">
+      <div class="avatar ${CORES[i%CORES.length]}">${iniciais}</div>
+      <div class="paciente-dados"><div class="paciente-nome">${p.nome}</div><div class="paciente-info">${p.queixa_principal||'—'} · ${p.total_consultas} consulta${p.total_consultas!==1?'s':''}</div></div>
+      <div style="text-align:right;font-size:12px;color:var(--cinza-medio)">${ultima}<br><span style="color:${p.status==='ativo'?'var(--verde)':'var(--vermelho)'};font-size:11px">${p.status==='ativo'?'Ativo':'Inativo'}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function filtrarPacientes(status, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('ativa'));
+  el.classList.add('ativa');
+  renderPacientes(status==='todos' ? todosOsPacientes : todosOsPacientes.filter(p=>p.status===status));
+}
+
+// RELATÓRIO
+async function carregarRelatorio() {
+  if (!clinicaId) return;
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0, 23, 59, 59);
+  const { data } = await db.from('consultas').select('*').eq('clinica_id',clinicaId).gte('data_hora',inicio.toISOString()).lte('data_hora',fim.toISOString());
+  if (!data) return;
+  const realizadas = data.filter(c=>c.status==='atendido').length;
+  const cancelamentos = data.filter(c=>c.status==='cancelado').length;
+  const taxa = data.length > 0 ? Math.round((realizadas/data.length)*100) : 0;
+  const novosWpp = data.filter(c=>c.origem==='whatsapp').length;
+  document.getElementById('rel-realizadas').textContent = realizadas;
+  document.getElementById('rel-novos').textContent = novosWpp;
+  document.getElementById('rel-taxa').textContent = `${taxa}%`;
+  document.getElementById('rel-cancelamentos').textContent = cancelamentos;
+  const mes = MESES[hoje.getMonth()];
+  document.getElementById('rel-resumo').innerHTML = `Em ${mes}, sua clínica realizou <strong>${realizadas} consultas</strong>, com taxa de comparecimento de <strong>${taxa}%</strong>. Foram recebidos <strong>${novosWpp} agendamentos pelo WhatsApp</strong> sem ação manual. Houve <strong>${cancelamentos} cancelamento${cancelamentos!==1?'s':''}</strong> no período. ${taxa>=80?'Excelente resultado — o sistema de lembretes está funcionando bem.':'Continue acompanhando para identificar padrões de falta.'}`;
+}
+
+// CONFIGURAÇÕES
+async function carregarConfigs() {
+  if (!clinicaId) return;
+  const { data } = await db.from('configuracoes').select('*').eq('clinica_id',clinicaId).single();
+  if (!data) return;
+  document.getElementById('cfg-confirmacao').value = data.msg_confirmacao||'';
+  document.getElementById('cfg-24h').value = data.msg_lembrete_24h||'';
+  document.getElementById('cfg-1h').value = data.msg_lembrete_1h||'';
+  document.getElementById('cfg-l1').value = data.antecedencia_lembrete_1||24;
+  document.getElementById('cfg-l2').value = data.antecedencia_lembrete_2||1;
+}
+
+async function salvarConfigs() {
+  if (!clinicaId) return;
+  const { error } = await db.from('configuracoes').update({
+    msg_confirmacao: document.getElementById('cfg-confirmacao').value,
+    msg_lembrete_24h: document.getElementById('cfg-24h').value,
+    msg_lembrete_1h: document.getElementById('cfg-1h').value,
+    antecedencia_lembrete_1: parseInt(document.getElementById('cfg-l1').value),
+    antecedencia_lembrete_2: parseFloat(document.getElementById('cfg-l2').value),
+    atualizado_em: new Date().toISOString()
+  }).eq('clinica_id', clinicaId);
+  toast(error ? 'Erro ao salvar' : 'Configurações salvas ✓');
+}
+
+// NOVA CONSULTA
+async function salvarConsulta() {
+  if (!clinicaId) return;
+  const nome = document.getElementById('novo-nome').value.trim();
+  const data = document.getElementById('novo-data').value;
+  const hora = document.getElementById('novo-hora').value;
+  const wpp = document.getElementById('novo-wpp').value.trim();
+  const queixa = document.getElementById('novo-queixa').value.trim();
+  if (!nome || !data || !hora) { toast('Preencha nome, data e horário'); return; }
+  const { data: existente } = await db.from('pacientes').select('id').eq('clinica_id',clinicaId).eq('nome',nome).maybeSingle();
+  let pacienteId = existente?.id;
+  if (!pacienteId) {
+    const { data: novo } = await db.from('pacientes').insert({clinica_id:clinicaId, nome, whatsapp:wpp, queixa_principal:queixa}).select('id').single();
+    pacienteId = novo?.id;
+  }
+  if (!pacienteId) { toast('Erro ao salvar paciente'); return; }
+  const dataHora = new Date(`${data}T${hora}:00`).toISOString();
+  const { error } = await db.from('consultas').insert({clinica_id:clinicaId, paciente_id:pacienteId, data_hora:dataHora, queixa, status:'agendado', origem:'manual'});
+  if (!error) {
+    fecharModal(); toast('Consulta agendada ✓');
+    await db.from('alertas').insert({clinica_id:clinicaId, tipo:'novo_agendamento', mensagem:`Nova consulta agendada: ${nome}`});
+    carregarConsultas(); carregarAlertas(); carregarPacientes();
+  } else toast('Erro ao agendar. Tente novamente.');
+}
+
+// CALENDÁRIO
+function renderCalendario() {
+  const ano = calData.getFullYear(), mes = calData.getMonth();
+  document.getElementById('cal-mes-ano').textContent = `${MESES[mes]} ${ano}`;
+  const primeiroDia = new Date(ano,mes,1).getDay();
+  const ultimoDia = new Date(ano,mes+1,0).getDate();
+  const hoje = new Date();
+  const diasAnt = new Date(ano,mes,0).getDate();
+  let html = ['D','S','T','Q','Q','S','S'].map(d=>`<div class="cal-dia-semana">${d}</div>`).join('');
+  for (let i=primeiroDia-1; i>=0; i--) html += `<div class="cal-dia outro-mes">${diasAnt-i}</div>`;
+  for (let d=1; d<=ultimoDia; d++) {
+    const isHoje = d===hoje.getDate() && mes===hoje.getMonth() && ano===hoje.getFullYear();
+    html += `<div class="cal-dia ${isHoje?'hoje tem-consulta':''}">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+}
+function navCal(dir) { calData.setMonth(calData.getMonth()+dir); renderCalendario(); }
+
+// NAVEGAÇÃO
+function irPara(sec) {
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('ativa'));
+  document.getElementById(`sec-${sec}`).classList.add('ativa');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('ativo'));
+  ['agenda','pacientes','relatorio','configuracoes'].forEach((s,i)=>{ if(s===sec) document.querySelectorAll('.nav-item')[i].classList.add('ativo'); });
+}
+
+// MODAL
+function abrirModal() { document.getElementById('modal').classList.add('aberto'); }
+function fecharModal() { document.getElementById('modal').classList.remove('aberto'); }
+function fecharModalClick(e) { if(e.target===document.getElementById('modal')) fecharModal(); }
+
+// TOAST
+let toastTimer;
+function toast(msg) {
+  clearTimeout(toastTimer);
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast').classList.add('visivel');
+  toastTimer = setTimeout(()=>document.getElementById('toast').classList.remove('visivel'), 3200);
+}
+
+// UTILS
+function formatarTempo(iso) {
+  const diff = Math.floor((Date.now()-new Date(iso))/60000);
+  if (diff<1) return 'Agora mesmo';
+  if (diff<60) return `Há ${diff} minuto${diff>1?'s':''}`;
+  const h = Math.floor(diff/60);
+  if (h<24) return `Há ${h} hora${h>1?'s':''}`;
+  return `Há ${Math.floor(h/24)} dia${Math.floor(h/24)>1?'s':''}`;
+}
+
+init();
+</script>
+</body>
+</html>
