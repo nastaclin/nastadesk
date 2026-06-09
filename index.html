@@ -57,6 +57,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .onb-bem-vindo-icon svg { width: 36px; height: 36px; color: var(--verde); }
 .onb-progresso { height: 4px; background: var(--cinza-claro); border-radius: 2px; margin-bottom: 32px; overflow: hidden; }
 .onb-progresso-fill { height: 100%; background: var(--verde-medio); border-radius: 2px; transition: width .4s ease; }
+.horario-dia-row { display: flex; align-items: center; gap: 10px; background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 10px; padding: 12px 14px; }
+.horario-dia-label { font-size: 13px; font-weight: 600; color: var(--verde); min-width: 64px; }
+.horario-dia-row input[type="time"] { padding: 6px 10px; border: 1px solid var(--cinza-claro); border-radius: 7px; font-size: 13px; font-family: "DM Sans", sans-serif; background: white; outline: none; color: var(--cinza-escuro); flex: 1; }
+.horario-dia-row input[type="time"]:focus { border-color: var(--verde-medio); }
+.horario-dia-sep { font-size: 12px; color: var(--cinza-medio); }
 
 /* AUTH */
 .auth-wrap { min-height: 100vh; display: flex; }
@@ -393,6 +398,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
         <div class="onb-campo"><label>Seu nome (responsável)</label><input type="text" id="onb-responsavel" placeholder="Ex: Dr. Carlos Mendes"></div>
         <div class="onb-campo"><label>WhatsApp da clínica</label><input type="text" id="onb-whatsapp" placeholder="Ex: 11999990001"></div>
         <div class="onb-campo"><label>Endereço (opcional)</label><input type="text" id="onb-endereco" placeholder="Ex: Rua das Flores, 123 — São Paulo"></div>
+        <div class="onb-campo"><label>Complemento (opcional)</label><input type="text" id="onb-complemento" placeholder="Ex: Sala 302, 3º andar, próximo ao metrô"></div>
       </div>
       <div class="onb-nav">
         <button class="btn btn-secundario" onclick="onbProximo(1)">← Voltar</button>
@@ -404,24 +410,21 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
     <div id="onb-step-3" style="display:none">
       <div class="onb-card">
         <div class="onb-titulo">Horários de atendimento</div>
-        <div class="onb-sub">Configure quando você atende. O sistema vai usar essas informações para organizar os agendamentos.</div>
+        <div class="onb-sub">Selecione os dias e defina o horário de cada um. Dias com horários diferentes podem ser configurados separadamente.</div>
         <div class="onb-campo">
-          <label>Dias de atendimento</label>
+          <label>Selecione os dias de atendimento</label>
           <div class="onb-dias">
-            <button class="dia-btn selecionado" data-dia="seg" onclick="toggleDia(this)">Seg</button>
-            <button class="dia-btn selecionado" data-dia="ter" onclick="toggleDia(this)">Ter</button>
-            <button class="dia-btn selecionado" data-dia="qua" onclick="toggleDia(this)">Qua</button>
-            <button class="dia-btn selecionado" data-dia="qui" onclick="toggleDia(this)">Qui</button>
-            <button class="dia-btn selecionado" data-dia="sex" onclick="toggleDia(this)">Sex</button>
-            <button class="dia-btn" data-dia="sab" onclick="toggleDia(this)">Sáb</button>
-            <button class="dia-btn" data-dia="dom" onclick="toggleDia(this)">Dom</button>
+            <button class="dia-btn selecionado" data-dia="seg" data-label="Segunda" onclick="toggleDiaHorario(this)">Seg</button>
+            <button class="dia-btn selecionado" data-dia="ter" data-label="Terça" onclick="toggleDiaHorario(this)">Ter</button>
+            <button class="dia-btn selecionado" data-dia="qua" data-label="Quarta" onclick="toggleDiaHorario(this)">Qua</button>
+            <button class="dia-btn selecionado" data-dia="qui" data-label="Quinta" onclick="toggleDiaHorario(this)">Qui</button>
+            <button class="dia-btn selecionado" data-dia="sex" data-label="Sexta" onclick="toggleDiaHorario(this)">Sex</button>
+            <button class="dia-btn" data-dia="sab" data-label="Sábado" onclick="toggleDiaHorario(this)">Sáb</button>
+            <button class="dia-btn" data-dia="dom" data-label="Domingo" onclick="toggleDiaHorario(this)">Dom</button>
           </div>
         </div>
-        <div class="onb-grid">
-          <div class="onb-campo"><label>Horário de início</label><input type="time" id="onb-inicio" value="08:00"></div>
-          <div class="onb-campo"><label>Horário de término</label><input type="time" id="onb-fim" value="18:00"></div>
-        </div>
-        <div class="onb-campo">
+        <div id="onb-horarios-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:8px"></div>
+        <div class="onb-campo" style="margin-top:18px">
           <label>Duração padrão de cada consulta</label>
           <select id="onb-intervalo">
             <option value="30">30 minutos</option>
@@ -645,23 +648,37 @@ async function onbSalvarClinica() {
   const nome = document.getElementById('onb-nome-clinica').value.trim();
   const responsavel = document.getElementById('onb-responsavel').value.trim();
   const whatsapp = document.getElementById('onb-whatsapp').value.trim();
+  const endereco = document.getElementById('onb-endereco').value.trim();
+  const complemento = document.getElementById('onb-complemento').value.trim();
   if (!nome || !responsavel) { toast('Preencha o nome da clínica e o responsável'); return; }
-  const { error } = await db.from('clinicas').update({ nome, responsavel, whatsapp }).eq('id', clinicaId);
+  const { error } = await db.from('clinicas').update({ nome, responsavel, whatsapp, endereco, endereco_complemento: complemento }).eq('id', clinicaId);
   if (error) { toast('Erro ao salvar. Tente novamente.'); return; }
   document.getElementById('sb-nome').textContent = responsavel;
   document.getElementById('sb-sub').textContent = nome;
   onbProximo(3);
+  // Renderizar horários ao entrar no step 3
+  setTimeout(renderHorariosPorDia, 100);
 }
 
 async function onbSalvarHorarios() {
-  const inicio = document.getElementById('onb-inicio').value;
-  const fim = document.getElementById('onb-fim').value;
   const intervalo = parseInt(document.getElementById('onb-intervalo').value);
-  const dias = Array.from(document.querySelectorAll('.dia-btn.selecionado')).map(b => b.dataset.dia);
+  const dias = Array.from(document.querySelectorAll('#onb-step-3 .dia-btn.selecionado')).map(b => b.dataset.dia);
   if (!dias.length) { toast('Selecione pelo menos um dia de atendimento'); return; }
+  // Montar objeto de horários por dia
+  const horariosPorDia = {};
+  let primeiroInicio = '08:00', primeiroFim = '18:00';
+  dias.forEach((dia, i) => {
+    const ini = document.getElementById(`h-inicio-${dia}`)?.value || '08:00';
+    const fim = document.getElementById(`h-fim-${dia}`)?.value || '18:00';
+    horariosPorDia[dia] = { inicio: ini, fim: fim };
+    if (i === 0) { primeiroInicio = ini; primeiroFim = fim; }
+  });
   const { error } = await db.from('clinicas').update({
-    horario_inicio: inicio, horario_fim: fim,
-    intervalo_consulta: intervalo, dias_atendimento: dias
+    horario_inicio: primeiroInicio,
+    horario_fim: primeiroFim,
+    intervalo_consulta: intervalo,
+    dias_atendimento: dias,
+    horarios_por_dia: horariosPorDia
   }).eq('id', clinicaId);
   if (error) { toast('Erro ao salvar. Tente novamente.'); return; }
   onbProximo(4);
@@ -677,6 +694,37 @@ function toggleDia(btn) {
   btn.classList.toggle('selecionado');
 }
 
+function toggleDiaHorario(btn) {
+  btn.classList.toggle('selecionado');
+  renderHorariosPorDia();
+}
+
+const ORDEM_DIAS = ['seg','ter','qua','qui','sex','sab','dom'];
+
+function renderHorariosPorDia() {
+  const lista = document.getElementById('onb-horarios-lista');
+  if (!lista) return;
+  const botoes = document.querySelectorAll('#onb-step-3 .dia-btn.selecionado');
+  const diasSelecionados = Array.from(botoes)
+    .sort((a,b) => ORDEM_DIAS.indexOf(a.dataset.dia) - ORDEM_DIAS.indexOf(b.dataset.dia));
+
+  if (!diasSelecionados.length) { lista.innerHTML = ''; return; }
+
+  // Agrupar dias consecutivos com mesmo horário para sugerir agrupamento
+  lista.innerHTML = diasSelecionados.map(btn => {
+    const dia = btn.dataset.dia;
+    const label = btn.dataset.label || dia;
+    const inicioid = `h-inicio-${dia}`;
+    const fimid = `h-fim-${dia}`;
+    return `<div class="horario-dia-row">
+      <span class="horario-dia-label">${label}</span>
+      <input type="time" id="${inicioid}" value="08:00" title="Início">
+      <span class="horario-dia-sep">às</span>
+      <input type="time" id="${fimid}" value="18:00" title="Término">
+    </div>`;
+  }).join('');
+}
+
 function mostrarOnboarding(clinica) {
   // Pré-preencher campos com dados existentes
   if (clinica.nome) document.getElementById('onb-nome-clinica').value = clinica.nome;
@@ -689,6 +737,7 @@ function mostrarOnboarding(clinica) {
   const nome = clinica.responsavel ? clinica.responsavel.split(' ')[0] : '';
   if (nome) document.getElementById('onb-titulo-bv').textContent = `Bem-vindo, ${nome}!`;
   document.getElementById('onb-wrap').classList.add('visivel');
+  setTimeout(renderHorariosPorDia, 200);
 }
 
 // INIT — verificar sessão
