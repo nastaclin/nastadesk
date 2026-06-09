@@ -63,6 +63,68 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .horario-dia-row input[type="time"]:focus { border-color: var(--verde-medio); }
 .horario-dia-sep { font-size: 12px; color: var(--cinza-medio); }
 
+
+/* FICHA DO PACIENTE - PAINEL LATERAL */
+.ficha-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 400; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.ficha-overlay.aberto { opacity: 1; pointer-events: all; }
+.ficha-painel { position: fixed; top: 0; right: 0; width: 480px; max-width: 100vw; height: 100vh; background: white; z-index: 401; transform: translateX(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(0,0,0,0.12); }
+.ficha-painel.aberto { transform: translateX(0); }
+.ficha-topo { padding: 20px 24px; border-bottom: 1px solid var(--cinza-claro); display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.ficha-avatar-grande { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: white; flex-shrink: 0; }
+.ficha-topo-info { flex: 1; min-width: 0; }
+.ficha-nome { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--cinza-escuro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ficha-sub { font-size: 13px; color: var(--cinza-medio); margin-top: 2px; }
+.ficha-fechar { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--cinza-claro); background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--cinza-medio); font-size: 18px; flex-shrink: 0; transition: all .15s; }
+.ficha-fechar:hover { background: var(--creme); color: var(--cinza-escuro); }
+.ficha-acoes { padding: 12px 24px; border-bottom: 1px solid var(--cinza-claro); display: flex; gap: 8px; flex-shrink: 0; }
+.ficha-btn { display: flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 8px; font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; transition: all .15s; }
+.ficha-btn-wpp { background: #E8F5E9; color: #2E7D32; }
+.ficha-btn-wpp:hover { background: #C8E6C9; }
+.ficha-btn-agendar { background: var(--verde-claro); color: var(--verde); }
+.ficha-btn-agendar:hover { background: #b8e8d8; }
+.ficha-btn-inativo { background: #FAE0E0; color: var(--vermelho); }
+.ficha-btn-inativo:hover { background: #f5c6c6; }
+.ficha-btn svg { width: 14px; height: 14px; }
+.ficha-tabs { display: flex; border-bottom: 1px solid var(--cinza-claro); padding: 0 24px; flex-shrink: 0; }
+.ficha-tab { font-size: 13px; font-weight: 500; padding: 11px 14px; cursor: pointer; color: var(--cinza-medio); border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+.ficha-tab.ativa { color: var(--verde); border-bottom-color: var(--verde); }
+.ficha-corpo { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.ficha-secao { margin-bottom: 22px; }
+.ficha-secao-titulo { font-size: 11px; font-weight: 600; color: var(--cinza-medio); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.ficha-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ficha-campo { background: var(--creme); border-radius: 9px; padding: 10px 13px; }
+.ficha-campo.full { grid-column: 1/-1; }
+.ficha-campo-label { font-size: 11px; color: var(--cinza-medio); font-weight: 500; margin-bottom: 3px; }
+.ficha-campo-valor { font-size: 14px; color: var(--cinza-escuro); font-weight: 400; }
+.ficha-campo-input { width: 100%; background: none; border: none; outline: none; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); resize: none; }
+.ficha-campo-input::placeholder { color: var(--cinza-claro); }
+.ficha-campo.editavel { background: white; border: 1.5px solid var(--cinza-claro); transition: border-color .15s; }
+.ficha-campo.editavel:focus-within { border-color: var(--verde-medio); background: white; }
+.ficha-salvar { display: none; }
+.ficha-salvar.visivel { display: block; }
+
+/* CONSULTAS NA FICHA */
+.ficha-consulta { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--cinza-claro); }
+.ficha-consulta:last-child { border-bottom: none; }
+.ficha-consulta-data { font-size: 13px; font-weight: 600; color: var(--verde); min-width: 80px; }
+.ficha-consulta-info { flex: 1; }
+.ficha-consulta-queixa { font-size: 13px; color: var(--cinza-escuro); }
+.ficha-consulta-status { font-size: 11px; color: var(--cinza-medio); margin-top: 2px; }
+
+/* EVOLUÇÃO */
+.evolucao-item { background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 10px; padding: 13px 15px; margin-bottom: 10px; }
+.evolucao-data { font-size: 11px; color: var(--cinza-medio); margin-bottom: 5px; }
+.evolucao-texto { font-size: 13px; color: var(--cinza-escuro); line-height: 1.6; }
+.evolucao-nova { width: 100%; padding: 11px 13px; border: 1.5px solid var(--cinza-claro); border-radius: 9px; font-size: 14px; font-family: 'DM Sans', sans-serif; resize: none; height: 80px; outline: none; background: white; transition: border-color .15s; }
+.evolucao-nova:focus { border-color: var(--verde-medio); }
+.evolucao-nova-acoes { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+/* TAGS STATS */
+.ficha-stats { display: flex; gap: 10px; margin-bottom: 18px; }
+.ficha-stat { flex: 1; background: var(--creme); border-radius: 10px; padding: 12px 14px; text-align: center; }
+.ficha-stat-val { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--cinza-escuro); }
+.ficha-stat-label { font-size: 11px; color: var(--cinza-medio); margin-top: 2px; }
+
 /* AUTH */
 .auth-wrap { min-height: 100vh; display: flex; }
 .auth-lado { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; }
@@ -590,6 +652,137 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
   </main>
 </div>
 
+
+<!-- FICHA DO PACIENTE -->
+<div class="ficha-overlay" id="ficha-overlay" onclick="fecharFicha()"></div>
+<div class="ficha-painel" id="ficha-painel">
+  <div class="ficha-topo">
+    <div class="ficha-avatar-grande" id="ficha-avatar">—</div>
+    <div class="ficha-topo-info">
+      <div class="ficha-nome" id="ficha-nome">—</div>
+      <div class="ficha-sub" id="ficha-sub">—</div>
+    </div>
+    <button class="ficha-fechar" onclick="fecharFicha()">×</button>
+  </div>
+  <div class="ficha-acoes">
+    <button class="ficha-btn ficha-btn-wpp" id="ficha-btn-wpp" onclick="abrirWppFicha()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      WhatsApp
+    </button>
+    <button class="ficha-btn ficha-btn-agendar" onclick="agendarDaFicha()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Agendar
+    </button>
+    <button class="ficha-btn ficha-btn-inativo" id="ficha-btn-status" onclick="toggleStatusPaciente()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+      Inativar
+    </button>
+  </div>
+  <div class="ficha-tabs">
+    <div class="ficha-tab ativa" onclick="fichaTab('dados',this)">Dados</div>
+    <div class="ficha-tab" onclick="fichaTab('consultas',this)">Consultas</div>
+    <div class="ficha-tab" onclick="fichaTab('evolucao',this)">Evolução</div>
+    <div class="ficha-tab" onclick="fichaTab('anamnese',this)">Anamnese</div>
+  </div>
+  <div class="ficha-corpo">
+
+    <!-- TAB: DADOS -->
+    <div id="ficha-tab-dados">
+      <div class="ficha-stats">
+        <div class="ficha-stat"><div class="ficha-stat-val" id="fstat-consultas">—</div><div class="ficha-stat-label">Consultas</div></div>
+        <div class="ficha-stat"><div class="ficha-stat-val" id="fstat-faltas">—</div><div class="ficha-stat-label">Faltas</div></div>
+        <div class="ficha-stat"><div class="ficha-stat-val" id="fstat-taxa">—</div><div class="ficha-stat-label">Presença</div></div>
+      </div>
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Informações pessoais</div>
+        <div class="ficha-grid">
+          <div class="ficha-campo editavel full">
+            <div class="ficha-campo-label">Nome completo</div>
+            <input class="ficha-campo-input" id="fi-nome" placeholder="Nome do paciente" oninput="fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">WhatsApp</div>
+            <input class="ficha-campo-input" id="fi-wpp" placeholder="11999990001" oninput="fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">Data de nascimento</div>
+            <input class="ficha-campo-input" id="fi-nasc" type="date" oninput="fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">Gênero</div>
+            <select class="ficha-campo-input" id="fi-genero" onchange="fichaEditado()" style="cursor:pointer">
+              <option value="">Selecione</option>
+              <option value="masculino">Masculino</option>
+              <option value="feminino">Feminino</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+          <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">Profissão</div>
+            <input class="ficha-campo-input" id="fi-profissao" placeholder="Ex: Professor" oninput="fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel full">
+            <div class="ficha-campo-label">Endereço</div>
+            <input class="ficha-campo-input" id="fi-endereco" placeholder="Rua, número, bairro" oninput="fichaEditado()">
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primario ficha-salvar" id="ficha-salvar-btn" onclick="salvarFicha()" style="width:100%;padding:12px">Salvar alterações</button>
+    </div>
+
+    <!-- TAB: CONSULTAS -->
+    <div id="ficha-tab-consultas" style="display:none">
+      <div id="ficha-lista-consultas"><div class="loading"><div class="loading-spinner"></div></div></div>
+    </div>
+
+    <!-- TAB: EVOLUÇÃO -->
+    <div id="ficha-tab-evolucao" style="display:none">
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Nova anotação</div>
+        <textarea class="evolucao-nova" id="evolucao-nova-texto" placeholder="Descreva a evolução do paciente nesta sessão..."></textarea>
+        <div class="evolucao-nova-acoes">
+          <button class="btn btn-primario" onclick="salvarEvolucao()" style="font-size:13px;padding:8px 16px">Salvar anotação</button>
+        </div>
+      </div>
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Histórico de evoluções</div>
+        <div id="ficha-lista-evolucoes"><div class="loading"><div class="loading-spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- TAB: ANAMNESE -->
+    <div id="ficha-tab-anamnese" style="display:none">
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Anamnese clínica</div>
+        <div class="ficha-grid">
+          <div class="ficha-campo editavel full">
+            <div class="ficha-campo-label">Queixa principal</div>
+            <input class="ficha-campo-input" id="fi-queixa" placeholder="Descreva a queixa principal" oninput="fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel full" style="height:80px">
+            <div class="ficha-campo-label">Histórico médico</div>
+            <textarea class="ficha-campo-input" id="fi-historico" placeholder="Cirurgias, doenças, condições anteriores..." style="height:52px;resize:none" oninput="fichaEditado()"></textarea>
+          </div>
+          <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">Medicamentos em uso</div>
+            <input class="ficha-campo-input" id="fi-medicamentos" placeholder="Ex: Losartana 50mg" oninput="fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">Alergias</div>
+            <input class="ficha-campo-input" id="fi-alergias" placeholder="Ex: Dipirona" oninput="fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel full" style="height:80px">
+            <div class="ficha-campo-label">Observações gerais</div>
+            <textarea class="ficha-campo-input" id="fi-obs" placeholder="Outras informações relevantes..." style="height:52px;resize:none" oninput="fichaEditado()"></textarea>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primario ficha-salvar visivel" onclick="salvarFicha()" style="width:100%;padding:12px">Salvar anamnese</button>
+    </div>
+
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="overlay" id="modal" onclick="fecharModalClick(event)">
   <div class="modal">
@@ -966,13 +1159,210 @@ function renderPacientes(lista) {
   el.innerHTML = lista.map((p,i)=>{
     const iniciais = p.nome.split(' ').map(n=>n[0]).slice(0,2).join('');
     const ultima = p.ultima_consulta ? new Date(p.ultima_consulta).toLocaleDateString('pt-BR') : '—';
-    return `<div class="paciente-row" onclick="toast('Ficha completa — em breve')">
+    return `<div class="paciente-row" onclick="abrirFicha('${p.id}')">
       <div class="avatar ${CORES[i%CORES.length]}">${iniciais}</div>
       <div class="paciente-dados"><div class="paciente-nome">${p.nome}</div><div class="paciente-info">${p.queixa_principal||'—'} · ${p.total_consultas} consulta${p.total_consultas!==1?'s':''}</div></div>
       <div style="text-align:right;font-size:12px;color:var(--cinza-medio)">${ultima}<br><span style="color:${p.status==='ativo'?'var(--verde)':'var(--vermelho)'};font-size:11px">${p.status==='ativo'?'Ativo':'Inativo'}</span></div>
     </div>`;
   }).join('');
 }
+
+
+// =================== FICHA DO PACIENTE ===================
+let pacienteAtual = null;
+let fichaModificada = false;
+
+async function abrirFicha(pacienteId) {
+  // Buscar dados completos do paciente
+  const { data: p } = await db.from('pacientes').select('*').eq('id', pacienteId).single();
+  if (!p) return;
+  pacienteAtual = p;
+  fichaModificada = false;
+
+  // Topo
+  const iniciais = p.nome.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+  const corIdx = todosOsPacientes.findIndex(x=>x.id===pacienteId) % CORES.length;
+  const avEl = document.getElementById('ficha-avatar');
+  avEl.textContent = iniciais;
+  avEl.className = `ficha-avatar-grande ${CORES[corIdx]}`;
+  document.getElementById('ficha-nome').textContent = p.nome;
+  document.getElementById('ficha-sub').textContent = p.queixa_principal || 'Sem queixa registrada';
+
+  // Botão status
+  const btnStatus = document.getElementById('ficha-btn-status');
+  if (p.status === 'inativo') {
+    btnStatus.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path d="M5 13l4 4L19 7"/></svg> Reativar`;
+    btnStatus.style.background = '#E8F5E9'; btnStatus.style.color = '#2E7D32';
+  } else {
+    btnStatus.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg> Inativar`;
+    btnStatus.style.background = '#FAE0E0'; btnStatus.style.color = 'var(--vermelho)';
+  }
+
+  // Preencher campos
+  document.getElementById('fi-nome').value = p.nome || '';
+  document.getElementById('fi-wpp').value = p.whatsapp || '';
+  document.getElementById('fi-nasc').value = p.data_nascimento || '';
+  document.getElementById('fi-genero').value = p.genero || '';
+  document.getElementById('fi-profissao').value = p.profissao || '';
+  document.getElementById('fi-endereco').value = p.endereco || '';
+  document.getElementById('fi-queixa').value = p.queixa_principal || '';
+  document.getElementById('fi-historico').value = p.historico_medico || '';
+  document.getElementById('fi-medicamentos').value = p.medicamentos || '';
+  document.getElementById('fi-alergias').value = p.alergias || '';
+  document.getElementById('fi-obs').value = p.observacoes || '';
+
+  // Ir para tab dados
+  fichaTab('dados', document.querySelector('.ficha-tab'));
+
+  // Abrir painel
+  document.getElementById('ficha-overlay').classList.add('aberto');
+  document.getElementById('ficha-painel').classList.add('aberto');
+
+  // Carregar consultas e stats em paralelo
+  carregarConsultasFicha(pacienteId);
+  carregarEvolucoes(pacienteId);
+}
+
+function fecharFicha() {
+  document.getElementById('ficha-overlay').classList.remove('aberto');
+  document.getElementById('ficha-painel').classList.remove('aberto');
+  pacienteAtual = null;
+}
+
+function fichaTab(tab, el) {
+  ['dados','consultas','evolucao','anamnese'].forEach(t => {
+    document.getElementById(`ficha-tab-${t}`).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.ficha-tab').forEach(t => t.classList.remove('ativa'));
+  if (el) el.classList.add('ativa');
+}
+
+function fichaEditado() {
+  fichaModificada = true;
+  document.getElementById('ficha-salvar-btn').classList.add('visivel');
+}
+
+async function salvarFicha() {
+  if (!pacienteAtual) return;
+  const payload = {
+    nome: document.getElementById('fi-nome').value.trim(),
+    whatsapp: document.getElementById('fi-wpp').value.trim(),
+    data_nascimento: document.getElementById('fi-nasc').value || null,
+    genero: document.getElementById('fi-genero').value,
+    profissao: document.getElementById('fi-profissao').value.trim(),
+    endereco: document.getElementById('fi-endereco').value.trim(),
+    queixa_principal: document.getElementById('fi-queixa').value.trim(),
+    historico_medico: document.getElementById('fi-historico').value.trim(),
+    medicamentos: document.getElementById('fi-medicamentos').value.trim(),
+    alergias: document.getElementById('fi-alergias').value.trim(),
+    observacoes: document.getElementById('fi-obs').value.trim(),
+  };
+  const { error } = await db.from('pacientes').update(payload).eq('id', pacienteAtual.id);
+  if (!error) {
+    toast('Ficha salva ✓');
+    fichaModificada = false;
+    document.getElementById('ficha-salvar-btn').classList.remove('visivel');
+    document.getElementById('ficha-nome').textContent = payload.nome;
+    document.getElementById('ficha-sub').textContent = payload.queixa_principal || 'Sem queixa registrada';
+    // Atualizar lista de pacientes
+    await carregarPacientes();
+  } else {
+    toast('Erro ao salvar. Tente novamente.');
+  }
+}
+
+async function carregarConsultasFicha(pacienteId) {
+  const { data } = await db.from('consultas').select('*').eq('paciente_id', pacienteId).order('data_hora', { ascending: false });
+  const lista = data || [];
+  const el = document.getElementById('ficha-lista-consultas');
+
+  // Stats
+  const total = lista.length;
+  const faltas = lista.filter(c => c.status === 'cancelado').length;
+  const atendidas = lista.filter(c => c.status === 'atendido').length;
+  const taxa = total > 0 ? Math.round((atendidas/total)*100) : 0;
+  document.getElementById('fstat-consultas').textContent = total;
+  document.getElementById('fstat-faltas').textContent = faltas;
+  document.getElementById('fstat-taxa').textContent = `${taxa}%`;
+
+  if (!lista.length) { el.innerHTML = '<div class="empty">Nenhuma consulta registrada</div>'; return; }
+
+  const stLabel = { confirmado:'Confirmado', aguardando:'Aguardando', cancelado:'Cancelado', atendido:'Atendido', agendado:'Agendado' };
+  const stColor = { confirmado:'var(--verde)', aguardando:'var(--amarelo)', cancelado:'var(--vermelho)', atendido:'var(--cinza-medio)', agendado:'var(--azul)' };
+
+  el.innerHTML = lista.map(c => {
+    const data = new Date(c.data_hora).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+    const hora = new Date(c.data_hora).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    return `<div class="ficha-consulta">
+      <div class="ficha-consulta-data">${data}</div>
+      <div class="ficha-consulta-info">
+        <div class="ficha-consulta-queixa">${c.queixa || 'Sem descrição'}</div>
+        <div class="ficha-consulta-status">${hora} · <span style="color:${stColor[c.status]||'var(--cinza-medio)'}">${stLabel[c.status]||c.status}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function carregarEvolucoes(pacienteId) {
+  const { data } = await db.from('evolucoes').select('*').eq('paciente_id', pacienteId).order('criado_em', { ascending: false });
+  const el = document.getElementById('ficha-lista-evolucoes');
+  if (!data?.length) { el.innerHTML = '<div class="empty">Nenhuma evolução registrada</div>'; return; }
+  el.innerHTML = data.map(e => `
+    <div class="evolucao-item">
+      <div class="evolucao-data">${new Date(e.criado_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+      <div class="evolucao-texto">${e.texto}</div>
+    </div>`).join('');
+}
+
+async function salvarEvolucao() {
+  if (!pacienteAtual || !clinicaId) return;
+  const texto = document.getElementById('evolucao-nova-texto').value.trim();
+  if (!texto) { toast('Escreva algo antes de salvar'); return; }
+  const { error } = await db.from('evolucoes').insert({
+    clinica_id: clinicaId, paciente_id: pacienteAtual.id, texto
+  });
+  if (!error) {
+    document.getElementById('evolucao-nova-texto').value = '';
+    toast('Evolução salva ✓');
+    await carregarEvolucoes(pacienteAtual.id);
+  } else {
+    toast('Erro ao salvar evolução');
+  }
+}
+
+function abrirWppFicha() {
+  if (!pacienteAtual?.whatsapp) { toast('Paciente sem WhatsApp cadastrado'); return; }
+  const num = `55${pacienteAtual.whatsapp.replace(/\D/g,'')}`;
+  window.open(`https://wa.me/${num}`, '_blank');
+}
+
+function agendarDaFicha() {
+  fecharFicha();
+  document.getElementById('novo-nome').value = pacienteAtual?.nome || '';
+  document.getElementById('novo-wpp').value = pacienteAtual?.whatsapp || '';
+  document.getElementById('novo-queixa').value = pacienteAtual?.queixa_principal || '';
+  abrirModal();
+}
+
+async function toggleStatusPaciente() {
+  if (!pacienteAtual) return;
+  const novoStatus = pacienteAtual.status === 'inativo' ? 'ativo' : 'inativo';
+  const { error } = await db.from('pacientes').update({ status: novoStatus }).eq('id', pacienteAtual.id);
+  if (!error) {
+    pacienteAtual.status = novoStatus;
+    toast(novoStatus === 'ativo' ? 'Paciente reativado ✓' : 'Paciente marcado como inativo');
+    const btnStatus = document.getElementById('ficha-btn-status');
+    if (novoStatus === 'inativo') {
+      btnStatus.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path d="M5 13l4 4L19 7"/></svg> Reativar`;
+      btnStatus.style.background = '#E8F5E9'; btnStatus.style.color = '#2E7D32';
+    } else {
+      btnStatus.innerHTML = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg> Inativar`;
+      btnStatus.style.background = '#FAE0E0'; btnStatus.style.color = 'var(--vermelho)';
+    }
+    await carregarPacientes();
+  }
+}
+// =================== FIM FICHA ===================
 
 function filtrarPacientes(status, el) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('ativa'));
