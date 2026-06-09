@@ -18,7 +18,7 @@
 body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cinza-escuro); min-height: 100vh; }
 
 /* ONBOARDING */
-.onb-wrap { position: fixed; inset: 0; background: var(--creme); z-index: 500; display: none; overflow-y: auto; }
+.onb-wrap { position: fixed; inset: 0; background: var(--creme); z-index: 999; display: none; overflow-y: auto; }
 .onb-wrap.visivel { display: block; }
 .onb-inner { max-width: 640px; margin: 0 auto; padding: 48px 24px 80px; }
 .onb-header { text-align: center; margin-bottom: 48px; }
@@ -730,13 +730,16 @@ function mostrarOnboarding(clinica) {
   if (clinica.nome) document.getElementById('onb-nome-clinica').value = clinica.nome;
   if (clinica.responsavel) document.getElementById('onb-responsavel').value = clinica.responsavel;
   if (clinica.whatsapp) document.getElementById('onb-whatsapp').value = clinica.whatsapp;
-  if (clinica.horario_inicio) document.getElementById('onb-inicio').value = clinica.horario_inicio.substring(0,5);
-  if (clinica.horario_fim) document.getElementById('onb-fim').value = clinica.horario_fim.substring(0,5);
+  if (clinica.horario_inicio) document.getElementById('onb-inicio') && (document.getElementById('onb-inicio').value = clinica.horario_inicio.substring(0,5));
+  if (clinica.horario_fim) document.getElementById('onb-fim') && (document.getElementById('onb-fim').value = clinica.horario_fim.substring(0,5));
   if (clinica.intervalo_consulta) document.getElementById('onb-intervalo').value = clinica.intervalo_consulta;
   // Atualizar título
   const nome = clinica.responsavel ? clinica.responsavel.split(' ')[0] : '';
   if (nome) document.getElementById('onb-titulo-bv').textContent = `Bem-vindo, ${nome}!`;
-  document.getElementById('onb-wrap').classList.add('visivel');
+  // Garantir que o onboarding aparece na frente de tudo
+  const onbWrap = document.getElementById('onb-wrap');
+  onbWrap.style.display = 'block';
+  onbWrap.classList.add('visivel');
   setTimeout(renderHorariosPorDia, 200);
 }
 
