@@ -1215,7 +1215,7 @@ function renderConsultas(lista) {
   const stClass = { confirmado:'status-confirmado', aguardando:'status-aguardando', cancelado:'status-cancelado', atendido:'status-atendido', agendado:'status-agendado' };
   const stLabel = { confirmado:'Confirmado', aguardando:'Aguardando', cancelado:'Cancelado', atendido:'Atendido', agendado:'Agendado' };
   el.innerHTML = lista.map((c,i) => {
-    const hora = new Date(c.data_hora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const hora = new Date(c.data_hora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
     const nome = c.pacientes?.nome || '—';
     const iniciais = nome.split(' ').map(n=>n[0]).slice(0,2).join('');
     const cor = c.status==='cancelado' ? 'style="background:var(--cinza-claro);color:var(--cinza-medio)"' : `class="avatar ${CORES[i%CORES.length]}"`;
@@ -1410,7 +1410,7 @@ async function carregarConsultasFicha(pacienteId) {
 
   el.innerHTML = lista.map(c => {
     const data = new Date(c.data_hora).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
-    const hora = new Date(c.data_hora).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    const hora = new Date(c.data_hora).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' });
     return `<div class="ficha-consulta">
       <div class="ficha-consulta-data">${data}</div>
       <div class="ficha-consulta-info">
@@ -1600,10 +1600,8 @@ async function salvarConsulta() {
   if (!pacienteId) { toast('Erro ao salvar paciente'); return; }
   const dataHora = new Date(`${data}T${hora}:00`);
   // Ajuste manual para evitar bug de timezone (ISO retorna UTC)
-  // Compensar UTC-3 (Brasil) — somamos 3h para que o Supabase salve no horário correto
-  const dataHoraLocal = new Date(`${data}T${hora}:00`);
-  dataHoraLocal.setHours(dataHoraLocal.getHours() + 3);
-  const dataHoraISO = dataHoraLocal.toISOString();
+  // Salvar com offset de São Paulo (-03:00) para evitar conversão UTC errada
+  const dataHoraISO = `${data}T${hora}:00-03:00`;
   const { error } = await db.from('consultas').insert({clinica_id:clinicaId, paciente_id:pacienteId, data_hora:dataHoraISO, queixa, status:'agendado', origem:'manual'});
   if (!error) {
     fecharModal(); toast('Consulta agendada ✓');
@@ -1741,9 +1739,8 @@ async function renderGradeSemanal() {
       // Buscar consultas nesse slot (horário local para evitar bug de timezone)
       const dataLocal = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
       const consultasSlot = consultasSemana.filter(c => {
-        const cd = new Date(c.data_hora);
-        const cdLocal = `${cd.getFullYear()}-${String(cd.getMonth()+1).padStart(2,'0')}-${String(cd.getDate()).padStart(2,'0')}`;
-        const cdHora = `${String(cd.getHours()).padStart(2,'0')}:${String(cd.getMinutes()).padStart(2,'0')}`;
+        const cdHora = new Date(c.data_hora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).replace('h',':').substring(0,5);
+        const cdLocal = new Date(c.data_hora).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}).split('/').reverse().join('-');
         return cdLocal === dataLocal && cdHora === slot;
       });
 
