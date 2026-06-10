@@ -279,6 +279,18 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .paciente-nome { font-size: 14px; font-weight: 500; }
 .paciente-info { font-size: 12px; color: var(--cinza-medio); margin-top: 2px; }
 
+/* GRÁFICO BARRAS */
+.grafico-barra-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; }
+.grafico-barra { width: 100%; border-radius: 5px 5px 0 0; background: var(--verde-medio); transition: height .6s ease; min-height: 4px; }
+.grafico-barra.destaque { background: var(--verde); }
+.grafico-label { font-size: 10px; color: var(--cinza-medio); font-weight: 500; }
+.grafico-valor { font-size: 11px; font-weight: 600; color: var(--cinza-escuro); }
+.queixa-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--cinza-claro); }
+.queixa-row:last-child { border-bottom: none; }
+.queixa-nome { flex: 1; font-size: 13px; color: var(--cinza-escuro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queixa-count { font-size: 12px; font-weight: 600; color: var(--verde); min-width: 24px; text-align: right; }
+@media (max-width: 700px) { #rel-grid { grid-template-columns: 1fr !important; } }
+
 /* RELATÓRIO */
 .resumo-box { background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 10px; padding: 20px 22px; margin: 20px; }
 .resumo-texto { font-size: 14px; color: var(--cinza-escuro); line-height: 1.8; }
@@ -692,10 +704,25 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
     <section id="sec-relatorio" class="sec">
       <div class="topbar"><div class="topbar-titulo"><h1>Relatório Mensal</h1><p id="rel-periodo">—</p></div></div>
       <div class="metricas">
-        <div class="metrica-card verde"><div class="metrica-label">Consultas realizadas</div><div class="metrica-valor" id="rel-realizadas">—</div><span class="metrica-badge badge-verde">este mês</span></div>
-        <div class="metrica-card azul"><div class="metrica-label">Novos pacientes</div><div class="metrica-valor" id="rel-novos">—</div><span class="metrica-badge badge-verde">Via WhatsApp</span></div>
-        <div class="metrica-card laranja"><div class="metrica-label">Comparecimento</div><div class="metrica-valor" id="rel-taxa">—</div><span class="metrica-badge badge-verde">do total</span></div>
+        <div class="metrica-card verde"><div class="metrica-label">Consultas realizadas</div><div class="metrica-valor" id="rel-realizadas">—</div><span class="metrica-badge badge-verde" id="rel-realizadas-badge">este mês</span></div>
+        <div class="metrica-card azul"><div class="metrica-label">Novos pacientes</div><div class="metrica-valor" id="rel-novos">—</div><span class="metrica-badge badge-verde">este mês</span></div>
+        <div class="metrica-card laranja"><div class="metrica-label">Comparecimento</div><div class="metrica-valor" id="rel-taxa">—</div><span class="metrica-badge" id="rel-taxa-badge">do total</span></div>
         <div class="metrica-card vermelho"><div class="metrica-label">Cancelamentos</div><div class="metrica-valor" id="rel-cancelamentos">—</div><span class="metrica-badge badge-amarelo">este mês</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="rel-grid">
+        <!-- GRÁFICO SEMANAL -->
+        <div class="card" style="padding:22px">
+          <div class="card-titulo" style="margin-bottom:16px">Consultas por semana</div>
+          <div id="rel-grafico" style="display:flex;align-items:flex-end;gap:8px;height:100px">
+            <div class="loading"><div class="loading-spinner"></div></div>
+          </div>
+          <div id="rel-grafico-labels" style="display:flex;gap:8px;margin-top:8px"></div>
+        </div>
+        <!-- TOP QUEIXAS -->
+        <div class="card" style="padding:22px">
+          <div class="card-titulo" style="margin-bottom:16px">Queixas mais frequentes</div>
+          <div id="rel-queixas"><div class="loading"><div class="loading-spinner"></div></div></div>
+        </div>
       </div>
       <div class="card"><div class="resumo-box"><div class="card-titulo" style="margin-bottom:10px">Resumo do mês</div><div class="resumo-texto" id="rel-resumo">Carregando...</div></div></div>
     </section>
@@ -1469,16 +1496,65 @@ async function carregarRelatorio() {
   const fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0, 23, 59, 59);
   const { data } = await db.from('consultas').select('*').eq('clinica_id',clinicaId).gte('data_hora',inicio.toISOString()).lte('data_hora',fim.toISOString());
   if (!data) return;
+
   const realizadas = data.filter(c=>c.status==='atendido').length;
   const cancelamentos = data.filter(c=>c.status==='cancelado').length;
   const taxa = data.length > 0 ? Math.round((realizadas/data.length)*100) : 0;
-  const novosWpp = data.filter(c=>c.origem==='whatsapp').length;
+
+  // Novos pacientes do mês
+  const { count: novos } = await db.from('pacientes').select('*', {count:'exact',head:true}).eq('clinica_id',clinicaId).gte('criado_em',inicio.toISOString()).lte('criado_em',fim.toISOString());
+
   document.getElementById('rel-realizadas').textContent = realizadas;
-  document.getElementById('rel-novos').textContent = novosWpp;
+  document.getElementById('rel-novos').textContent = novos || 0;
   document.getElementById('rel-taxa').textContent = `${taxa}%`;
   document.getElementById('rel-cancelamentos').textContent = cancelamentos;
+
+  // Badge taxa
+  const taxaBadge = document.getElementById('rel-taxa-badge');
+  taxaBadge.textContent = taxa >= 80 ? '↑ Ótimo' : taxa >= 60 ? 'Regular' : '↓ Baixo';
+  taxaBadge.className = `metrica-badge ${taxa >= 80 ? 'badge-verde' : taxa >= 60 ? 'badge-amarelo' : 'badge-vermelho'}`;
+
+  // Gráfico por semana
+  const semanas = [0,0,0,0,0];
+  const labels = [];
+  data.forEach(c => {
+    const d = new Date(c.data_hora).getDate();
+    const sem = Math.min(Math.floor((d-1)/7), 4);
+    semanas[sem]++;
+  });
+  // Gerar labels de semana
+  const diasMes = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).getDate();
+  for (let i = 0; i < 5; i++) {
+    const ini = i*7+1, fim2 = Math.min((i+1)*7, diasMes);
+    if (ini > diasMes) break;
+    labels.push(`${ini}–${fim2}`);
+  }
+  const semanasValidas = semanas.slice(0, labels.length);
+  const maxVal = Math.max(...semanasValidas, 1);
+  const semAtual = Math.floor((hoje.getDate()-1)/7);
+
+  document.getElementById('rel-grafico').innerHTML = semanasValidas.map((v,i) => `
+    <div class="grafico-barra-wrap">
+      <div class="grafico-valor">${v||''}</div>
+      <div class="grafico-barra ${i===semAtual?'destaque':''}" style="height:${Math.max((v/maxVal)*80,4)}px"></div>
+    </div>`).join('');
+  document.getElementById('rel-grafico-labels').innerHTML = labels.map((l,i) =>
+    `<div class="grafico-label" style="flex:1;text-align:center">${l}</div>`).join('');
+
+  // Top queixas
+  const queixaMap = {};
+  data.forEach(c => {
+    if (!c.queixa) return;
+    const q = c.queixa.trim().toLowerCase();
+    queixaMap[q] = (queixaMap[q]||0) + 1;
+  });
+  const topQueixas = Object.entries(queixaMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const elQ = document.getElementById('rel-queixas');
+  if (!topQueixas.length) { elQ.innerHTML = '<div class="empty">Nenhum dado ainda</div>'; }
+  else { elQ.innerHTML = topQueixas.map(([q,n]) => `<div class="queixa-row"><span class="queixa-nome">${q.charAt(0).toUpperCase()+q.slice(1)}</span><span class="queixa-count">${n}×</span></div>`).join(''); }
+
   const mes = MESES[hoje.getMonth()];
-  document.getElementById('rel-resumo').innerHTML = `Em ${mes}, sua clínica realizou <strong>${realizadas} consultas</strong>, com taxa de comparecimento de <strong>${taxa}%</strong>. Foram recebidos <strong>${novosWpp} agendamentos pelo WhatsApp</strong> sem ação manual. Houve <strong>${cancelamentos} cancelamento${cancelamentos!==1?'s':''}</strong> no período. ${taxa>=80?'Excelente resultado — o sistema de lembretes está funcionando bem.':'Continue acompanhando para identificar padrões de falta.'}`;
+  document.getElementById('rel-resumo').innerHTML = `Em ${mes}, sua clínica realizou <strong>${realizadas} consultas</strong>, com taxa de comparecimento de <strong>${taxa}%</strong>. Foram cadastrados <strong>${novos||0} novos pacientes</strong> este mês. Houve <strong>${cancelamentos} cancelamento${cancelamentos!==1?'s':''}</strong> no período. ${taxa>=80?'Excelente resultado — o sistema de lembretes está funcionando bem.':'Continue acompanhando para identificar padrões de falta.'}`;
 }
 
 // CONFIGURAÇÕES
