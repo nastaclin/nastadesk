@@ -291,6 +291,32 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .queixa-count { font-size: 12px; font-weight: 600; color: var(--verde); min-width: 24px; text-align: right; }
 @media (max-width: 700px) { #rel-grid { grid-template-columns: 1fr !important; } }
 
+/* SINO E NOTIFICAÇÕES */
+.sino-wrap { display: flex; align-items: center; gap: 10px; padding: 12px 24px; cursor: pointer; color: rgba(255,255,255,0.65); transition: all .18s; position: relative; border-top: 1px solid rgba(255,255,255,0.12); }
+.sino-wrap:hover { color: white; background: rgba(255,255,255,0.07); }
+.sino-txt { font-size: 14px; }
+.sino-badge { background: #E84040; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; margin-left: auto; animation: pulse-badge .8s ease infinite; }
+.sino-badge-mobile { position: absolute; top: 2px; right: 18px; background: #E84040; color: white; font-size: 9px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+@keyframes pulse-badge { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+.notif-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; display: none; }
+.notif-overlay.aberto { display: block; }
+.notif-painel { position: fixed; top: 0; right: -360px; width: 340px; height: 100vh; background: white; z-index: 201; display: flex; flex-direction: column; box-shadow: -8px 0 32px rgba(0,0,0,0.12); transition: right .28s cubic-bezier(.4,0,.2,1); }
+.notif-painel.aberto { right: 0; }
+.notif-topo { display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 16px; border-bottom: 1px solid var(--cinza-claro); }
+.notif-titulo { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--cinza-escuro); }
+.notif-fechar { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--cinza-medio); line-height: 1; }
+.notif-lista { flex: 1; overflow-y: auto; }
+.notif-item { display: flex; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--cinza-claro); transition: background .15s; }
+.notif-item.nao-lida { background: var(--verde-suave); }
+.notif-item:hover { background: var(--verde-suave); }
+.notif-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.notif-corpo { flex: 1; }
+.notif-msg { font-size: 13px; color: var(--cinza-escuro); line-height: 1.5; }
+.notif-tempo { font-size: 11px; color: var(--cinza-medio); margin-top: 3px; }
+.notif-vazio { padding: 40px 20px; text-align: center; color: var(--cinza-medio); font-size: 14px; }
+.notif-rodape { padding: 14px 20px; border-top: 1px solid var(--cinza-claro); }
+@media (max-width: 900px) { .notif-painel { width: 100vw; } }
+
 /* MENU STATUS */
 .menu-status { position: absolute; background: white; border: 1px solid var(--cinza-claro); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 500; min-width: 170px; overflow: hidden; }
 .menu-status-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 13px; cursor: pointer; transition: background .12s; color: var(--cinza-escuro); font-family: 'DM Sans', sans-serif; }
@@ -633,6 +659,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
       <div class="clinica-sub" id="sb-sub">—</div>
       <div class="plano-badge" id="sb-plano">—</div>
     </div>
+    <div class="sino-wrap" onclick="toggleNotifPainel()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <span class="sino-txt">Notificações</span>
+      <div class="sino-badge" id="sino-badge" style="display:none">0</div>
+    </div>
     <div class="sidebar-footer" onclick="fazerLogout()">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="15" height="15" style="color:rgba(255,255,255,0.4)"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
       <span class="logout-txt">Sair da conta</span>
@@ -953,6 +984,19 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
   </div>
 </div>
 
+<!-- PAINEL NOTIFICAÇÕES -->
+<div class="notif-overlay" id="notif-overlay" onclick="fecharNotifPainel()"></div>
+<div class="notif-painel" id="notif-painel">
+  <div class="notif-topo">
+    <div class="notif-titulo">Notificações</div>
+    <button class="notif-fechar" onclick="fecharNotifPainel()">×</button>
+  </div>
+  <div id="notif-lista"><div class="loading"><div class="loading-spinner"></div></div></div>
+  <div class="notif-rodape">
+    <button class="btn btn-secundario" style="width:100%;font-size:13px" onclick="marcarTodasLidas()">Marcar todas como lidas</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
 
 <!-- NAVBAR MOBILE -->
@@ -977,6 +1021,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
     <div class="mobile-nav-item" id="mnav-configuracoes" onclick="irPara('configuracoes')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       <span>Config</span>
+    </div>
+    <div class="mobile-nav-item" style="position:relative" onclick="toggleNotifPainel()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <div class="sino-badge-mobile" id="sino-badge-mobile" style="display:none">0</div>
+      <span>Alertas</span>
     </div>
   </div>
 </div>
@@ -1251,12 +1300,16 @@ async function carregarDados(user) {
   renderCalendario();
   carregarRelatorio();
   carregarConfigs();
+  verificarNotificacoes();
 
   // Realtime
   db.channel('nastadesk-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas' }, () => { carregarConsultas(); carregarRelatorio(); })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'alertas' }, () => carregarAlertas())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'alertas' }, () => { carregarAlertas(); verificarNotificacoes(); if(notifAberto) carregarNotificacoes(); })
     .subscribe();
+
+  // Polling a cada 60s para badge de notificações
+  notifInterval = setInterval(verificarNotificacoes, 60000);
 }
 
 // CONSULTAS
@@ -1305,6 +1358,86 @@ function atualizarMetricas(lista) {
   document.getElementById('m-canceladas').textContent = lista.filter(c=>c.status==='cancelado').length;
   document.getElementById('m-total').textContent = lista.length;
   document.getElementById('m-confirmadas-sub').textContent = `de ${lista.length} hoje`;
+}
+
+// NOTIFICAÇÕES
+let notifAberto = false;
+let notifInterval = null;
+
+function toggleNotifPainel() {
+  notifAberto ? fecharNotifPainel() : abrirNotifPainel();
+}
+
+async function abrirNotifPainel() {
+  notifAberto = true;
+  document.getElementById('notif-overlay').classList.add('aberto');
+  document.getElementById('notif-painel').classList.add('aberto');
+  await carregarNotificacoes();
+}
+
+function fecharNotifPainel() {
+  notifAberto = false;
+  document.getElementById('notif-overlay').classList.remove('aberto');
+  document.getElementById('notif-painel').classList.remove('aberto');
+}
+
+async function carregarNotificacoes() {
+  if (!clinicaId) return;
+  const { data } = await db.from('alertas').select('*').eq('clinica_id', clinicaId).order('criado_em', {ascending: false}).limit(30);
+  const lista = data || [];
+  const el = document.getElementById('notif-lista');
+  if (!lista.length) {
+    el.innerHTML = '<div class="notif-vazio">Nenhuma notificação ainda</div>';
+    return;
+  }
+  const cores = { cancelamento: 'var(--vermelho)', novo_agendamento: 'var(--verde-medio)', sem_resposta: 'var(--amarelo)', info: 'var(--azul)' };
+  el.innerHTML = lista.map(a => `
+    <div class="notif-item ${a.lido ? '' : 'nao-lida'}">
+      <div class="notif-dot" style="background:${cores[a.tipo]||'var(--cinza-medio)'}"></div>
+      <div class="notif-corpo">
+        <div class="notif-msg">${a.mensagem}</div>
+        <div class="notif-tempo">${tempoRelativo(a.criado_em)}</div>
+      </div>
+    </div>`).join('');
+  atualizarBadge(lista.filter(a => !a.lido).length);
+}
+
+async function marcarTodasLidas() {
+  if (!clinicaId) return;
+  await db.from('alertas').update({lido: true}).eq('clinica_id', clinicaId).eq('lido', false);
+  atualizarBadge(0);
+  carregarNotificacoes();
+  toast('Todas as notificações marcadas como lidas ✓');
+}
+
+function atualizarBadge(count) {
+  const badge = document.getElementById('sino-badge');
+  const badgeMobile = document.getElementById('sino-badge-mobile');
+  if (count > 0) {
+    const txt = count > 99 ? '99+' : count;
+    badge.textContent = txt; badge.style.display = 'flex';
+    badgeMobile.textContent = txt; badgeMobile.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+    badgeMobile.style.display = 'none';
+  }
+}
+
+async function verificarNotificacoes() {
+  if (!clinicaId) return;
+  const { count } = await db.from('alertas').select('*', {count:'exact', head:true}).eq('clinica_id', clinicaId).eq('lido', false);
+  atualizarBadge(count || 0);
+}
+
+function tempoRelativo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'Agora mesmo';
+  if (min < 60) return `Há ${min} minuto${min>1?'s':''}`;
+  const h = Math.floor(min/60);
+  if (h < 24) return `Há ${h} hora${h>1?'s':''}`;
+  const d = Math.floor(h/24);
+  return `Há ${d} dia${d>1?'s':''}`;
 }
 
 function abrirMenuStatus(consultaId, btn) {
