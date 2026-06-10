@@ -1600,7 +1600,10 @@ async function salvarConsulta() {
   if (!pacienteId) { toast('Erro ao salvar paciente'); return; }
   const dataHora = new Date(`${data}T${hora}:00`);
   // Ajuste manual para evitar bug de timezone (ISO retorna UTC)
-  const dataHoraISO = `${data}T${hora}:00`;
+  // Compensar UTC-3 (Brasil) — somamos 3h para que o Supabase salve no horário correto
+  const dataHoraLocal = new Date(`${data}T${hora}:00`);
+  dataHoraLocal.setHours(dataHoraLocal.getHours() + 3);
+  const dataHoraISO = dataHoraLocal.toISOString();
   const { error } = await db.from('consultas').insert({clinica_id:clinicaId, paciente_id:pacienteId, data_hora:dataHoraISO, queixa, status:'agendado', origem:'manual'});
   if (!error) {
     fecharModal(); toast('Consulta agendada ✓');
