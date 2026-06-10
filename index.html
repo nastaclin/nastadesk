@@ -291,9 +291,29 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .queixa-count { font-size: 12px; font-weight: 600; color: var(--verde); min-width: 24px; text-align: right; }
 @media (max-width: 700px) { #rel-grid { grid-template-columns: 1fr !important; } }
 
+/* MENU STATUS */
+.menu-status { position: absolute; background: white; border: 1px solid var(--cinza-claro); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 500; min-width: 170px; overflow: hidden; }
+.menu-status-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 13px; cursor: pointer; transition: background .12s; color: var(--cinza-escuro); font-family: 'DM Sans', sans-serif; }
+.menu-status-item:hover { background: var(--verde-suave); }
+.menu-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
 /* RELATÓRIO */
 .resumo-box { background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 10px; padding: 20px 22px; margin: 20px; }
 .resumo-texto { font-size: 14px; color: var(--cinza-escuro); line-height: 1.8; }
+
+/* CONFIG TABS */
+.cfg-tab { padding: 10px 18px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--cinza-medio); border-bottom: 2px solid transparent; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+.cfg-tab.ativa { color: var(--verde); border-bottom-color: var(--verde); }
+.cfg-vars { margin-top: 6px; font-size: 11px; color: var(--cinza-medio); }
+.cfg-vars code { background: var(--cinza-claro); padding: 1px 5px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
+.cfg-dia-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--cinza-claro); }
+.cfg-dia-row:last-child { border-bottom: none; }
+.cfg-dia-toggle { display: flex; align-items: center; gap: 8px; min-width: 90px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.cfg-dia-toggle input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--verde); cursor: pointer; }
+.cfg-dia-horas { display: flex; align-items: center; gap: 8px; flex: 1; }
+.cfg-dia-horas input[type=time] { padding: 6px 10px; border: 1px solid var(--cinza-claro); border-radius: 7px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); background: var(--creme); outline: none; }
+.cfg-dia-horas input[type=time]:focus { border-color: var(--verde-medio); background: white; }
+.cfg-dia-horas span { font-size: 12px; color: var(--cinza-medio); }
 
 /* CONFIG */
 .config-campo { margin-bottom: 16px; }
@@ -729,15 +749,56 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 
     <!-- CONFIGURAÇÕES -->
     <section id="sec-configuracoes" class="sec">
-      <div class="topbar"><div class="topbar-titulo"><h1>Configurações</h1><p>Personalize as mensagens automáticas</p></div></div>
-      <div class="card" style="padding:28px;max-width:580px">
-        <div class="card-titulo" style="margin-bottom:20px">Lembretes automáticos</div>
-        <div class="config-campo"><label>Lembrete 1 — antecedência</label><select id="cfg-l1"><option value="24">24 horas antes</option><option value="48">48 horas antes</option><option value="12">12 horas antes</option></select></div>
-        <div class="config-campo"><label>Lembrete 2 — antecedência</label><select id="cfg-l2"><option value="1">1 hora antes</option><option value="2">2 horas antes</option><option value="0.5">30 minutos antes</option></select></div>
-        <div class="config-campo"><label>Mensagem de confirmação</label><textarea id="cfg-confirmacao"></textarea></div>
-        <div class="config-campo"><label>Mensagem lembrete 24h</label><textarea id="cfg-24h"></textarea></div>
-        <div class="config-campo"><label>Mensagem lembrete 1h</label><textarea id="cfg-1h"></textarea></div>
-        <button class="btn btn-primario" onclick="salvarConfigs()">Salvar configurações</button>
+      <div class="topbar"><div class="topbar-titulo"><h1>Configurações</h1><p>Gerencie sua clínica e mensagens automáticas</p></div></div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--cinza-claro);padding-bottom:0">
+        <div class="cfg-tab ativa" onclick="cfgTab('mensagens',this)">Mensagens</div>
+        <div class="cfg-tab" onclick="cfgTab('clinica',this)">Clínica</div>
+        <div class="cfg-tab" onclick="cfgTab('agenda',this)">Agenda</div>
+      </div>
+
+      <!-- ABA MENSAGENS -->
+      <div id="cfg-tab-mensagens" style="max-width:580px">
+        <div class="card" style="padding:28px">
+          <div class="card-titulo" style="margin-bottom:20px">Lembretes automáticos</div>
+          <div class="config-campo"><label>Lembrete 1 — antecedência</label><select id="cfg-l1"><option value="24">24 horas antes</option><option value="48">48 horas antes</option><option value="12">12 horas antes</option></select></div>
+          <div class="config-campo"><label>Lembrete 2 — antecedência</label><select id="cfg-l2"><option value="1">1 hora antes</option><option value="2">2 horas antes</option><option value="0.5">30 minutos antes</option></select></div>
+          <div class="config-campo"><label>Mensagem de confirmação</label><textarea id="cfg-confirmacao" placeholder="Olá {nome}! Sua consulta foi confirmada para {data} às {hora}. Qualquer dúvida, estamos à disposição!"></textarea><div class="cfg-vars">Variáveis: <code>{nome}</code> <code>{data}</code> <code>{hora}</code> <code>{clinica}</code></div></div>
+          <div class="config-campo"><label>Mensagem lembrete 24h</label><textarea id="cfg-24h" placeholder="Olá {nome}! Lembrete da sua consulta amanhã às {hora}. Confirme com SIM ou avise se precisar remarcar. 😊"></textarea></div>
+          <div class="config-campo"><label>Mensagem lembrete 1h</label><textarea id="cfg-1h" placeholder="Olá {nome}! Sua consulta é em 1 hora ({hora}). Até logo!"></textarea></div>
+          <button class="btn btn-primario" onclick="salvarConfigs()">Salvar mensagens</button>
+        </div>
+      </div>
+
+      <!-- ABA CLÍNICA -->
+      <div id="cfg-tab-clinica" style="display:none;max-width:580px">
+        <div class="card" style="padding:28px">
+          <div class="card-titulo" style="margin-bottom:20px">Dados da clínica</div>
+          <div class="config-campo"><label>Nome da clínica</label><input type="text" id="cfg-nome-clinica" placeholder="Ex: Clínica Mendes Fisioterapia"></div>
+          <div class="config-campo"><label>Nome do responsável</label><input type="text" id="cfg-responsavel" placeholder="Ex: Dr. Carlos Mendes"></div>
+          <div class="config-campo"><label>WhatsApp da clínica</label><input type="tel" id="cfg-whatsapp" placeholder="Ex: 11999990000"></div>
+          <div class="config-campo"><label>Endereço</label><input type="text" id="cfg-endereco" placeholder="Rua, número, bairro, cidade"></div>
+          <div class="config-campo"><label>Complemento</label><input type="text" id="cfg-complemento" placeholder="Sala, andar, etc."></div>
+          <button class="btn btn-primario" onclick="salvarDadosClinica()">Salvar dados</button>
+        </div>
+      </div>
+
+      <!-- ABA AGENDA -->
+      <div id="cfg-tab-agenda" style="display:none;max-width:580px">
+        <div class="card" style="padding:28px">
+          <div class="card-titulo" style="margin-bottom:20px">Horários de atendimento</div>
+          <div class="config-campo"><label>Intervalo entre consultas</label>
+            <select id="cfg-intervalo">
+              <option value="30">30 minutos</option>
+              <option value="45">45 minutos</option>
+              <option value="60">1 hora</option>
+              <option value="90">1h30</option>
+              <option value="120">2 horas</option>
+            </select>
+          </div>
+          <div class="card-titulo" style="margin:20px 0 16px;font-size:13px">Horários por dia</div>
+          <div id="cfg-dias-horarios"></div>
+          <button class="btn btn-primario" style="margin-top:8px" onclick="salvarHorarios()">Salvar horários</button>
+        </div>
       </div>
     </section>
   </main>
@@ -1220,7 +1281,7 @@ function renderConsultas(lista) {
     const iniciais = nome.split(' ').map(n=>n[0]).slice(0,2).join('');
     const cor = c.status==='cancelado' ? 'style="background:var(--cinza-claro);color:var(--cinza-medio)"' : `class="avatar ${CORES[i%CORES.length]}"`;
     const wpp = c.pacientes?.whatsapp ? `55${c.pacientes.whatsapp.replace(/\D/g,'')}` : '';
-    return `<div class="consulta-item">
+    return `<div class="consulta-item" onclick="abrirFicha('${c.paciente_id}')">
       <span class="consulta-hora">${hora}</span>
       <div ${c.status==='cancelado'?cor:`class="avatar ${CORES[i%CORES.length]}"`}>${iniciais}</div>
       <div class="consulta-info">
@@ -1228,10 +1289,11 @@ function renderConsultas(lista) {
         <div class="consulta-queixa">${c.queixa||'—'}</div>
       </div>
       <span class="status-pill ${stClass[c.status]||'status-agendado'}">${stLabel[c.status]||c.status}</span>
-      <div class="consulta-acoes">
-        ${c.status!=='cancelado'&&c.status!=='atendido'?`<button class="btn-icone" title="Marcar atendido" onclick="atualizarStatus('${c.id}','atendido')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg></button>`:''}
+      <div class="consulta-acoes" onclick="event.stopPropagation()">
+        <button class="btn-icone" title="Alterar status" onclick="abrirMenuStatus('${c.id}', this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg>
+        </button>
         ${wpp?`<button class="btn-icone" title="WhatsApp" onclick="window.open('https://wa.me/${wpp}','_blank')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></button>`:''}
-        ${c.status!=='cancelado'?`<button class="btn-icone" title="Cancelar" onclick="atualizarStatus('${c.id}','cancelado')" style="color:var(--vermelho)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -1245,9 +1307,36 @@ function atualizarMetricas(lista) {
   document.getElementById('m-confirmadas-sub').textContent = `de ${lista.length} hoje`;
 }
 
+function abrirMenuStatus(consultaId, btn) {
+  // Fechar menu existente
+  document.querySelectorAll('.menu-status').forEach(m => m.remove());
+  const opcoes = [
+    { status: 'agendado',   label: 'Agendado',   cor: 'var(--azul)' },
+    { status: 'confirmado', label: 'Confirmado', cor: 'var(--verde)' },
+    { status: 'aguardando', label: 'Aguardando', cor: 'var(--amarelo)' },
+    { status: 'atendido',   label: 'Atendido',   cor: 'var(--cinza-medio)' },
+    { status: 'cancelado',  label: 'Cancelado',  cor: 'var(--vermelho)' },
+  ];
+  const menu = document.createElement('div');
+  menu.className = 'menu-status';
+  menu.innerHTML = opcoes.map(o => `
+    <div class="menu-status-item" onclick="atualizarStatus('${consultaId}','${o.status}');this.closest('.menu-status').remove()">
+      <div class="menu-status-dot" style="background:${o.cor}"></div>${o.label}
+    </div>`).join('');
+  // Posicionar perto do botão
+  const rect = btn.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top = `${rect.bottom + 4}px`;
+  menu.style.right = `${window.innerWidth - rect.right}px`;
+  document.body.appendChild(menu);
+  // Fechar ao clicar fora
+  setTimeout(() => document.addEventListener('click', function h() { menu.remove(); document.removeEventListener('click', h); }), 10);
+}
+
 async function atualizarStatus(id, status) {
   await db.from('consultas').update({status}).eq('id',id);
-  toast(status==='atendido'?'Marcado como atendido ✓':'Consulta cancelada');
+  const labels = { agendado:'Agendado', confirmado:'Confirmado ✓', aguardando:'Aguardando', atendido:'Atendido ✓', cancelado:'Cancelado' };
+  toast(labels[status] || status);
   if (status==='cancelado') await db.from('alertas').insert({clinica_id:clinicaId, tipo:'cancelamento', mensagem:'Consulta cancelada'});
   carregarConsultas();
 }
@@ -1558,28 +1647,101 @@ async function carregarRelatorio() {
 }
 
 // CONFIGURAÇÕES
+// CONFIGURAÇÕES
+function cfgTab(nome, el) {
+  ['mensagens','clinica','agenda'].forEach(t => {
+    document.getElementById(`cfg-tab-${t}`).style.display = t===nome ? 'block' : 'none';
+  });
+  document.querySelectorAll('.cfg-tab').forEach(t => t.classList.remove('ativa'));
+  el.classList.add('ativa');
+}
+
 async function carregarConfigs() {
   if (!clinicaId) return;
   const { data } = await db.from('configuracoes').select('*').eq('clinica_id',clinicaId).single();
-  if (!data) return;
-  document.getElementById('cfg-confirmacao').value = data.msg_confirmacao||'';
-  document.getElementById('cfg-24h').value = data.msg_lembrete_24h||'';
-  document.getElementById('cfg-1h').value = data.msg_lembrete_1h||'';
-  document.getElementById('cfg-l1').value = data.antecedencia_lembrete_1||24;
-  document.getElementById('cfg-l2').value = data.antecedencia_lembrete_2||1;
+  if (data) {
+    document.getElementById('cfg-confirmacao').value = data.msg_confirmacao||'';
+    document.getElementById('cfg-24h').value = data.msg_lembrete_24h||'';
+    document.getElementById('cfg-1h').value = data.msg_lembrete_1h||'';
+    document.getElementById('cfg-l1').value = data.antecedencia_lembrete_1||24;
+    document.getElementById('cfg-l2').value = data.antecedencia_lembrete_2||1;
+  }
+  const { data: cl } = await db.from('clinicas').select('*').eq('id',clinicaId).single();
+  if (cl) {
+    document.getElementById('cfg-nome-clinica').value = cl.nome||'';
+    document.getElementById('cfg-responsavel').value = cl.responsavel||'';
+    document.getElementById('cfg-whatsapp').value = cl.whatsapp||'';
+    document.getElementById('cfg-endereco').value = cl.endereco||'';
+    document.getElementById('cfg-complemento').value = cl.endereco_complemento||'';
+    document.getElementById('cfg-intervalo').value = cl.intervalo_consulta||60;
+    const DIAS = [{cod:'seg',nome:'Segunda'},{cod:'ter',nome:'Terça'},{cod:'qua',nome:'Quarta'},{cod:'qui',nome:'Quinta'},{cod:'sex',nome:'Sexta'},{cod:'sab',nome:'Sábado'},{cod:'dom',nome:'Domingo'}];
+    const hp = cl.horarios_por_dia||{};
+    const da = cl.dias_atendimento||['seg','ter','qua','qui','sex'];
+    document.getElementById('cfg-dias-horarios').innerHTML = DIAS.map(d => `
+      <div class="cfg-dia-row">
+        <label class="cfg-dia-toggle">
+          <input type="checkbox" id="cfgd-${d.cod}" ${da.includes(d.cod)?'checked':''} onchange="toggleDiaConfig('${d.cod}')">
+          ${d.nome}
+        </label>
+        <div class="cfg-dia-horas" id="cfgd-horas-${d.cod}" style="${da.includes(d.cod)?'':'opacity:.4;pointer-events:none'}">
+          <input type="time" id="cfgd-ini-${d.cod}" value="${hp[d.cod]?.inicio||cl.horario_inicio||'08:00'}">
+          <span>até</span>
+          <input type="time" id="cfgd-fim-${d.cod}" value="${hp[d.cod]?.fim||cl.horario_fim||'18:00'}">
+        </div>
+      </div>`).join('');
+  }
+}
+
+function toggleDiaConfig(cod) {
+  const checked = document.getElementById(`cfgd-${cod}`).checked;
+  const horas = document.getElementById(`cfgd-horas-${cod}`);
+  horas.style.opacity = checked ? '1' : '.4';
+  horas.style.pointerEvents = checked ? 'auto' : 'none';
 }
 
 async function salvarConfigs() {
   if (!clinicaId) return;
-  const { error } = await db.from('configuracoes').update({
+  const { error } = await db.from('configuracoes').upsert({
+    clinica_id: clinicaId,
     msg_confirmacao: document.getElementById('cfg-confirmacao').value,
     msg_lembrete_24h: document.getElementById('cfg-24h').value,
     msg_lembrete_1h: document.getElementById('cfg-1h').value,
     antecedencia_lembrete_1: parseInt(document.getElementById('cfg-l1').value),
     antecedencia_lembrete_2: parseFloat(document.getElementById('cfg-l2').value),
     atualizado_em: new Date().toISOString()
-  }).eq('clinica_id', clinicaId);
-  toast(error ? 'Erro ao salvar' : 'Configurações salvas ✓');
+  }, {onConflict:'clinica_id'});
+  toast(error ? 'Erro ao salvar' : 'Mensagens salvas ✓');
+}
+
+async function salvarDadosClinica() {
+  const { error } = await db.from('clinicas').update({
+    nome: document.getElementById('cfg-nome-clinica').value,
+    responsavel: document.getElementById('cfg-responsavel').value,
+    whatsapp: document.getElementById('cfg-whatsapp').value,
+    endereco: document.getElementById('cfg-endereco').value,
+    endereco_complemento: document.getElementById('cfg-complemento').value,
+  }).eq('id', clinicaId);
+  toast(error ? 'Erro ao salvar' : 'Dados da clínica salvos ✓');
+  if (!error) carregarInfoClinica();
+}
+
+async function salvarHorarios() {
+  const DIAS = ['seg','ter','qua','qui','sex','sab','dom'];
+  const horarios_por_dia = {};
+  const dias_atendimento = [];
+  DIAS.forEach(d => {
+    const ativo = document.getElementById(`cfgd-${d}`)?.checked;
+    if (ativo) {
+      dias_atendimento.push(d);
+      horarios_por_dia[d] = {
+        inicio: document.getElementById(`cfgd-ini-${d}`)?.value||'08:00',
+        fim: document.getElementById(`cfgd-fim-${d}`)?.value||'18:00',
+      };
+    }
+  });
+  const intervalo = parseInt(document.getElementById('cfg-intervalo').value);
+  const { error } = await db.from('clinicas').update({ horarios_por_dia, dias_atendimento, intervalo_consulta: intervalo }).eq('id', clinicaId);
+  toast(error ? 'Erro ao salvar' : 'Horários salvos ✓');
 }
 
 // NOVA CONSULTA
