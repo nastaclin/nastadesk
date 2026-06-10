@@ -326,7 +326,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .semana-nav-btn:hover { background: var(--verde-suave); border-color: var(--verde-claro); }
 .semana-periodo { font-size: 15px; font-weight: 600; color: var(--cinza-escuro); flex: 1; }
 .semana-hoje-btn { background: var(--verde); color: white; border: none; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; }
-.grade-semanal { display: grid; grid-template-columns: 56px repeat(7, 1fr); gap: 0; border: 1px solid var(--cinza-claro); border-radius: 14px; overflow: hidden; background: white; box-shadow: var(--sombra); }
+.grade-semanal-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.grade-semanal { display: grid; grid-template-columns: 56px repeat(7, minmax(100px, 1fr)); gap: 0; border: 1px solid var(--cinza-claro); border-radius: 14px; overflow: hidden; background: white; box-shadow: var(--sombra); min-width: 780px; }
 .grade-header { background: white; border-bottom: 1px solid var(--cinza-claro); }
 .grade-header-hora { background: var(--crème); }
 .grade-col-dia { text-align: center; padding: 12px 4px; border-left: 1px solid var(--cinza-claro); }
@@ -355,10 +356,18 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 
 @media (max-width: 900px) {
   .sidebar { display: none; }
-  .main { margin-left: 0; padding: 20px; }
-  .metricas { grid-template-columns: repeat(2, 1fr); }
+  .main { margin-left: 0; padding: 16px; }
+  .metricas { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .grid-principal { grid-template-columns: 1fr; }
   .auth-lado.esquerdo { display: none; }
+  .topbar { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .topbar-acoes { width: 100%; }
+  .topbar-acoes .btn { width: 100%; text-align: center; }
+  .semana-nav { flex-wrap: wrap; gap: 8px; }
+  .modal { padding: 22px 18px; }
+  .ficha-painel { width: 100vw; }
+  .ficha-grid { grid-template-columns: 1fr; }
+  .ficha-campo.full { grid-column: 1; }
 }
 </style>
 </head>
@@ -1095,10 +1104,11 @@ function traduzirErro(msg) {
 // CARREGAR DADOS
 async function carregarDados(user) {
   const hoje = new Date();
+  const hojeLocal = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
   document.getElementById('topbar-data').textContent = hoje.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
   document.getElementById('satis-mes').textContent = MESES[hoje.getMonth()];
   document.getElementById('rel-periodo').textContent = `${MESES[hoje.getMonth()]} ${hoje.getFullYear()}`;
-  document.getElementById('novo-data').value = hoje.toISOString().split('T')[0];
+  document.getElementById('novo-data').value = hojeLocal;
 
   // Buscar clínica do usuário
   const { data: clinica } = await db.from('clinicas').select('*').eq('user_id', user.id).single();
@@ -1130,8 +1140,8 @@ async function carregarDados(user) {
 async function carregarConsultas() {
   if (!clinicaId) return;
   const hoje = new Date();
-  const inicio = new Date(hoje); inicio.setHours(0,0,0,0);
-  const fim = new Date(hoje); fim.setHours(23,59,59,999);
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
+  const fim = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59);
   const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp)').eq('clinica_id', clinicaId).gte('data_hora', inicio.toISOString()).lte('data_hora', fim.toISOString()).order('data_hora');
   renderConsultas(data || []);
   atualizarMetricas(data || []);
@@ -1477,8 +1487,10 @@ async function salvarConsulta() {
     pacienteId = novo?.id;
   }
   if (!pacienteId) { toast('Erro ao salvar paciente'); return; }
-  const dataHora = new Date(`${data}T${hora}:00`).toISOString();
-  const { error } = await db.from('consultas').insert({clinica_id:clinicaId, paciente_id:pacienteId, data_hora:dataHora, queixa, status:'agendado', origem:'manual'});
+  const dataHora = new Date(`${data}T${hora}:00`);
+  // Ajuste manual para evitar bug de timezone (ISO retorna UTC)
+  const dataHoraISO = `${data}T${hora}:00`;
+  const { error } = await db.from('consultas').insert({clinica_id:clinicaId, paciente_id:pacienteId, data_hora:dataHoraISO, queixa, status:'agendado', origem:'manual'});
   if (!error) {
     fecharModal(); toast('Consulta agendada ✓');
     await db.from('alertas').insert({clinica_id:clinicaId, tipo:'novo_agendamento', mensagem:`Nova consulta agendada: ${nome}`});
@@ -1608,17 +1620,17 @@ async function renderGradeSemanal() {
       if (horasPorDia[diaCod]) { iniDia = horasPorDia[diaCod].inicio; fimDia = horasPorDia[diaCod].fim; }
       const dentroHorario = diasAtend.includes(diaCod) && slot >= iniDia && slot < fimDia;
 
-      // Buscar consultas nesse slot
-      const dataStr = data.toISOString().split('T')[0];
+      // Buscar consultas nesse slot (horário local para evitar bug de timezone)
+      const dataLocal = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
       const consultasSlot = consultasSemana.filter(c => {
         const cd = new Date(c.data_hora);
-        const cdStr = cd.toISOString().split('T')[0];
-        const cdHora = cd.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-        return cdStr === dataStr && cdHora === slot;
+        const cdLocal = `${cd.getFullYear()}-${String(cd.getMonth()+1).padStart(2,'0')}-${String(cd.getDate()).padStart(2,'0')}`;
+        const cdHora = `${String(cd.getHours()).padStart(2,'0')}:${String(cd.getMinutes()).padStart(2,'0')}`;
+        return cdLocal === dataLocal && cdHora === slot;
       });
 
       const foraClass = dentroHorario ? '' : 'fora-horario';
-      const onclick = dentroHorario ? `onclick="abrirModalSlot('${dataStr}','${slot}')"` : '';
+      const onclick = dentroHorario ? `onclick="abrirModalSlot('${dataLocal}','${slot}')"` : '';
       html += `<div class="grade-slot ${foraClass}" ${onclick}>`;
       for (const c of consultasSlot) {
         const nome = c.pacientes?.nome?.split(' ')[0] || '—';
