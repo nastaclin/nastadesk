@@ -317,6 +317,13 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .notif-rodape { padding: 14px 20px; border-top: 1px solid var(--cinza-claro); flex-shrink: 0; }
 @media (max-width: 900px) { .notif-painel { width: 100vw; right: -100vw; } }
 
+/* PERFIL */
+.perfil-info-item { padding: 10px 0; border-bottom: 1px solid var(--cinza-claro); }
+.perfil-info-item:nth-child(odd) { border-right: 1px solid var(--cinza-claro); padding-right: 12px; }
+.perfil-info-item:nth-child(even) { padding-left: 12px; }
+.perfil-info-label { font-size: 11px; font-weight: 600; color: var(--cinza-medio); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.perfil-info-val { font-size: 14px; color: var(--cinza-escuro); }
+
 /* MENU STATUS */
 .menu-status { position: absolute; background: white; border: 1px solid var(--cinza-claro); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 500; min-width: 170px; overflow: hidden; }
 .menu-status-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 13px; cursor: pointer; transition: background .12s; color: var(--cinza-escuro); font-family: 'DM Sans', sans-serif; }
@@ -653,6 +660,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
       <div class="nav-item" onclick="irPara('configuracoes')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configurações
       </div>
+      <div class="nav-item" onclick="irPara('perfil')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Minha Clínica
+      </div>
     </nav>
     <div class="clinica-info">
       <div class="clinica-nome" id="sb-nome">—</div>
@@ -832,6 +842,48 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
         </div>
       </div>
     </section>
+    <!-- PERFIL DA CLÍNICA -->
+    <section id="sec-perfil" class="sec">
+      <div class="topbar"><div class="topbar-titulo"><h1>Minha Clínica</h1><p>Informações e dados do seu perfil</p></div></div>
+
+      <!-- CARD RESUMO -->
+      <div class="card" style="padding:28px;margin-bottom:16px;max-width:580px">
+        <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px">
+          <div id="perfil-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--verde);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:24px;color:white;flex-shrink:0">—</div>
+          <div>
+            <div id="perfil-nome" style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--cinza-escuro)">—</div>
+            <div id="perfil-responsavel" style="font-size:14px;color:var(--cinza-medio);margin-top:2px">—</div>
+            <div id="perfil-plano-badge" class="plano-badge" style="display:inline-block;margin-top:6px">—</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="perfil-info-grid">
+          <div class="perfil-info-item"><div class="perfil-info-label">WhatsApp</div><div class="perfil-info-val" id="perfil-wpp">—</div></div>
+          <div class="perfil-info-item"><div class="perfil-info-label">Plano ativo</div><div class="perfil-info-val" id="perfil-plano">—</div></div>
+          <div class="perfil-info-item"><div class="perfil-info-label">Endereço</div><div class="perfil-info-val" id="perfil-endereco">—</div></div>
+          <div class="perfil-info-item"><div class="perfil-info-label">Membro desde</div><div class="perfil-info-val" id="perfil-desde">—</div></div>
+        </div>
+      </div>
+
+      <!-- EDITAR DADOS -->
+      <div class="card" style="padding:28px;max-width:580px;margin-bottom:16px">
+        <div class="card-titulo" style="margin-bottom:20px">Editar dados</div>
+        <div class="config-campo"><label>Nome da clínica</label><input type="text" id="perf-nome"></div>
+        <div class="config-campo"><label>Responsável</label><input type="text" id="perf-responsavel"></div>
+        <div class="config-campo"><label>WhatsApp</label><input type="tel" id="perf-wpp" placeholder="Ex: 11999990000"></div>
+        <div class="config-campo"><label>Endereço</label><input type="text" id="perf-endereco"></div>
+        <div class="config-campo"><label>Complemento</label><input type="text" id="perf-complemento"></div>
+        <button class="btn btn-primario" onclick="salvarPerfil()">Salvar alterações</button>
+      </div>
+
+      <!-- ALTERAR SENHA -->
+      <div class="card" style="padding:28px;max-width:580px">
+        <div class="card-titulo" style="margin-bottom:20px">Alterar senha</div>
+        <div class="config-campo"><label>Nova senha</label><input type="password" id="perf-senha" placeholder="Mínimo 6 caracteres"></div>
+        <div class="config-campo"><label>Confirmar nova senha</label><input type="password" id="perf-senha2" placeholder="Repita a senha"></div>
+        <button class="btn btn-secundario" onclick="alterarSenha()">Alterar senha</button>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1003,7 +1055,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
     <div class="notif-titulo">Notificações</div>
     <button class="notif-fechar" onclick="fecharNotifPainel()">×</button>
   </div>
-  <div id="notif-lista"><div class="loading"><div class="loading-spinner"></div></div></div>
+  <div id="notif-lista" style="flex:1;overflow-y:auto;min-height:0"><div class="loading"><div class="loading-spinner"></div></div></div>
   <div class="notif-rodape">
     <button class="btn btn-secundario" style="width:100%;font-size:13px" onclick="marcarTodasLidas()">Marcar todas como lidas</button>
   </div>
@@ -1920,6 +1972,54 @@ async function salvarHorarios() {
   toast(error ? 'Erro ao salvar' : 'Horários salvos ✓');
 }
 
+// PERFIL DA CLÍNICA
+async function carregarPerfil() {
+  if (!clinicaId) return;
+  const { data: cl } = await db.from('clinicas').select('*').eq('id', clinicaId).single();
+  if (!cl) return;
+  const iniciais = (cl.nome||'?').split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+  document.getElementById('perfil-avatar').textContent = iniciais;
+  document.getElementById('perfil-nome').textContent = cl.nome || '—';
+  document.getElementById('perfil-responsavel').textContent = cl.responsavel || '—';
+  document.getElementById('perfil-plano-badge').textContent = cl.plano ? cl.plano.charAt(0).toUpperCase()+cl.plano.slice(1) : '—';
+  document.getElementById('perfil-wpp').textContent = cl.whatsapp || '—';
+  document.getElementById('perfil-plano').textContent = cl.plano ? cl.plano.charAt(0).toUpperCase()+cl.plano.slice(1) : '—';
+  document.getElementById('perfil-endereco').textContent = cl.endereco || '—';
+  const desde = cl.criado_em ? new Date(cl.criado_em).toLocaleDateString('pt-BR', {month:'long', year:'numeric'}) : '—';
+  document.getElementById('perfil-desde').textContent = desde;
+  // Preencher campos de edição
+  document.getElementById('perf-nome').value = cl.nome || '';
+  document.getElementById('perf-responsavel').value = cl.responsavel || '';
+  document.getElementById('perf-wpp').value = cl.whatsapp || '';
+  document.getElementById('perf-endereco').value = cl.endereco || '';
+  document.getElementById('perf-complemento').value = cl.endereco_complemento || '';
+}
+
+async function salvarPerfil() {
+  const { error } = await db.from('clinicas').update({
+    nome: document.getElementById('perf-nome').value.trim(),
+    responsavel: document.getElementById('perf-responsavel').value.trim(),
+    whatsapp: document.getElementById('perf-wpp').value.trim(),
+    endereco: document.getElementById('perf-endereco').value.trim(),
+    endereco_complemento: document.getElementById('perf-complemento').value.trim(),
+  }).eq('id', clinicaId);
+  if (!error) { toast('Perfil salvo ✓'); carregarPerfil(); carregarInfoClinica(); }
+  else toast('Erro ao salvar');
+}
+
+async function alterarSenha() {
+  const s1 = document.getElementById('perf-senha').value;
+  const s2 = document.getElementById('perf-senha2').value;
+  if (!s1 || s1.length < 6) { toast('A senha deve ter pelo menos 6 caracteres'); return; }
+  if (s1 !== s2) { toast('As senhas não coincidem'); return; }
+  const { error } = await db.auth.updateUser({ password: s1 });
+  if (!error) {
+    toast('Senha alterada com sucesso ✓');
+    document.getElementById('perf-senha').value = '';
+    document.getElementById('perf-senha2').value = '';
+  } else toast('Erro ao alterar senha');
+}
+
 // NOVA CONSULTA
 async function salvarConsulta() {
   if (!clinicaId) return;
@@ -1971,12 +2071,13 @@ function irPara(sec) {
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('ativa'));
   document.getElementById(`sec-${sec}`).classList.add('ativa');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('ativo'));
-  ['agenda','agendamentos','pacientes','relatorio','configuracoes'].forEach((s,i)=>{ if(s===sec) document.querySelectorAll('.nav-item')[i].classList.add('ativo'); });
-  // Atualizar navbar mobile
+  ['agenda','agendamentos','pacientes','relatorio','configuracoes','perfil'].forEach((s,i)=>{ if(s===sec) document.querySelectorAll('.nav-item')[i].classList.add('ativo'); });
   document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('ativo'));
   const mnav = document.getElementById(`mnav-${sec}`);
   if (mnav) mnav.classList.add('ativo');
   if (sec === 'agendamentos') renderGradeSemanal();
+  if (sec === 'relatorio') carregarRelatorio();
+  if (sec === 'perfil') carregarPerfil();
 }
 
 // ==================== AGENDAMENTOS SEMANAIS ====================
