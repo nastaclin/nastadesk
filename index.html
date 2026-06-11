@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NastaDesk — by Nastaclin</title>
+<title>NastaDesk — Gestão de Clínica</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif'>N</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -395,7 +396,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .loading-spinner { width: 28px; height: 28px; border: 2px solid var(--cinza-claro); border-top-color: var(--verde-medio); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.empty { padding: 40px; text-align: center; color: var(--cinza-medio); font-size: 14px; }
+.empty { padding: 40px 24px; text-align: center; color: var(--cinza-medio); font-size: 14px; line-height: 1.7; }
 .av-1{background:#1A9E72} .av-2{background:#3B6FD4} .av-3{background:#E87040}
 .av-4{background:#7B5CF0} .av-5{background:#D44598} .av-6{background:#E8A820}
 
@@ -731,11 +732,12 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
           </div>
           <div class="card">
             <div class="card-header"><div class="card-titulo">Satisfação</div><span style="font-size:12px;color:var(--cinza-medio)" id="satis-mes">—</span></div>
-            <div style="padding:14px 22px">
-              <div class="satis-barra"><span class="satis-label">Ótimo</span><div class="barra-track"><div class="barra-fill" style="width:72%;background:var(--verde-medio)"></div></div><span class="satis-pct">72%</span></div>
-              <div class="satis-barra"><span class="satis-label">Bom</span><div class="barra-track"><div class="barra-fill" style="width:20%;background:var(--azul)"></div></div><span class="satis-pct">20%</span></div>
-              <div class="satis-barra"><span class="satis-label">Regular</span><div class="barra-track"><div class="barra-fill" style="width:6%;background:var(--amarelo)"></div></div><span class="satis-pct">6%</span></div>
-              <div class="satis-barra"><span class="satis-label">Ruim</span><div class="barra-track"><div class="barra-fill" style="width:2%;background:var(--vermelho)"></div></div><span class="satis-pct">2%</span></div>
+            <div style="padding:14px 22px" id="satis-barras">
+              <div class="satis-barra"><span class="satis-label">Ótimo</span><div class="barra-track"><div class="barra-fill" id="satis-otimo" style="width:0%;background:var(--verde-medio)"></div></div><span class="satis-pct" id="satis-otimo-pct">—</span></div>
+              <div class="satis-barra"><span class="satis-label">Bom</span><div class="barra-track"><div class="barra-fill" id="satis-bom" style="width:0%;background:var(--azul)"></div></div><span class="satis-pct" id="satis-bom-pct">—</span></div>
+              <div class="satis-barra"><span class="satis-label">Regular</span><div class="barra-track"><div class="barra-fill" id="satis-regular" style="width:0%;background:var(--amarelo)"></div></div><span class="satis-pct" id="satis-regular-pct">—</span></div>
+              <div class="satis-barra"><span class="satis-label">Ruim</span><div class="barra-track"><div class="barra-fill" id="satis-ruim" style="width:0%;background:var(--vermelho)"></div></div><span class="satis-pct" id="satis-ruim-pct">—</span></div>
+              <div id="satis-vazio" style="display:none;font-size:12px;color:var(--cinza-medio);text-align:center;padding:4px 0">Nenhuma avaliação ainda</div>
             </div>
           </div>
         </div>
@@ -1448,6 +1450,32 @@ async function carregarConsultas() {
   const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp)').eq('clinica_id', clinicaId).gte('data_hora', inicio.toISOString()).lte('data_hora', fim.toISOString()).order('data_hora');
   renderConsultas(data || []);
   atualizarMetricas(data || []);
+  carregarSatisfacao();
+}
+
+async function carregarSatisfacao() {
+  if (!clinicaId) return;
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0, 23, 59, 59);
+  const { data } = await db.from('consultas').select('satisfacao').eq('clinica_id', clinicaId).gte('data_hora', inicio.toISOString()).lte('data_hora', fim.toISOString()).not('satisfacao','is',null);
+  const total = data?.length || 0;
+  if (!total) {
+    document.getElementById('satis-vazio').style.display = 'block';
+    ['otimo','bom','regular','ruim'].forEach(k => {
+      document.getElementById(`satis-${k}`).style.width = '0%';
+      document.getElementById(`satis-${k}-pct`).textContent = '0%';
+    });
+    return;
+  }
+  document.getElementById('satis-vazio').style.display = 'none';
+  const map = { otimo:0, bom:0, regular:0, ruim:0 };
+  data.forEach(c => { if (map[c.satisfacao] !== undefined) map[c.satisfacao]++; });
+  ['otimo','bom','regular','ruim'].forEach(k => {
+    const pct = Math.round((map[k]/total)*100);
+    document.getElementById(`satis-${k}`).style.width = `${pct}%`;
+    document.getElementById(`satis-${k}-pct`).textContent = `${pct}%`;
+  });
 }
 
 function renderConsultas(lista) {
