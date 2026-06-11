@@ -317,6 +317,20 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .notif-rodape { padding: 14px 20px; border-top: 1px solid var(--cinza-claro); flex-shrink: 0; }
 @media (max-width: 900px) { .notif-painel { width: 100vw; right: -100vw; } }
 
+.menu-mais { position: fixed; bottom: 72px; right: 8px; background: white; border: 1px solid var(--cinza-claro); border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.14); z-index: 160; min-width: 200px; overflow: hidden; }
+.menu-mais-item { display: flex; align-items: center; gap: 12px; padding: 14px 18px; font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); transition: background .12s; border-bottom: 1px solid var(--cinza-claro); }
+.menu-mais-item:last-child { border-bottom: none; }
+.menu-mais-item:hover { background: var(--verde-suave); }
+
+/* MENU MAIS MOBILE */
+.menu-mais-overlay { display: none; position: fixed; inset: 0; z-index: 148; }
+.menu-mais-overlay.aberto { display: block; }
+.menu-mais { position: fixed; bottom: 70px; right: 12px; background: white; border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); z-index: 149; min-width: 200px; overflow: hidden; transform: scale(0.95); opacity: 0; pointer-events: none; transition: all .18s cubic-bezier(.4,0,.2,1); transform-origin: bottom right; }
+.menu-mais.aberto { transform: scale(1); opacity: 1; pointer-events: auto; }
+.menu-mais-item { display: flex; align-items: center; gap: 12px; padding: 14px 18px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--cinza-escuro); font-family: 'DM Sans', sans-serif; border-bottom: 1px solid var(--cinza-claro); transition: background .12s; }
+.menu-mais-item:last-child { border-bottom: none; }
+.menu-mais-item:hover { background: var(--verde-suave); }
+
 /* PERFIL */
 .perfil-info-item { padding: 10px 0; border-bottom: 1px solid var(--cinza-claro); }
 .perfil-info-item:nth-child(odd) { border-right: 1px solid var(--cinza-claro); padding-right: 12px; }
@@ -1061,6 +1075,23 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
   </div>
 </div>
 
+<!-- MENU MAIS (mobile) -->
+<div class="menu-mais" id="menu-mais" style="display:none">
+  <div class="menu-mais-item" onclick="fecharMenuMais();toggleNotifPainel()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+    Notificações
+    <div class="sino-badge" id="sino-badge-mais" style="display:none;margin-left:auto">0</div>
+  </div>
+  <div class="menu-mais-item" onclick="fecharMenuMais();irPara('perfil')">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Minha Clínica
+  </div>
+  <div class="menu-mais-item" onclick="fecharMenuMais();confirmarLogout()" style="color:var(--vermelho)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    Sair da conta
+  </div>
+</div>
+
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
 
 <!-- NAVBAR MOBILE -->
@@ -1086,15 +1117,27 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       <span>Config</span>
     </div>
-    <div class="mobile-nav-item" style="position:relative" onclick="toggleNotifPainel()">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+    <div class="mobile-nav-item" style="position:relative" onclick="toggleMenuMais(this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
       <div class="sino-badge-mobile" id="sino-badge-mobile" style="display:none">0</div>
-      <span>Alertas</span>
+      <span>Mais</span>
     </div>
-    <div class="mobile-nav-item" onclick="confirmarLogout()">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-      <span>Sair</span>
-    </div>
+  </div>
+</div>
+
+<!-- MENU MAIS (MOBILE) -->
+<div class="menu-mais-overlay" id="menu-mais-overlay" onclick="fecharMenuMais()"></div>
+<div class="menu-mais" id="menu-mais">
+  <div class="menu-mais-item" onclick="fecharMenuMais();irPara('perfil')">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Minha Clínica
+  </div>
+  <div class="menu-mais-item" onclick="fecharMenuMais();toggleNotifPainel()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+    Notificações
+    <span id="sino-badge-mais" style="display:none;background:#E84040;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;margin-left:auto"></span>
+  </div>
+  <div class="menu-mais-item" style="color:var(--vermelho)" onclick="fecharMenuMais();confirmarLogout()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Sair da conta
   </div>
 </div>
 
@@ -1338,6 +1381,20 @@ function fecharModalConfirm(e) {
   }
 }
 
+function toggleMenuMais(btn) {
+  const menu = document.getElementById('menu-mais');
+  const overlay = document.getElementById('menu-mais-overlay');
+  const aberto = menu.classList.contains('aberto');
+  if (aberto) { fecharMenuMais(); } else {
+    menu.classList.add('aberto');
+    overlay.classList.add('aberto');
+  }
+}
+function fecharMenuMais() {
+  document.getElementById('menu-mais').classList.remove('aberto');
+  document.getElementById('menu-mais-overlay').classList.remove('aberto');
+}
+
 function confirmarLogout() {
   abrirModalConfirm('Tem certeza que deseja sair?', 'Você precisará fazer login novamente para acessar o painel.', 'Sair', fazerLogout);
 }
@@ -1505,17 +1562,31 @@ async function marcarTodasLidas(silencioso = false) {
   if (!silencioso) { carregarNotificacoes(); toast('Todas marcadas como lidas ✓'); }
 }
 
+function toggleMenuMais(el) {
+  const menu = document.getElementById('menu-mais');
+  const aberto = menu.style.display === 'block';
+  menu.style.display = aberto ? 'none' : 'block';
+  if (!aberto) {
+    setTimeout(() => document.addEventListener('click', function h(e) {
+      if (!menu.contains(e.target) && !el.contains(e.target)) { menu.style.display = 'none'; document.removeEventListener('click', h); }
+    }), 10);
+  }
+}
+
+function fecharMenuMais() {
+  document.getElementById('menu-mais').style.display = 'none';
+}
+
 function atualizarBadge(count) {
   const badge = document.getElementById('sino-badge');
   const badgeMobile = document.getElementById('sino-badge-mobile');
-  if (count > 0) {
-    const txt = count > 99 ? '99+' : count;
-    badge.textContent = txt; badge.style.display = 'flex';
-    badgeMobile.textContent = txt; badgeMobile.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
-    badgeMobile.style.display = 'none';
-  }
+  const badgeMais = document.getElementById('sino-badge-mais');
+  const txt = count > 99 ? '99+' : String(count);
+  [badge, badgeMobile, badgeMais].forEach(b => {
+    if (!b) return;
+    if (count > 0) { b.textContent = txt; b.style.display = 'flex'; }
+    else b.style.display = 'none';
+  });
 }
 
 async function verificarNotificacoes() {
