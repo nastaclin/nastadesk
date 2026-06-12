@@ -371,7 +371,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .config-campo textarea { height: 72px; resize: none; }
 
 /* MODAL */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: none; align-items: center; justify-content: center; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; display: none; align-items: center; justify-content: center; }
 .overlay.aberto { display: flex; }
 .modal { background: white; border-radius: 18px; padding: 30px; width: 460px; max-width: 92vw; animation: slideUp .2s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
 @keyframes slideUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -1683,21 +1683,26 @@ function buscarPaciente(termo) {
 
 function deletarPaciente() {
   if (!pacienteAtual) return;
+  const idParaDeletar = pacienteAtual.id;
+  const nomeParaDeletar = pacienteAtual.nome;
   abrirModalConfirm(
     'Excluir paciente?',
-    `Isso vai remover "${pacienteAtual.nome}" e todas as suas consultas permanentemente. Esta ação não pode ser desfeita.`,
+    `Isso vai remover "${nomeParaDeletar}" e todas as suas consultas permanentemente. Esta ação não pode ser desfeita.`,
     'Excluir',
     async () => {
-      await db.from('consultas').delete().eq('paciente_id', pacienteAtual.id);
-      await db.from('pacientes').delete().eq('id', pacienteAtual.id);
+      // Deletar evolucoes primeiro
+      await db.from('evolucoes').delete().eq('paciente_id', idParaDeletar);
+      // Deletar consultas
+      const { error: errConsultas } = await db.from('consultas').delete().eq('paciente_id', idParaDeletar);
+      if (errConsultas) { toast('Erro ao excluir consultas: ' + errConsultas.message); return; }
+      // Deletar paciente
+      const { error: errPaciente } = await db.from('pacientes').delete().eq('id', idParaDeletar);
+      if (errPaciente) { toast('Erro ao excluir paciente: ' + errPaciente.message); return; }
       fecharFicha();
       await carregarPacientes();
-      toast('Paciente excluído');
+      toast('Paciente excluído ✓');
     }
   );
-  // Deixar botão vermelho
-  const btn = document.getElementById('confirm-btn');
-  if (btn) btn.style.background = 'var(--vermelho)';
 }
 
 function renderPacientes(lista) {
