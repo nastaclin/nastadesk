@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agendar consulta</title>
+<meta name="description" content="Agende sua consulta de fisioterapia online em menos de 1 minuto.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif' fill='white'>N</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --verde: #0B6E4F; --verde-escuro: #07523A; --verde-medio: #17A076; --verde-claro: #D6F2E6;
+  --verde-suave: #F1FAF6; --creme: #F8F7F3; --cinza-escuro: #1B221E;
+  --cinza-medio: #66706A; --cinza-claro: #E6E8E3; --vermelho: #D44545;
+  --sombra: 0 1px 2px rgba(16,40,32,0.05), 0 8px 24px -14px rgba(16,40,32,0.14);
+  --anel: 0 0 0 3px rgba(23,160,118,0.18);
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cinza-escuro); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.topo { background: linear-gradient(165deg, var(--verde) 0%, var(--verde-escuro) 100%); padding: 36px 20px 76px; text-align: center; color: white; position: relative; overflow: hidden; }
+.topo::before { content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,255,255,0.06); top: -130px; right: -90px; }
+.topo-logo { font-family: 'DM Serif Display', serif; font-size: 17px; opacity: .75; margin-bottom: 14px; position: relative; }
+.topo-nome { font-family: 'DM Serif Display', serif; font-size: 27px; letter-spacing: -0.4px; position: relative; }
+.topo-end { font-size: 13px; opacity: .75; margin-top: 8px; line-height: 1.5; position: relative; }
+.wrap { max-width: 560px; margin: -48px auto 0; padding: 0 16px 60px; position: relative; }
+.card { background: white; border-radius: 20px; border: 1px solid var(--cinza-claro); box-shadow: var(--sombra); padding: 26px 22px; margin-bottom: 16px; }
+.passo-titulo { font-size: 12px; font-weight: 700; color: var(--verde); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+.passo-sub { font-family: 'DM Serif Display', serif; font-size: 21px; margin-bottom: 18px; }
+.dias-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.dia-card { min-width: 64px; padding: 11px 6px; border-radius: 14px; border: 1.5px solid var(--cinza-claro); background: white; text-align: center; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+.dia-card:hover { border-color: var(--verde-medio); }
+.dia-card.selecionado { background: var(--verde); border-color: var(--verde); color: white; }
+.dia-card.indisponivel { opacity: .35; cursor: not-allowed; }
+.dia-card .dsem { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; opacity: .75; }
+.dia-card .dnum { font-family: 'DM Serif Display', serif; font-size: 21px; margin: 2px 0; }
+.dia-card .dmes { font-size: 10px; opacity: .7; text-transform: uppercase; }
+.slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
+.slot-btn { padding: 11px 4px; border-radius: 11px; border: 1.5px solid var(--cinza-claro); background: white; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); cursor: pointer; transition: all .15s; font-variant-numeric: tabular-nums; }
+.slot-btn:hover { border-color: var(--verde-medio); background: var(--verde-suave); }
+.slot-btn.selecionado { background: var(--verde); border-color: var(--verde); color: white; }
+.slots-vazio { text-align: center; color: var(--cinza-medio); font-size: 14px; padding: 22px 10px; line-height: 1.6; }
+.campo { margin-bottom: 15px; }
+.campo label { display: block; font-size: 12px; font-weight: 600; color: var(--cinza-medio); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.campo input, .campo textarea { width: 100%; padding: 13px 14px; border: 1.5px solid var(--cinza-claro); border-radius: 11px; font-size: 15px; font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); background: var(--creme); outline: none; transition: border-color .15s, box-shadow .15s; }
+.campo input:focus, .campo textarea:focus { border-color: var(--verde-medio); background: white; box-shadow: var(--anel); }
+.campo textarea { height: 76px; resize: none; }
+.btn-confirmar { width: 100%; padding: 15px; background: var(--verde); color: white; border: none; border-radius: 13px; font-size: 16px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .18s; box-shadow: 0 6px 18px -8px rgba(11,110,79,0.6); margin-top: 4px; }
+.btn-confirmar:hover { background: var(--verde-escuro); transform: translateY(-1px); }
+.btn-confirmar:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.resumo { background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 13px; padding: 14px 16px; font-size: 14px; line-height: 1.7; margin-bottom: 16px; display: none; }
+.resumo.visivel { display: block; }
+.erro-box { background: #FAE3E3; color: var(--vermelho); border-radius: 11px; padding: 12px 15px; font-size: 13.5px; margin-bottom: 14px; display: none; line-height: 1.5; }
+.erro-box.visivel { display: block; }
+.loading { text-align: center; padding: 46px 20px; color: var(--cinza-medio); font-size: 14px; }
+.spinner { width: 30px; height: 30px; border: 2.5px solid var(--cinza-claro); border-top-color: var(--verde-medio); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 14px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sucesso { text-align: center; padding: 16px 4px; }
+.sucesso-icon { width: 76px; height: 76px; background: var(--verde-claro); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+.sucesso-icon svg { width: 38px; height: 38px; color: var(--verde); }
+.sucesso h2 { font-family: 'DM Serif Display', serif; font-size: 25px; margin-bottom: 8px; }
+.sucesso p { font-size: 14.5px; color: var(--cinza-medio); line-height: 1.65; }
+.sucesso-detalhes { background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 14px; padding: 18px; margin: 20px 0; text-align: left; font-size: 14.5px; line-height: 2; }
+.btn-sec { display: inline-block; width: 100%; padding: 13px; background: white; color: var(--cinza-escuro); border: 1.5px solid var(--cinza-claro); border-radius: 13px; font-size: 14.5px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .15s; text-decoration: none; text-align: center; margin-top: 10px; }
+.btn-sec:hover { background: var(--verde-suave); border-color: var(--verde-claro); }
+.indisponivel-box { text-align: center; padding: 40px 20px; }
+.indisponivel-box h2 { font-family: 'DM Serif Display', serif; font-size: 23px; margin-bottom: 10px; }
+.indisponivel-box p { font-size: 14.5px; color: var(--cinza-medio); line-height: 1.65; }
+.rodape { text-align: center; font-size: 12px; color: var(--cinza-medio); padding-bottom: 30px; }
+.rodape a { color: var(--verde); text-decoration: none; font-weight: 500; }
+.oculto { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <div class="topo-logo">NastaDesk · Agendamento online</div>
+  <div class="topo-nome" id="clinica-nome">Carregando...</div>
+  <div class="topo-end" id="clinica-endereco"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- CARREGANDO -->
+  <div class="card" id="tela-loading">
+    <div class="loading"><div class="spinner"></div>Carregando agenda da clínica...</div>
+  </div>
+
+  <!-- INDISPONÍVEL -->
+  <div class="card oculto" id="tela-indisponivel">
+    <div class="indisponivel-box">
+      <h2>Agendamento indisponível</h2>
+      <p>O agendamento online desta clínica não está ativo no momento.<br>Entre em contato diretamente com a clínica para marcar sua consulta.</p>
+    </div>
+  </div>
+
+  <!-- FLUXO DE AGENDAMENTO -->
+  <div id="tela-agendar" class="oculto">
+    <div class="card">
+      <div class="passo-titulo">Passo 1 de 3</div>
+      <div class="passo-sub">Escolha o dia</div>
+      <div class="dias-scroll" id="dias-lista"></div>
+    </div>
+
+    <div class="card oculto" id="card-horarios">
+      <div class="passo-titulo">Passo 2 de 3</div>
+      <div class="passo-sub">Escolha o horário</div>
+      <div class="slots-grid" id="slots-lista"></div>
+      <div class="slots-vazio oculto" id="slots-vazio">Nenhum horário livre neste dia. 😕<br>Escolha outra data acima.</div>
+    </div>
+
+    <div class="card oculto" id="card-dados">
+      <div class="passo-titulo">Passo 3 de 3</div>
+      <div class="passo-sub">Seus dados</div>
+      <div class="resumo" id="resumo-agendamento"></div>
+      <div class="erro-box" id="erro-agendar"></div>
+      <div class="campo"><label>Nome completo</label><input type="text" id="ag-nome" placeholder="Ex: Maria da Silva" autocomplete="name"></div>
+      <div class="campo"><label>WhatsApp (com DDD)</label><input type="tel" id="ag-wpp" placeholder="Ex: 11 99999-0000" autocomplete="tel" inputmode="tel"></div>
+      <div class="campo"><label>Motivo da consulta (opcional)</label><textarea id="ag-queixa" placeholder="Ex: Dor no joelho direito ao caminhar" maxlength="300"></textarea></div>
+      <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarAgendamento()">Confirmar agendamento</button>
+    </div>
+  </div>
+
+  <!-- SUCESSO -->
+  <div class="card oculto" id="tela-sucesso">
+    <div class="sucesso">
+      <div class="sucesso-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+      <h2>Consulta agendada!</h2>
+      <p>Guarde os detalhes abaixo. A clínica pode entrar em contato pelo WhatsApp para confirmar.</p>
+      <div class="sucesso-detalhes" id="sucesso-detalhes"></div>
+      <a class="btn-sec" id="btn-calendario" target="_blank" rel="noopener">Adicionar ao calendário</a>
+      <a class="btn-sec oculto" id="btn-wpp-clinica" target="_blank" rel="noopener">Falar com a clínica no WhatsApp</a>
+      <button class="btn-sec" onclick="location.reload()">Agendar outra consulta</button>
+    </div>
+  </div>
+
+  <div class="rodape">Agendamento online por <a href="https://nastaclin.vercel.app" target="_blank" rel="noopener">Nastaclin</a></div>
+</div>
+
+<script>
+const SUPA_URL = 'https://zrkadblxozddreiwruhv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpya2FkYmx4b3pkZHJlaXdydWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NjA4MjEsImV4cCI6MjA5NjUzNjgyMX0.BQkXr831MlctUk-FhfEYkrgs6Amdpho5yDWcR3BtXok';
+const TZ = 'America/Sao_Paulo';
+const DIAS_COD = ['dom','seg','ter','qua','qui','sex','sab'];
+const DIAS_NOME = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MESES_CURTO = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+let slug = null;
+let clinica = null;
+let dataSelecionada = null;
+let horaSelecionada = null;
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+async function rpc(fn, params) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` },
+    body: JSON.stringify(params)
+  });
+  if (!res.ok) throw new Error(`RPC ${fn} falhou (${res.status})`);
+  return res.json();
+}
+
+function dataLocalISO(d) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit' }).format(d);
+}
+
+function agoraSP() {
+  // Date "virtual" com hora de São Paulo para comparações de hoje
+  const s = new Date().toLocaleString('en-US', { timeZone: TZ });
+  return new Date(s);
+}
+
+function extrairSlug() {
+  const m = location.pathname.match(/\/agendar\/([a-z0-9-]+)/i);
+  if (m) return m[1].toLowerCase();
+  const q = new URLSearchParams(location.search).get('c');
+  return q ? q.toLowerCase() : null;
+}
+
+async function init() {
+  slug = extrairSlug();
+  if (!slug) { mostrarIndisponivel(); return; }
+  try {
+    clinica = await rpc('clinica_publica', { p_slug: slug });
+  } catch(e) {
+    console.error(e);
+    mostrarIndisponivel();
+    return;
+  }
+  if (!clinica) { mostrarIndisponivel(); return; }
+  document.title = `Agendar — ${clinica.nome}`;
+  document.getElementById('clinica-nome').textContent = clinica.nome;
+  const end = [clinica.endereco, clinica.endereco_complemento].filter(Boolean).join(' — ');
+  document.getElementById('clinica-endereco').textContent = end;
+  document.getElementById('tela-loading').classList.add('oculto');
+  document.getElementById('tela-agendar').classList.remove('oculto');
+  renderDias();
+}
+
+function mostrarIndisponivel() {
+  document.getElementById('clinica-nome').textContent = 'Clínica';
+  document.getElementById('tela-loading').classList.add('oculto');
+  document.getElementById('tela-indisponivel').classList.remove('oculto');
+}
+
+function horarioDoDia(diaCod) {
+  const hp = clinica.horarios_por_dia || {};
+  return {
+    inicio: hp[diaCod]?.inicio || clinica.horario_inicio || '08:00',
+    fim: hp[diaCod]?.fim || clinica.horario_fim || '18:00'
+  };
+}
+
+function renderDias() {
+  const lista = document.getElementById('dias-lista');
+  const diasAtend = clinica.dias_atendimento || ['seg','ter','qua','qui','sex'];
+  const hoje = agoraSP();
+  let html = '';
+  let primeiroDisponivel = null;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + i);
+    const cod = DIAS_COD[d.getDay()];
+    const disponivel = diasAtend.includes(cod);
+    const dataStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (disponivel && !primeiroDisponivel) primeiroDisponivel = dataStr;
+    html += `<div class="dia-card ${disponivel?'':'indisponivel'}" data-data="${dataStr}" ${disponivel?`onclick="selecionarDia('${dataStr}', this)"`:''}>
+      <div class="dsem">${DIAS_NOME[d.getDay()]}</div>
+      <div class="dnum">${d.getDate()}</div>
+      <div class="dmes">${MESES_CURTO[d.getMonth()]}</div>
+    </div>`;
+  }
+  lista.innerHTML = html;
+  if (primeiroDisponivel) {
+    const el = lista.querySelector(`[data-data="${primeiroDisponivel}"]`);
+    if (el) selecionarDia(primeiroDisponivel, el);
+  } else {
+    document.getElementById('card-horarios').classList.remove('oculto');
+    document.getElementById('slots-lista').innerHTML = '';
+    const vazio = document.getElementById('slots-vazio');
+    vazio.classList.remove('oculto');
+    vazio.innerHTML = 'A clínica está sem dias de atendimento configurados.<br>Entre em contato diretamente com ela.';
+  }
+}
+
+async function selecionarDia(dataStr, el) {
+  dataSelecionada = dataStr;
+  horaSelecionada = null;
+  document.querySelectorAll('.dia-card').forEach(c => c.classList.remove('selecionado'));
+  el.classList.add('selecionado');
+  document.getElementById('card-dados').classList.add('oculto');
+  const card = document.getElementById('card-horarios');
+  card.classList.remove('oculto');
+  const slotsEl = document.getElementById('slots-lista');
+  document.getElementById('slots-vazio').classList.add('oculto');
+  slotsEl.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:18px"><div class="spinner"></div></div>';
+
+  let ocupados = [];
+  try {
+    ocupados = await rpc('horarios_ocupados', { p_slug: slug, p_data: dataStr }) || [];
+  } catch(e) { console.error(e); }
+
+  const d = new Date(`${dataStr}T12:00:00`);
+  const cod = DIAS_COD[d.getDay()];
+  const { inicio, fim } = horarioDoDia(cod);
+  const intervalo = clinica.intervalo_consulta || 60;
+
+  const hoje = agoraSP();
+  const ehHoje = dataStr === dataLocalISO(new Date());
+  const minutosAgora = hoje.getHours() * 60 + hoje.getMinutes();
+
+  const slots = [];
+  let [hI, mI] = inicio.substring(0,5).split(':').map(Number);
+  let [hF, mF] = fim.substring(0,5).split(':').map(Number);
+  let cur = hI * 60 + mI;
+  const fimMin = hF * 60 + mF;
+  while (cur < fimMin) {
+    const slot = `${Math.floor(cur/60).toString().padStart(2,'0')}:${(cur%60).toString().padStart(2,'0')}`;
+    const passou = ehHoje && cur <= minutosAgora;
+    if (!ocupados.includes(slot) && !passou) slots.push(slot);
+    cur += intervalo;
+  }
+
+  if (!slots.length) {
+    slotsEl.innerHTML = '';
+    document.getElementById('slots-vazio').classList.remove('oculto');
+    return;
+  }
+  slotsEl.innerHTML = slots.map(s => `<button class="slot-btn" onclick="selecionarHora('${s}', this)">${s}</button>`).join('');
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function selecionarHora(hora, el) {
+  horaSelecionada = hora;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selecionado'));
+  el.classList.add('selecionado');
+  const card = document.getElementById('card-dados');
+  card.classList.remove('oculto');
+  const d = new Date(`${dataSelecionada}T12:00:00`);
+  const dataFmt = d.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
+  const resumo = document.getElementById('resumo-agendamento');
+  resumo.innerHTML = `📅 <strong>${dataFmt}</strong> às <strong>${hora}</strong><br>📍 ${esc(clinica.nome)}`;
+  resumo.classList.add('visivel');
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function confirmarAgendamento() {
+  const erro = document.getElementById('erro-agendar');
+  erro.classList.remove('visivel');
+  const nome = document.getElementById('ag-nome').value.trim();
+  const wpp = document.getElementById('ag-wpp').value.trim();
+  const queixa = document.getElementById('ag-queixa').value.trim();
+  if (!dataSelecionada || !horaSelecionada) { mostrarErro('Escolha o dia e o horário da consulta.'); return; }
+  if (nome.length < 3) { mostrarErro('Informe seu nome completo.'); return; }
+  const digits = wpp.replace(/\D/g, '');
+  if (digits.length < 10 || digits.length > 13) { mostrarErro('Informe um WhatsApp válido com DDD. Ex: 11 99999-0000'); return; }
+
+  const btn = document.getElementById('btn-confirmar');
+  btn.disabled = true; btn.textContent = 'Agendando...';
+  let resultado;
+  try {
+    resultado = await rpc('agendar_online', {
+      p_slug: slug, p_nome: nome, p_whatsapp: digits,
+      p_data: dataSelecionada, p_hora: horaSelecionada, p_queixa: queixa || null
+    });
+  } catch(e) {
+    console.error(e);
+    btn.disabled = false; btn.textContent = 'Confirmar agendamento';
+    mostrarErro('Não foi possível concluir o agendamento. Verifique sua conexão e tente novamente.');
+    return;
+  }
+  btn.disabled = false; btn.textContent = 'Confirmar agendamento';
+  if (!resultado?.ok) {
+    mostrarErro(resultado?.erro || 'Não foi possível agendar. Tente outro horário.');
+    if ((resultado?.erro || '').includes('preenchido')) {
+      const diaEl = document.querySelector(`.dia-card[data-data="${dataSelecionada}"]`);
+      if (diaEl) selecionarDia(dataSelecionada, diaEl);
+    }
+    return;
+  }
+  mostrarSucesso(resultado);
+}
+
+function mostrarErro(msg) {
+  const erro = document.getElementById('erro-agendar');
+  erro.textContent = msg;
+  erro.classList.add('visivel');
+  erro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function mostrarSucesso(r) {
+  document.getElementById('tela-agendar').classList.add('oculto');
+  const det = document.getElementById('sucesso-detalhes');
+  const end = [clinica.endereco, clinica.endereco_complemento].filter(Boolean).join(' — ');
+  det.innerHTML = `🏥 <strong>${esc(r.clinica)}</strong><br>📅 ${esc(r.data)} às ${esc(r.hora)}${end ? `<br>📍 ${esc(end)}` : ''}`;
+
+  // Link "adicionar ao Google Agenda"
+  const [dia, mes, ano] = r.data.split('/');
+  const horaIni = r.hora.replace(':','') + '00';
+  const fimDate = new Date(`${ano}-${mes}-${dia}T${r.hora}:00-03:00`);
+  fimDate.setMinutes(fimDate.getMinutes() + (clinica.intervalo_consulta || 60));
+  const fmtG = (d) => d.toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+  const iniDate = new Date(`${ano}-${mes}-${dia}T${r.hora}:00-03:00`);
+  const gcal = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Consulta — ' + r.clinica)}&dates=${fmtG(iniDate)}/${fmtG(fimDate)}${end?`&location=${encodeURIComponent(end)}`:''}`;
+  document.getElementById('btn-calendario').href = gcal;
+
+  const wppClinica = (clinica.whatsapp || '').replace(/\D/g,'');
+  if (wppClinica) {
+    const btnW = document.getElementById('btn-wpp-clinica');
+    btnW.href = `https://wa.me/55${wppClinica}`;
+    btnW.classList.remove('oculto');
+  }
+  document.getElementById('tela-sucesso').classList.remove('oculto');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+init();
+</script>
+</body>
+</html>
