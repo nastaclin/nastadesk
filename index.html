@@ -400,6 +400,16 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .av-1{background:#1A9E72} .av-2{background:#3B6FD4} .av-3{background:#E87040}
 .av-4{background:#7B5CF0} .av-5{background:#D44598} .av-6{background:#E8A820}
 
+.lista-agend-dia { margin-bottom: 20px; }
+.lista-agend-dia-titulo { font-size: 12px; font-weight: 600; color: var(--cinza-medio); text-transform: uppercase; letter-spacing: .06em; padding: 8px 0; margin-bottom: 8px; border-bottom: 1px solid var(--cinza-claro); }
+.lista-agend-dia-titulo.hoje-label { color: var(--verde); }
+.lista-agend-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: white; border-radius: 10px; margin-bottom: 6px; border: 1px solid var(--cinza-claro); cursor: pointer; transition: background .15s; }
+.lista-agend-item:hover { background: var(--verde-suave); }
+.lista-agend-hora { font-size: 13px; font-weight: 600; color: var(--verde); min-width: 44px; }
+.lista-agend-info { flex: 1; }
+.lista-agend-nome { font-size: 14px; font-weight: 500; }
+.lista-agend-queixa { font-size: 12px; color: var(--cinza-medio); margin-top: 1px; }
+
 /* AGENDAMENTOS SEMANAL */
 .semana-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .semana-nav-btn { background: white; border: 1px solid var(--cinza-claro); border-radius: 8px; padding: 7px 14px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; color: var(--cinza-escuro); transition: all .15s; }
@@ -748,7 +758,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
     <section id="sec-agendamentos" class="sec">
       <div class="topbar">
         <div class="topbar-titulo"><h1>Agendamentos</h1><p id="agend-periodo">—</p></div>
-        <div class="topbar-acoes"><button class="btn btn-secundario" onclick="abrirModal()">+ Agendar</button></div>
+        <div class="topbar-acoes">
+          <button class="btn btn-secundario" id="btn-toggle-view" onclick="toggleViewAgend()" style="display:none">Lista</button>
+          <button class="btn btn-secundario" onclick="abrirModal()">+ Agendar</button>
+        </div>
       </div>
       <div class="semana-nav">
         <button class="semana-nav-btn" onclick="navSemana(-1)">← Anterior</button>
@@ -768,6 +781,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
         <div class="topbar-acoes"><button class="btn btn-primario" onclick="abrirModal()">+ Novo agendamento</button></div>
       </div>
       <div class="card">
+        <div style="padding:14px 22px;border-bottom:1px solid var(--cinza-claro)">
+          <input type="text" id="busca-paciente" placeholder="Buscar paciente por nome..." oninput="buscarPaciente(this.value)" style="width:100%;padding:9px 14px;border:1.5px solid var(--cinza-claro);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;background:var(--creme)" onfocus="this.style.borderColor='var(--verde-medio)'" onblur="this.style.borderColor='var(--cinza-claro)'">
+        </div>
         <div class="tabs">
           <div class="tab ativa" onclick="filtrarPacientes('todos',this)">Todos</div>
           <div class="tab" onclick="filtrarPacientes('ativo',this)">Ativos</div>
@@ -927,6 +943,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
     <button class="ficha-btn ficha-btn-inativo" id="ficha-btn-status" onclick="toggleStatusPaciente()">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
       Inativar
+    </button>
+    <button class="ficha-btn" style="background:#fff0f0;color:var(--vermelho);margin-left:auto" onclick="deletarPaciente()" title="Excluir paciente">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      Excluir
     </button>
   </div>
   <div class="ficha-tabs">
@@ -1656,6 +1676,30 @@ async function carregarPacientes() {
   renderPacientes(todosOsPacientes);
 }
 
+function buscarPaciente(termo) {
+  const filtrados = todosOsPacientes.filter(p => p.nome.toLowerCase().includes(termo.toLowerCase()));
+  renderPacientes(filtrados);
+}
+
+function deletarPaciente() {
+  if (!pacienteAtual) return;
+  abrirModalConfirm(
+    'Excluir paciente?',
+    `Isso vai remover "${pacienteAtual.nome}" e todas as suas consultas permanentemente. Esta ação não pode ser desfeita.`,
+    'Excluir',
+    async () => {
+      await db.from('consultas').delete().eq('paciente_id', pacienteAtual.id);
+      await db.from('pacientes').delete().eq('id', pacienteAtual.id);
+      fecharFicha();
+      await carregarPacientes();
+      toast('Paciente excluído');
+    }
+  );
+  // Deixar botão vermelho
+  const btn = document.getElementById('confirm-btn');
+  if (btn) btn.style.background = 'var(--vermelho)';
+}
+
 function renderPacientes(lista) {
   const el = document.getElementById('lista-pacientes');
   if (!lista.length) { el.innerHTML = '<div class="empty">Nenhum paciente cadastrado ainda</div>'; return; }
@@ -2150,6 +2194,22 @@ function irPara(sec) {
 
 // ==================== AGENDAMENTOS SEMANAIS ====================
 let semanaOffset = 0;
+let viewAgendMode = 'grade'; // 'grade' ou 'lista'
+
+function toggleViewAgend() {
+  viewAgendMode = viewAgendMode === 'grade' ? 'lista' : 'grade';
+  const btn = document.getElementById('btn-toggle-view');
+  btn.textContent = viewAgendMode === 'grade' ? 'Lista' : 'Grade';
+  renderGradeSemanal();
+}
+
+// Mostrar botão de toggle só no mobile
+function verificarViewMobile() {
+  const btn = document.getElementById('btn-toggle-view');
+  if (btn) btn.style.display = window.innerWidth <= 900 ? 'block' : 'none';
+}
+window.addEventListener('resize', verificarViewMobile);
+window.addEventListener('load', verificarViewMobile);
 let consultasSemana = [];
 
 function inicioSemana(offset) {
@@ -2173,19 +2233,62 @@ function irParaHojeSemana() {
 
 async function renderGradeSemanal() {
   if (!clinicaId) return;
+  verificarViewMobile();
   const wrap = document.getElementById('grade-semanal-wrap');
   wrap.innerHTML = '<div class="semana-loading"><div class="loading-spinner"></div>Carregando...</div>';
 
   const seg = inicioSemana(semanaOffset);
   const dom = new Date(seg); dom.setDate(seg.getDate() + 6); dom.setHours(23,59,59,999);
 
-  // Buscar clínica para pegar horários
   const { data: clinica } = await db.from('clinicas').select('horario_inicio,horario_fim,intervalo_consulta,horarios_por_dia,dias_atendimento').eq('id', clinicaId).single();
-
-  // Buscar consultas da semana
   const { data: consultas } = await db.from('consultas').select('*, pacientes(nome)').eq('clinica_id', clinicaId).gte('data_hora', seg.toISOString()).lte('data_hora', dom.toISOString()).order('data_hora');
   consultasSemana = consultas || [];
 
+  const fmtDia = d => d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+  document.getElementById('semana-periodo-label').textContent = `${fmtDia(seg)} – ${fmtDia(dom)}`;
+  document.getElementById('agend-periodo').textContent = `${fmtDia(seg)} – ${fmtDia(dom)}`;
+
+  // MODO LISTA (mobile)
+  if (viewAgendMode === 'lista') {
+    const NOMES_FULL = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const stLabel = { agendado:'Agendado', confirmado:'Confirmado', aguardando:'Aguardando', atendido:'Atendido', cancelado:'Cancelado' };
+    const stClass = { agendado:'status-agendado', confirmado:'status-confirmado', aguardando:'status-aguardando', atendido:'status-atendido', cancelado:'status-cancelado' };
+    let html = '';
+    for (let d = 0; d < 7; d++) {
+      const data = new Date(seg); data.setDate(seg.getDate() + d);
+      const dataLocal = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
+      const isHoje = data.getTime() === hoje.getTime();
+      const consultasDia = consultasSemana.filter(c => {
+        const cd = new Date(c.data_hora);
+        return `${cd.getFullYear()}-${String(cd.getMonth()+1).padStart(2,'0')}-${String(cd.getDate()).padStart(2,'0')}` === dataLocal;
+      });
+      if (!consultasDia.length && !isHoje) continue;
+      html += `<div class="lista-agend-dia">
+        <div class="lista-agend-dia-titulo ${isHoje?'hoje-label':''}">${NOMES_FULL[data.getDay()]} — ${data.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})}</div>`;
+      if (!consultasDia.length) {
+        html += `<div style="font-size:13px;color:var(--cinza-medio);padding:8px 0">Nenhum agendamento</div>`;
+      } else {
+        html += consultasDia.map(c => {
+          const hora = `${String(new Date(c.data_hora).getHours()).padStart(2,'0')}:${String(new Date(c.data_hora).getMinutes()).padStart(2,'0')}`;
+          return `<div class="lista-agend-item" onclick="abrirFicha('${c.paciente_id}')">
+            <span class="lista-agend-hora">${hora}</span>
+            <div class="lista-agend-info">
+              <div class="lista-agend-nome">${c.pacientes?.nome||'—'}</div>
+              <div class="lista-agend-queixa">${c.queixa||'—'}</div>
+            </div>
+            <span class="status-pill ${stClass[c.status]||'status-agendado'}">${stLabel[c.status]||c.status}</span>
+          </div>`;
+        }).join('');
+      }
+      html += '</div>';
+    }
+    if (!html) html = '<div class="empty">Nenhum agendamento nessa semana</div>';
+    wrap.innerHTML = html;
+    return;
+  }
+
+  // MODO GRADE (desktop)
   // Definir slots de horário
   const inicio = clinica?.horario_inicio?.substring(0,5) || '08:00';
   const fim = clinica?.horario_fim?.substring(0,5) || '18:00';
@@ -2209,11 +2312,6 @@ async function renderGradeSemanal() {
   const DIAS_SEMANA = ['seg','ter','qua','qui','sex','sab','dom'];
   const NOMES = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
   const hoje = new Date(); hoje.setHours(0,0,0,0);
-
-  // Label do período
-  const fmtDia = d => d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
-  document.getElementById('semana-periodo-label').textContent = `${fmtDia(seg)} – ${fmtDia(dom)}`;
-  document.getElementById('agend-periodo').textContent = `${fmtDia(seg)} – ${fmtDia(dom)}`;
 
   // Construir HTML
   let html = '<div class="grade-semanal">';
