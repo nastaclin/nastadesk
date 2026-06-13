@@ -1,0 +1,5 @@
+# Caddy gera o certificado HTTPS sozinho para o seu domínio.
+# Não precisa editar nada aqui — ele lê o domínio do arquivo .env.
+{$DOMINIO} {
+    reverse_proxy evolution-api:8080
+}
