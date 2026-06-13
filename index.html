@@ -479,6 +479,55 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .agend-pill.remarcado { background: #EFE4FB; color: #7B5CF0; }
 .semana-loading { text-align: center; padding: 60px; color: var(--cinza-medio); }
 
+/* ===== WHATSAPP / CONVERSAS ===== */
+.wpp-layout { display: grid; grid-template-columns: 340px 1fr; gap: 16px; height: calc(100vh - 170px); min-height: 460px; }
+.wpp-lista-card, .wpp-chat-card { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio); box-shadow: var(--sombra); display: flex; flex-direction: column; overflow: hidden; }
+.wpp-lista-busca { padding: 12px 14px; border-bottom: 1px solid var(--cinza-claro); }
+.wpp-lista { flex: 1; overflow-y: auto; }
+.wpp-conv { display: flex; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--cinza-claro); cursor: pointer; transition: background .15s; align-items: center; }
+.wpp-conv:hover { background: var(--verde-suave); }
+.wpp-conv.ativa { background: var(--verde-claro); }
+.wpp-conv-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--verde-medio); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; }
+.wpp-conv-info { flex: 1; min-width: 0; }
+.wpp-conv-topo { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.wpp-conv-nome { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wpp-conv-hora { font-size: 11px; color: var(--cinza-medio); flex-shrink: 0; }
+.wpp-conv-prev { font-size: 12.5px; color: var(--cinza-medio); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.wpp-conv-tags { display: flex; gap: 5px; align-items: center; margin-top: 4px; }
+.wpp-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 1px 6px; border-radius: 5px; }
+.wpp-tag-lead { background: #E4EBFB; color: var(--azul); }
+.wpp-tag-paciente { background: var(--verde-claro); color: var(--verde); }
+.wpp-tag-bot { background: #EFE4FB; color: #7B5CF0; }
+.wpp-tag-humano { background: #FBE9D7; color: var(--laranja); }
+.wpp-conv-badge { background: #25D366; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; margin-left: auto; }
+.wpp-chat-topo { padding: 14px 18px; border-bottom: 1px solid var(--cinza-claro); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.wpp-chat-msgs { flex: 1; overflow-y: auto; padding: 18px; background: var(--creme); display: flex; flex-direction: column; gap: 8px; }
+.wpp-bolha { max-width: 74%; padding: 9px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; box-shadow: var(--sombra); }
+.wpp-bolha-entrada { background: white; align-self: flex-start; border-bottom-left-radius: 4px; }
+.wpp-bolha-saida { background: #D9FDD3; align-self: flex-end; border-bottom-right-radius: 4px; }
+.wpp-bolha-meta { font-size: 10px; color: var(--cinza-medio); margin-top: 3px; text-align: right; }
+.wpp-bolha-autor { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 2px; }
+.wpp-autor-bot { color: #7B5CF0; }
+.wpp-autor-atendente { color: var(--verde); }
+.wpp-chat-input { padding: 12px 14px; border-top: 1px solid var(--cinza-claro); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+.wpp-chat-input textarea { flex: 1; border: 1.5px solid var(--cinza-claro); border-radius: 20px; padding: 10px 16px; font-size: 14px; resize: none; outline: none; max-height: 100px; }
+.wpp-chat-input textarea:focus { border-color: var(--verde-medio); box-shadow: var(--anel); }
+.wpp-chat-vazio { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--cinza-medio); gap: 12px; text-align: center; padding: 40px; font-size: 14px; }
+.wpp-bot-toggle { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--cinza-medio); cursor: pointer; white-space: nowrap; }
+.wpp-bot-toggle input { width: 15px; height: 15px; accent-color: var(--verde); }
+.wpp-status-conexao { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 5px 13px; border-radius: 20px; white-space: nowrap; }
+.wpp-status-conectado { background: var(--verde-claro); color: var(--verde); }
+.wpp-status-desconectado { background: #FAE3E3; color: var(--vermelho); }
+.wpp-status-conectando { background: #FBF0D4; color: #A0680A; }
+.wpp-qr-box { text-align: center; padding: 20px 10px; background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: var(--raio-m); margin-bottom: 16px; }
+.wpp-qr-box img { width: 240px; height: 240px; max-width: 100%; border: 1px solid var(--cinza-claro); border-radius: 12px; background: white; }
+@media (max-width: 900px) {
+  .wpp-layout { grid-template-columns: 1fr; height: auto; }
+  .wpp-chat-card { display: none; }
+  .wpp-layout.ver-chat .wpp-lista-card { display: none; }
+  .wpp-layout.ver-chat .wpp-chat-card { display: flex; height: calc(100vh - 140px); }
+}
+
 /* ===== MODAL ===== */
 .overlay { position: fixed; inset: 0; background: rgba(10,25,18,0.45); backdrop-filter: blur(2px); z-index: 500; display: none; align-items: center; justify-content: center; padding: 16px; }
 .overlay.aberto { display: flex; }
@@ -777,6 +826,10 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>Lembretes
         <span class="nav-badge" id="lem-badge" style="display:none">0</span>
       </div>
+      <div class="nav-item" data-sec="conversas" onclick="irPara('conversas')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 11-4.5-7.794M21 5l-9 9-3-3"/></svg>Conversas
+        <span class="nav-badge" id="conv-badge" style="display:none;background:#25D366">0</span>
+      </div>
       <div class="nav-label">Gestão</div>
       <div class="nav-item" data-sec="pacientes" onclick="irPara('pacientes')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M16 11a4 4 0 100-8"/></svg>Pacientes
@@ -916,6 +969,47 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div id="lem-conteudo"><div class="loading"><div class="loading-spinner"></div>Carregando lembretes...</div></div>
     </section>
 
+    <!-- CONVERSAS / WHATSAPP -->
+    <section id="sec-conversas" class="sec">
+      <div class="topbar">
+        <div class="topbar-titulo"><h1>Conversas WhatsApp</h1><p>Inbox do chatbot e atendimento da clínica</p></div>
+        <div class="topbar-acoes">
+          <span class="wpp-status-conexao wpp-status-desconectado" id="wpp-status-chip">● Verificando...</span>
+          <button class="btn btn-secundario" onclick="cfgTabIrPara('whatsapp')">Configurar WhatsApp</button>
+        </div>
+      </div>
+      <div class="wpp-layout" id="wpp-layout">
+        <div class="wpp-lista-card">
+          <div class="wpp-lista-busca"><input type="text" class="busca-input" id="wpp-busca" placeholder="Buscar conversa..." oninput="filtrarConversas(this.value)"></div>
+          <div class="wpp-lista" id="wpp-lista"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
+        </div>
+        <div class="wpp-chat-card">
+          <div id="wpp-chat-vazio" class="wpp-chat-vazio">
+            <svg width="46" height="46" fill="none" viewBox="0 0 24 24" stroke="#C2CBC4" stroke-width="1.3"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Selecione uma conversa para ver as mensagens.
+          </div>
+          <div id="wpp-chat" style="display:none; flex-direction:column; height:100%; min-height:0">
+            <div class="wpp-chat-topo">
+              <button class="btn-icone" id="wpp-voltar" onclick="fecharChat()" style="display:none; font-size:18px">‹</button>
+              <div class="wpp-conv-avatar" id="wpp-chat-avatar">—</div>
+              <div style="flex:1; min-width:0">
+                <div class="wpp-conv-nome" id="wpp-chat-nome">—</div>
+                <div class="wpp-conv-prev" id="wpp-chat-tel">—</div>
+              </div>
+              <label class="wpp-bot-toggle"><input type="checkbox" id="wpp-chat-bot" onchange="toggleBotConversa()"> Bot ativo</label>
+            </div>
+            <div class="wpp-chat-msgs" id="wpp-chat-msgs"></div>
+            <div class="wpp-chat-input">
+              <textarea id="wpp-chat-texto" rows="1" placeholder="Digite uma mensagem..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMsgInbox()}"></textarea>
+              <button class="btn-wpp" onclick="enviarMsgInbox()" title="Enviar" style="border-radius:50%; width:42px; height:42px; padding:0; flex-shrink:0">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- FINANCEIRO -->
     <section id="sec-financeiro" class="sec">
       <div class="topbar">
@@ -1045,6 +1139,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--cinza-claro);padding-bottom:0;overflow-x:auto">
         <div class="cfg-tab ativa" data-cfg="mensagens" onclick="cfgTab('mensagens',this)">Mensagens</div>
         <div class="cfg-tab" data-cfg="online" onclick="cfgTab('online',this)">Agendamento online</div>
+        <div class="cfg-tab" data-cfg="whatsapp" onclick="cfgTab('whatsapp',this)">WhatsApp & Chatbot</div>
         <div class="cfg-tab" data-cfg="clinica" onclick="cfgTab('clinica',this)">Clínica</div>
         <div class="cfg-tab" data-cfg="agenda" onclick="cfgTab('agenda',this)">Agenda</div>
       </div>
@@ -1122,6 +1217,41 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           <div class="card-titulo" style="margin:20px 0 16px;font-size:13px">Horários por dia</div>
           <div id="cfg-dias-horarios"></div>
           <button class="btn btn-primario" style="margin-top:8px" onclick="salvarHorarios()">Salvar horários</button>
+        </div>
+      </div>
+
+      <!-- ABA WHATSAPP & CHATBOT -->
+      <div id="cfg-tab-whatsapp" style="display:none;max-width:620px">
+        <div class="card" style="padding:28px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:10px;flex-wrap:wrap">
+            <div class="card-titulo">Conexão do WhatsApp</div>
+            <span class="wpp-status-conexao wpp-status-desconectado" id="cfg-wpp-status">● Desconectado</span>
+          </div>
+          <div class="card-sub" style="margin-bottom:18px">Conecte o WhatsApp da sua clínica escaneando o QR Code — igual ao WhatsApp Web. O número continua funcionando normalmente no celular.</div>
+          <div id="cfg-wpp-qr" class="wpp-qr-box" style="display:none">
+            <img id="cfg-wpp-qr-img" alt="QR Code do WhatsApp">
+            <div style="font-size:13px;color:var(--cinza-medio);margin-top:10px;line-height:1.6">No celular: WhatsApp → <strong>Aparelhos conectados</strong> → <strong>Conectar aparelho</strong> → escaneie o código acima.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primario" id="cfg-wpp-conectar" onclick="conectarWhatsapp()">Conectar WhatsApp</button>
+            <button class="btn btn-secundario" onclick="atualizarStatusWhatsapp()">Atualizar status</button>
+            <button class="btn btn-perigo" id="cfg-wpp-desconectar" onclick="desconectarWhatsapp()" style="display:none">Desconectar</button>
+          </div>
+        </div>
+        <div class="card" style="padding:28px">
+          <div class="card-titulo" style="margin-bottom:6px">Chatbot</div>
+          <div class="card-sub" style="margin-bottom:18px">O assistente virtual responde dúvidas, agenda consultas e capta novos pacientes automaticamente.</div>
+          <div class="toggle-row">
+            <div class="toggle-info"><h4>Chatbot ativo</h4><p>Quando desligado, todas as mensagens vão direto para o inbox, sem resposta automática.</p></div>
+            <label class="switch"><input type="checkbox" id="cfg-bot-ativo"><span class="switch-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><h4>Lembretes automáticos</h4><p>Envia lembrete de véspera pelo WhatsApp e pede confirmação — a resposta atualiza a agenda sozinha.</p></div>
+            <label class="switch"><input type="checkbox" id="cfg-lembrete-auto"><span class="switch-slider"></span></label>
+          </div>
+          <div class="config-campo" style="margin-top:16px"><label>Mensagem de boas-vindas</label><textarea id="cfg-bot-boasvindas" placeholder="Olá! 👋 Bem-vindo(a) à {clinica}..."></textarea><div class="cfg-vars">Variável: <code>{clinica}</code></div></div>
+          <div class="config-campo"><label>Informações para o bot responder (FAQ)</label><textarea id="cfg-bot-faq" style="height:140px" placeholder="Ex: Aceitamos os convênios Unimed e Bradesco. Estacionamento gratuito no local. Para a primeira consulta, traga exames anteriores. Atendemos crianças a partir de 5 anos..."></textarea><div class="cfg-vars">Quanto mais detalhes, melhor o bot responde. Horários, valores e endereço já são usados automaticamente.</div></div>
+          <button class="btn btn-primario" onclick="salvarConfigBot()">Salvar chatbot</button>
         </div>
       </div>
     </section>
@@ -1468,6 +1598,10 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 <!-- MENU MAIS (MOBILE) -->
 <div class="menu-mais-overlay" id="menu-mais-overlay" onclick="fecharMenuMais()"></div>
 <div class="menu-mais" id="menu-mais">
+  <div class="menu-mais-item" onclick="fecharMenuMais();irPara('conversas')">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 11-4.5-7.794M21 5l-9 9-3-3"/></svg>Conversas
+    <span id="conv-badge-mais" style="display:none;background:#25D366;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;margin-left:auto"></span>
+  </div>
   <div class="menu-mais-item" onclick="fecharMenuMais();irPara('relatorio')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Relatório
   </div>
@@ -1842,6 +1976,8 @@ async function carregarDados(user) {
   carregarConfigs();
   verificarNotificacoes();
   atualizarBadgeLembretes();
+  carregarConversas();
+  atualizarStatusWhatsapp();
 
   // Realtime — apenas eventos da própria clínica
   if (clinicaId) {
@@ -1856,6 +1992,12 @@ async function carregarDados(user) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'alertas', filter: `clinica_id=eq.${clinicaId}` }, () => {
         carregarAlertas(); verificarNotificacoes();
         if (notifAberto) carregarNotificacoes();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversas', filter: `clinica_id=eq.${clinicaId}` }, () => {
+        carregarConversas();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens', filter: `clinica_id=eq.${clinicaId}` }, (payload) => {
+        if (conversaAtual && payload.new && payload.new.conversa_id === conversaAtual.id) carregarMensagens(conversaAtual.id);
       })
       .subscribe();
   }
@@ -2905,8 +3047,9 @@ async function enviarLembrete(consultaId, tipo) {
 
 // ===== CONFIGURAÇÕES =====
 function cfgTab(nome, el) {
-  ['mensagens','online','clinica','agenda'].forEach(t => {
-    document.getElementById(`cfg-tab-${t}`).style.display = t===nome ? 'block' : 'none';
+  ['mensagens','online','whatsapp','clinica','agenda'].forEach(t => {
+    const tab = document.getElementById(`cfg-tab-${t}`);
+    if (tab) tab.style.display = t===nome ? 'block' : 'none';
   });
   document.querySelectorAll('.cfg-tab').forEach(t => t.classList.remove('ativa'));
   if (el) el.classList.add('ativa');
@@ -2914,6 +3057,7 @@ function cfgTab(nome, el) {
     const tabEl = document.querySelector(`.cfg-tab[data-cfg="${nome}"]`);
     if (tabEl) tabEl.classList.add('ativa');
   }
+  if (nome === 'whatsapp') atualizarStatusWhatsapp();
 }
 
 function cfgTabIrPara(nome) {
@@ -2929,6 +3073,10 @@ async function carregarConfigs() {
     document.getElementById('cfg-confirmacao').value = data.msg_confirmacao||'';
     document.getElementById('cfg-24h').value = data.msg_lembrete_24h||'';
     document.getElementById('cfg-1h').value = data.msg_lembrete_1h||'';
+    document.getElementById('cfg-bot-ativo').checked = data.bot_ativo !== false;
+    document.getElementById('cfg-lembrete-auto').checked = data.lembrete_auto !== false;
+    document.getElementById('cfg-bot-boasvindas').value = data.bot_boasvindas||'';
+    document.getElementById('cfg-bot-faq').value = data.bot_faq||'';
   }
   const cl = await carregarInfoClinica();
   if (cl) {
@@ -3239,6 +3387,7 @@ function irPara(sec) {
   if (sec === 'perfil') carregarPerfil();
   if (sec === 'financeiro') carregarFinanceiro();
   if (sec === 'lembretes') carregarLembretes();
+  if (sec === 'conversas') carregarConversas();
   if (sec === 'configuracoes') carregarConfigs();
   window.scrollTo({ top: 0 });
 }
@@ -3414,6 +3563,194 @@ function toast(msg) {
   document.getElementById('toast-msg').textContent = msg;
   document.getElementById('toast').classList.add('visivel');
   toastTimer = setTimeout(()=>document.getElementById('toast').classList.remove('visivel'), 3200);
+}
+
+// ===== WHATSAPP / CONVERSAS (INBOX) =====
+let conversaAtual = null;
+let conversasCache = [];
+let wppStatusTimer = null;
+
+async function carregarConversas() {
+  if (!clinicaId) return;
+  const { data } = await db.from('conversas').select('*').eq('clinica_id', clinicaId).order('ultima_msg_em', { ascending: false });
+  conversasCache = data || [];
+  if (secAtiva === 'conversas') renderConversas(conversasCache);
+  // mantém a conversa aberta sincronizada
+  if (conversaAtual) {
+    const atual = conversasCache.find(c => c.id === conversaAtual.id);
+    if (atual) { conversaAtual = atual; document.getElementById('wpp-chat-bot').checked = atual.bot_ativo; }
+  }
+  atualizarBadgeConversas();
+}
+
+function atualizarBadgeConversas() {
+  const total = conversasCache.reduce((s, c) => s + (c.nao_lidas || 0), 0);
+  ['conv-badge', 'conv-badge-mais'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (total > 0) { el.textContent = total > 99 ? '99+' : total; el.style.display = 'flex'; }
+    else el.style.display = 'none';
+  });
+}
+
+function filtrarConversas(termo) {
+  const t = (termo || '').toLowerCase();
+  renderConversas(conversasCache.filter(c => (c.nome_contato || '').toLowerCase().includes(t) || (c.telefone || '').includes(t)));
+}
+
+function renderConversas(lista) {
+  const el = document.getElementById('wpp-lista');
+  if (!el) return;
+  if (!lista.length) { el.innerHTML = emptyState('Nenhuma conversa ainda.<br>Quando alguém chamar no WhatsApp, aparece aqui.', 'sino'); return; }
+  el.innerHTML = lista.map(c => {
+    const tag = c.tipo === 'paciente' ? '<span class="wpp-tag wpp-tag-paciente">paciente</span>' : '<span class="wpp-tag wpp-tag-lead">lead</span>';
+    const botTag = c.bot_ativo ? '<span class="wpp-tag wpp-tag-bot">🤖 bot</span>' : '<span class="wpp-tag wpp-tag-humano">atendente</span>';
+    const hora = c.ultima_msg_em ? new Date(c.ultima_msg_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    const badge = (c.nao_lidas || 0) > 0 ? `<span class="wpp-conv-badge">${c.nao_lidas}</span>` : '';
+    return `<div class="wpp-conv ${conversaAtual && conversaAtual.id === c.id ? 'ativa' : ''}" onclick="abrirConversa('${c.id}')">
+      <div class="wpp-conv-avatar">${iniciaisDe(c.nome_contato || c.telefone)}</div>
+      <div class="wpp-conv-info">
+        <div class="wpp-conv-topo"><span class="wpp-conv-nome">${esc(c.nome_contato || ('+' + c.telefone))}</span><span class="wpp-conv-hora">${hora}</span></div>
+        <div class="wpp-conv-prev">${esc(c.ultima_msg || '')}</div>
+        <div class="wpp-conv-tags">${tag}${botTag}${badge}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function abrirConversa(id) {
+  const c = conversasCache.find(x => x.id === id);
+  if (!c) return;
+  conversaAtual = c;
+  document.getElementById('wpp-chat-vazio').style.display = 'none';
+  document.getElementById('wpp-chat').style.display = 'flex';
+  document.getElementById('wpp-chat-avatar').textContent = iniciaisDe(c.nome_contato || c.telefone);
+  document.getElementById('wpp-chat-nome').textContent = c.nome_contato || ('+' + c.telefone);
+  document.getElementById('wpp-chat-tel').textContent = '+' + c.telefone;
+  document.getElementById('wpp-chat-bot').checked = c.bot_ativo;
+  document.getElementById('wpp-layout').classList.add('ver-chat');
+  document.getElementById('wpp-voltar').style.display = window.innerWidth <= 900 ? 'flex' : 'none';
+  renderConversas(conversasCache);
+  if ((c.nao_lidas || 0) > 0) { await db.from('conversas').update({ nao_lidas: 0 }).eq('id', id); c.nao_lidas = 0; atualizarBadgeConversas(); }
+  await carregarMensagens(id);
+}
+
+function fecharChat() {
+  document.getElementById('wpp-layout').classList.remove('ver-chat');
+  conversaAtual = null;
+  document.getElementById('wpp-chat').style.display = 'none';
+  document.getElementById('wpp-chat-vazio').style.display = 'flex';
+  renderConversas(conversasCache);
+}
+
+async function carregarMensagens(convId) {
+  const el = document.getElementById('wpp-chat-msgs');
+  const { data } = await db.from('mensagens').select('*').eq('conversa_id', convId).order('criado_em');
+  el.innerHTML = (data || []).map(m => {
+    const saida = m.direcao === 'saida';
+    const autorLabel = m.autor === 'bot' ? '<div class="wpp-bolha-autor wpp-autor-bot">🤖 Assistente</div>'
+      : m.autor === 'atendente' ? '<div class="wpp-bolha-autor wpp-autor-atendente">Você</div>' : '';
+    const hora = new Date(m.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="wpp-bolha ${saida ? 'wpp-bolha-saida' : 'wpp-bolha-entrada'}">${saida ? autorLabel : ''}${esc(m.conteudo)}<div class="wpp-bolha-meta">${hora}</div></div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function enviarMsgInbox() {
+  if (!conversaAtual) return;
+  const ta = document.getElementById('wpp-chat-texto');
+  const texto = ta.value.trim();
+  if (!texto) return;
+  ta.value = '';
+  try {
+    const { data, error } = await db.functions.invoke('whatsapp-enviar', { body: { conversa_id: conversaAtual.id, texto, pausar_bot: !conversaAtual.bot_ativo } });
+    if (error || (data && data.erro)) { toast((data && data.erro) || 'Erro ao enviar. O WhatsApp está conectado?'); ta.value = texto; return; }
+    await carregarMensagens(conversaAtual.id);
+  } catch (e) { toast('Erro ao enviar'); ta.value = texto; }
+}
+
+async function toggleBotConversa() {
+  if (!conversaAtual) return;
+  const ativo = document.getElementById('wpp-chat-bot').checked;
+  await db.from('conversas').update({ bot_ativo: ativo, bot_pausado_ate: null }).eq('id', conversaAtual.id);
+  conversaAtual.bot_ativo = ativo;
+  const idx = conversasCache.findIndex(x => x.id === conversaAtual.id);
+  if (idx >= 0) conversasCache[idx].bot_ativo = ativo;
+  renderConversas(conversasCache);
+  toast(ativo ? 'Bot reativado nesta conversa' : 'Bot pausado — você assume o atendimento');
+}
+
+// ----- Conexão WhatsApp -----
+function pintarStatusWpp(status) {
+  const map = { conectado: ['wpp-status-conectado', '● Conectado'], conectando: ['wpp-status-conectando', '● Conectando...'], desconectado: ['wpp-status-desconectado', '● Desconectado'] };
+  const [cls, txt] = map[status] || map.desconectado;
+  ['wpp-status-chip', 'cfg-wpp-status'].forEach(id => {
+    const e = document.getElementById(id);
+    if (e) { e.className = 'wpp-status-conexao ' + cls; e.textContent = txt; }
+  });
+  const desc = document.getElementById('cfg-wpp-desconectar');
+  if (desc) desc.style.display = status === 'conectado' ? 'inline-flex' : 'none';
+  const conn = document.getElementById('cfg-wpp-conectar');
+  if (conn) conn.textContent = status === 'conectado' ? 'Reconectar' : 'Conectar WhatsApp';
+  if (status === 'conectado') { const qr = document.getElementById('cfg-wpp-qr'); if (qr) qr.style.display = 'none'; }
+}
+
+async function atualizarStatusWhatsapp() {
+  if (!clinicaId) return;
+  try {
+    const { data } = await db.functions.invoke('whatsapp-conexao', { body: { acao: 'status' } });
+    if (data && data.status) pintarStatusWpp(data.status);
+  } catch (e) { /* função ainda não publicada — ignora */ }
+}
+
+async function conectarWhatsapp() {
+  const btn = document.getElementById('cfg-wpp-conectar');
+  btn.disabled = true; btn.textContent = 'Gerando QR...';
+  try {
+    const { data, error } = await db.functions.invoke('whatsapp-conexao', { body: { acao: 'conectar' } });
+    if (error || (data && data.erro)) {
+      toast((data && data.erro) || 'Erro ao conectar. Verifique a configuração do servidor WhatsApp.');
+    } else if (data && data.qrcode) {
+      document.getElementById('cfg-wpp-qr-img').src = data.qrcode;
+      document.getElementById('cfg-wpp-qr').style.display = 'block';
+      pintarStatusWpp('conectando');
+      let n = 0;
+      clearInterval(wppStatusTimer);
+      wppStatusTimer = setInterval(async () => {
+        n++;
+        try {
+          const { data: s } = await db.functions.invoke('whatsapp-conexao', { body: { acao: 'status' } });
+          if (s && s.status === 'conectado') { pintarStatusWpp('conectado'); clearInterval(wppStatusTimer); toast('WhatsApp conectado! 🎉'); }
+        } catch (e) {}
+        if (n > 30) clearInterval(wppStatusTimer);
+      }, 4000);
+    }
+  } catch (e) { toast('Erro ao conectar'); }
+  btn.disabled = false;
+  if (btn.textContent === 'Gerando QR...') btn.textContent = 'Conectar WhatsApp';
+}
+
+async function desconectarWhatsapp() {
+  abrirModalConfirm('Desconectar WhatsApp?', 'O chatbot deixará de responder até você reconectar o número.', 'Desconectar', async () => {
+    try { await db.functions.invoke('whatsapp-conexao', { body: { acao: 'desconectar' } }); } catch (e) {}
+    pintarStatusWpp('desconectado');
+    toast('WhatsApp desconectado');
+  });
+}
+
+async function salvarConfigBot() {
+  if (!clinicaId) return;
+  const payload = {
+    clinica_id: clinicaId,
+    bot_ativo: document.getElementById('cfg-bot-ativo').checked,
+    lembrete_auto: document.getElementById('cfg-lembrete-auto').checked,
+    bot_boasvindas: document.getElementById('cfg-bot-boasvindas').value,
+    bot_faq: document.getElementById('cfg-bot-faq').value,
+    atualizado_em: new Date().toISOString(),
+  };
+  const { error } = await db.from('configuracoes').upsert(payload, { onConflict: 'clinica_id' });
+  if (!error) configAtual = Object.assign(configAtual || {}, payload);
+  toast(error ? 'Erro ao salvar' : 'Chatbot salvo ✓');
 }
 
 init();

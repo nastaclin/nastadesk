@@ -1,0 +1,17 @@
+project_id = "zrkadblxozddreiwruhv"
+
+# Webhook chamado pela Evolution API (sem JWT) — seguro pelo token na URL
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+# Cron de lembretes automáticos (chamado pelo pg_cron)
+[functions.lembretes-auto]
+verify_jwt = false
+
+# Gestão da conexão (QR Code) — exige login do painel
+[functions.whatsapp-conexao]
+verify_jwt = true
+
+# Envio pelo inbox — exige login do painel
+[functions.whatsapp-enviar]
+verify_jwt = true

@@ -1,0 +1,83 @@
+# Evolution API — instalação pronta (servidor de WhatsApp do NastaDesk)
+#
+# Este arquivo sobe TUDO que o WhatsApp precisa, com HTTPS automático:
+#   - Evolution API (o servidor que conversa com o WhatsApp)
+#   - PostgreSQL (banco do Evolution)
+#   - Redis (cache do Evolution)
+#   - Caddy (gera o certificado HTTPS sozinho)
+#
+# COMO USAR (num servidor/VPS com Docker instalado):
+#   1) Copie esta pasta inteira para o servidor
+#   2) Renomeie ".env.example" para ".env" e preencha os 3 valores
+#   3) No Caddyfile, nada a fazer (ele lê o domínio do .env)
+#   4) Rode:  docker compose up -d
+#   5) Pronto! Sua URL é https://SEU_DOMINIO e a chave é a do .env
+#
+# Depois, no Supabase (passo 2 do guia), preencha:
+#   EVOLUTION_API_URL = https://SEU_DOMINIO
+#   EVOLUTION_API_KEY = o mesmo valor de EVOLUTION_API_KEY do .env
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - evolution-api
+
+  evolution-api:
+    image: atendai/evolution-api:v2.1.1
+    restart: always
+    env_file: .env
+    environment:
+      - SERVER_URL=https://${DOMINIO}
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://evolution:${DB_PASSWORD}@postgres:5432/evolution
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution
+      - DATABASE_SAVE_DATA_INSTANCE=true
+      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
+      - DATABASE_SAVE_MESSAGE_UPDATE=true
+      - DATABASE_SAVE_DATA_CONTACTS=true
+      - DATABASE_SAVE_DATA_CHATS=true
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://redis:6379/6
+      - CACHE_REDIS_PREFIX_KEY=evolution
+      - CACHE_REDIS_SAVE_INSTANCES=true
+      - CACHE_LOCAL_ENABLED=false
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - evolution_instances:/evolution/instances
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=evolution
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=evolution
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+
+volumes:
+  caddy_data:
+  caddy_config:
+  evolution_instances:
+  postgres_data:
+  redis_data:
