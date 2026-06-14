@@ -504,6 +504,20 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .pacote-tag-pendente { background: #FBF0D4; color: #A0680A; }
 .pacote-tag-vencido { background: #FAE3E3; color: var(--vermelho); }
 
+/* ===== BUSCA DE PACIENTE (agendamento) ===== */
+.pac-resultados { margin-top: 6px; border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); overflow: hidden; max-height: 230px; overflow-y: auto; }
+.pac-resultados:empty { display: none; }
+.pac-res-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--cinza-claro); transition: background .12s; }
+.pac-res-item:last-child { border-bottom: none; }
+.pac-res-item:hover { background: var(--verde-suave); }
+.pac-res-nome { font-size: 14px; font-weight: 500; color: var(--cinza-escuro); }
+.pac-res-sub { font-size: 12px; color: var(--cinza-medio); margin-top: 1px; }
+.pac-res-novo { padding: 10px 12px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--verde); background: var(--verde-suave); transition: background .12s; }
+.pac-res-novo:hover { background: var(--verde-claro); }
+.pac-selecionado { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: var(--raio-p); padding: 11px 13px; }
+.pac-selecionado-nome { font-size: 14px; font-weight: 600; color: var(--cinza-escuro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pac-selecionado-sub { font-size: 12px; color: var(--cinza-medio); margin-top: 1px; }
+
 /* ===== WHATSAPP / CONVERSAS ===== */
 .wpp-layout { display: grid; grid-template-columns: 340px 1fr; gap: 16px; height: calc(100vh - 170px); min-height: 460px; }
 .wpp-lista-card, .wpp-chat-card { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio); box-shadow: var(--sombra); display: flex; flex-direction: column; overflow: hidden; }
@@ -1089,7 +1103,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       </div>
       <div class="card">
         <div style="padding:14px 22px;border-bottom:1px solid var(--cinza-claro)">
-          <input type="text" id="busca-paciente" class="busca-input" placeholder="Buscar paciente por nome ou WhatsApp..." oninput="buscarPaciente(this.value)">
+          <input type="text" id="busca-paciente" class="busca-input" placeholder="Buscar por nome, CPF ou WhatsApp..." oninput="buscarPaciente(this.value)">
         </div>
         <div class="tabs">
           <div class="tab ativa" onclick="filtrarPacientes('todos',this)">Todos</div>
@@ -1373,6 +1387,10 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <input class="ficha-campo-input" id="fi-nome" placeholder="Nome do paciente" oninput="fichaEditado()">
           </div>
           <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">CPF</div>
+            <input class="ficha-campo-input" id="fi-cpf" placeholder="000.000.000-00" inputmode="numeric" oninput="mascararCPF(this);fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel">
             <div class="ficha-campo-label">WhatsApp</div>
             <input class="ficha-campo-input" id="fi-wpp" placeholder="11999990001" oninput="fichaEditado()">
           </div>
@@ -1474,12 +1492,25 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
   <div class="modal">
     <div class="modal-header"><div class="modal-titulo">Nova consulta</div><button class="modal-fechar" onclick="fecharModal()">×</button></div>
     <div id="novo-pacote-hint" style="display:none;background:var(--verde-suave);border:1px solid var(--verde-claro);border-radius:var(--raio-p);padding:10px 13px;margin-bottom:14px;font-size:13px;color:var(--verde)">📦 Esta sessão será descontada do pacote <strong id="novo-pacote-nome">—</strong>.</div>
-    <div class="config-campo"><label>Nome do paciente</label><input type="text" id="novo-nome" placeholder="Ex: Maria Silva" list="lista-nomes-pacientes"><datalist id="lista-nomes-pacientes"></datalist></div>
+    <div class="config-campo" id="novo-pac-busca-wrap">
+      <label>Paciente</label>
+      <input type="text" id="novo-busca-paciente" class="busca-input" placeholder="Buscar por nome, CPF ou WhatsApp..." oninput="buscarPacienteConsulta(this.value)" autocomplete="off">
+      <div id="novo-pac-resultados" class="pac-resultados"></div>
+    </div>
+    <div class="config-campo" id="novo-pac-selecionado-wrap" style="display:none">
+      <label>Paciente</label>
+      <div class="pac-selecionado">
+        <div style="min-width:0">
+          <div class="pac-selecionado-nome" id="novo-pac-sel-nome">—</div>
+          <div class="pac-selecionado-sub" id="novo-pac-sel-sub">—</div>
+        </div>
+        <button type="button" class="pacote-btn" onclick="trocarPacienteConsulta()">Trocar</button>
+      </div>
+    </div>
     <div class="modal-grid">
       <div class="config-campo"><label>Data</label><input type="date" id="novo-data"></div>
       <div class="config-campo"><label>Horário</label><input type="time" id="novo-hora" value="09:00"></div>
     </div>
-    <div class="config-campo"><label>WhatsApp do paciente</label><input type="text" id="novo-wpp" placeholder="Ex: 11999990001"></div>
     <div class="config-campo"><label>Queixa principal</label><input type="text" id="novo-queixa" placeholder="Ex: Dor no joelho direito"></div>
     <div class="config-campo"><label>Valor da consulta (R$)</label><input type="number" id="novo-valor" placeholder="Valor padrão da clínica" min="0" step="0.01"></div>
     <div class="modal-acoes">
@@ -1495,10 +1526,13 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="modal-header"><div><div class="modal-titulo">Novo paciente</div><div class="modal-sub">Cadastre sem precisar agendar uma consulta</div></div><button class="modal-fechar" onclick="fecharModalPaciente()">×</button></div>
     <div class="config-campo"><label>Nome completo</label><input type="text" id="np-nome" placeholder="Ex: Maria Silva"></div>
     <div class="modal-grid">
+      <div class="config-campo"><label>CPF</label><input type="text" id="np-cpf" placeholder="000.000.000-00" inputmode="numeric" oninput="mascararCPF(this)"></div>
       <div class="config-campo"><label>WhatsApp</label><input type="text" id="np-wpp" placeholder="11999990001"></div>
-      <div class="config-campo"><label>Data de nascimento</label><input type="date" id="np-nasc"></div>
     </div>
-    <div class="config-campo"><label>E-mail (opcional)</label><input type="email" id="np-email" placeholder="email@exemplo.com"></div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Data de nascimento</label><input type="date" id="np-nasc"></div>
+      <div class="config-campo"><label>E-mail (opcional)</label><input type="email" id="np-email" placeholder="email@exemplo.com"></div>
+    </div>
     <div class="modal-grid">
       <div class="config-campo"><label>Convênio (opcional)</label><input type="text" id="np-convenio" placeholder="Ex: Unimed"></div>
       <div class="config-campo"><label>Profissão (opcional)</label><input type="text" id="np-profissao" placeholder="Ex: Professor"></div>
@@ -2348,15 +2382,16 @@ async function carregarPacientes() {
   const { data } = await db.from('pacientes').select('*').eq('clinica_id',clinicaId).order('nome');
   todosOsPacientes = data || [];
   document.getElementById('total-pacientes').textContent = `${todosOsPacientes.length} paciente${todosOsPacientes.length!==1?'s':''} cadastrado${todosOsPacientes.length!==1?'s':''}`;
-  const dl = document.getElementById('lista-nomes-pacientes');
-  if (dl) dl.innerHTML = todosOsPacientes.map(p => `<option value="${esc(p.nome)}">`).join('');
   renderPacientes(todosOsPacientes);
 }
 
 function buscarPaciente(termo) {
   const t = termo.toLowerCase().trim();
+  const tDig = t.replace(/\D/g,'');
   const filtrados = todosOsPacientes.filter(p =>
-    (p.nome || '').toLowerCase().includes(t) || (p.whatsapp || '').replace(/\D/g,'').includes(t.replace(/\D/g,'') || '§')
+    (p.nome || '').toLowerCase().includes(t) ||
+    (tDig && (p.whatsapp || '').replace(/\D/g,'').includes(tDig)) ||
+    (tDig && (p.cpf || '').replace(/\D/g,'').includes(tDig))
   );
   renderPacientes(filtrados);
 }
@@ -2368,7 +2403,7 @@ function renderPacientes(lista) {
     const ultima = p.ultima_consulta ? new Date(`${p.ultima_consulta}T12:00:00`).toLocaleDateString('pt-BR') : '—';
     return `<div class="paciente-row" onclick="abrirFicha('${p.id}')">
       <div class="avatar ${CORES[i%CORES.length]}">${esc(iniciaisDe(p.nome))}</div>
-      <div class="paciente-dados"><div class="paciente-nome">${esc(p.nome)}</div><div class="paciente-info">${esc(p.queixa_principal||'—')} · ${p.total_consultas||0} consulta${p.total_consultas!==1?'s':''}${p.convenio?` · ${esc(p.convenio)}`:''}</div></div>
+      <div class="paciente-dados"><div class="paciente-nome">${esc(p.nome)}</div><div class="paciente-info">${p.cpf?`CPF ${formatarCPF(p.cpf)} · `:''}${esc(p.queixa_principal||'—')} · ${p.total_consultas||0} consulta${p.total_consultas!==1?'s':''}${p.convenio?` · ${esc(p.convenio)}`:''}</div></div>
       <div style="text-align:right;font-size:12px;color:var(--cinza-medio)">${ultima}<br><span style="color:${p.status==='ativo'?'var(--verde)':'var(--vermelho)'};font-size:11px">${p.status==='ativo'?'Ativo':'Inativo'}</span></div>
     </div>`;
   }).join('');
@@ -2381,8 +2416,10 @@ function filtrarPacientes(status, el) {
 }
 
 // Modal novo paciente
-function abrirModalPaciente() {
-  ['np-nome','np-wpp','np-nasc','np-email','np-convenio','np-profissao','np-queixa'].forEach(id => document.getElementById(id).value = '');
+let pacienteParaConsulta = false;
+function abrirModalPaciente(prefillNome) {
+  ['np-nome','np-cpf','np-wpp','np-nasc','np-email','np-convenio','np-profissao','np-queixa'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  if (prefillNome) document.getElementById('np-nome').value = prefillNome;
   document.getElementById('modal-paciente').classList.add('aberto');
 }
 function fecharModalPaciente() {
@@ -2392,10 +2429,12 @@ async function salvarNovoPaciente() {
   if (!clinicaId) return;
   const nome = document.getElementById('np-nome').value.trim();
   const whatsapp = document.getElementById('np-wpp').value.trim();
+  const cpf = normalizarCPF(document.getElementById('np-cpf').value);
   if (!nome) { toast('Informe o nome do paciente'); return; }
   const payload = {
     clinica_id: clinicaId,
     nome,
+    cpf: cpf || null,
     whatsapp,
     data_nascimento: document.getElementById('np-nasc').value || null,
     email: document.getElementById('np-email').value.trim() || null,
@@ -2404,11 +2443,21 @@ async function salvarNovoPaciente() {
     queixa_principal: document.getElementById('np-queixa').value.trim() || null,
   };
   const { data: novo, error } = await db.from('pacientes').insert(payload).select('id').single();
-  if (error) { toast('Erro ao cadastrar paciente'); return; }
+  if (error) {
+    if (error.code === '23505' || `${error.message}`.includes('duplicate')) toast('Já existe um paciente com esse CPF');
+    else toast('Erro ao cadastrar paciente');
+    return;
+  }
   fecharModalPaciente();
   toast('Paciente cadastrado ✓');
   await carregarPacientes();
-  if (novo?.id) abrirFicha(novo.id);
+  if (pacienteParaConsulta && novo?.id) {
+    pacienteParaConsulta = false;
+    abrirModal();
+    setPacienteConsulta(novo.id);
+  } else if (novo?.id) {
+    abrirFicha(novo.id);
+  }
 }
 
 function deletarPaciente() {
@@ -2455,6 +2504,7 @@ async function abrirFicha(pacienteId) {
   atualizarBtnStatusFicha(p.status);
 
   document.getElementById('fi-nome').value = p.nome || '';
+  document.getElementById('fi-cpf').value = formatarCPF(p.cpf) || '';
   document.getElementById('fi-wpp').value = p.whatsapp || '';
   document.getElementById('fi-email').value = p.email || '';
   document.getElementById('fi-nasc').value = p.data_nascimento || '';
@@ -2513,6 +2563,7 @@ async function salvarFicha() {
   if (!pacienteAtual) return;
   const payload = {
     nome: document.getElementById('fi-nome').value.trim(),
+    cpf: normalizarCPF(document.getElementById('fi-cpf').value) || null,
     whatsapp: document.getElementById('fi-wpp').value.trim(),
     email: document.getElementById('fi-email').value.trim() || null,
     data_nascimento: document.getElementById('fi-nasc').value || null,
@@ -2537,7 +2588,8 @@ async function salvarFicha() {
     Object.assign(pacienteAtual, payload);
     await carregarPacientes();
   } else {
-    toast('Erro ao salvar. Tente novamente.');
+    if (error.code === '23505' || `${error.message}`.includes('duplicate')) toast('Já existe outro paciente com esse CPF');
+    else toast('Erro ao salvar. Tente novamente.');
   }
 }
 
@@ -2609,10 +2661,9 @@ function abrirWppFicha() {
 function agendarDaFicha() {
   const p = pacienteAtual;
   fecharFicha();
-  document.getElementById('novo-nome').value = p?.nome || '';
-  document.getElementById('novo-wpp').value = p?.whatsapp || '';
-  document.getElementById('novo-queixa').value = p?.queixa_principal || '';
+  document.getElementById('novo-queixa').value = '';
   abrirModal();
+  if (p) setPacienteConsulta(p.id, p);
 }
 
 async function toggleStatusPaciente() {
@@ -3398,22 +3449,15 @@ async function alterarSenha() {
 // ===== NOVA CONSULTA =====
 async function salvarConsulta() {
   if (!clinicaId) return;
-  const nome = document.getElementById('novo-nome').value.trim();
   const data = document.getElementById('novo-data').value;
   const hora = document.getElementById('novo-hora').value;
-  const wpp = document.getElementById('novo-wpp').value.trim();
   const queixa = document.getElementById('novo-queixa').value.trim();
   const valorInput = parseFloat(document.getElementById('novo-valor').value);
-  if (!nome || !data || !hora) { toast('Preencha nome, data e horário'); return; }
-  const { data: existentes } = await db.from('pacientes').select('id,whatsapp').eq('clinica_id',clinicaId).eq('nome',nome).limit(1);
-  let pacienteId = existentes?.[0]?.id;
-  if (!pacienteId) {
-    const { data: novo } = await db.from('pacientes').insert({clinica_id:clinicaId, nome, whatsapp:wpp, queixa_principal:queixa||null}).select('id').single();
-    pacienteId = novo?.id;
-  } else if (wpp && !existentes[0].whatsapp) {
-    await db.from('pacientes').update({ whatsapp: wpp }).eq('id', pacienteId);
-  }
-  if (!pacienteId) { toast('Erro ao salvar paciente'); return; }
+  if (!consultaPacienteId) { toast('Busque e selecione o paciente'); return; }
+  if (!data || !hora) { toast('Preencha a data e o horário'); return; }
+  const pacienteId = consultaPacienteId;
+  const pac = todosOsPacientes.find(x => x.id === pacienteId);
+  const nome = pac?.nome || 'Paciente';
   const usandoPacote = !!agendarPacoteId;
   const valor = usandoPacote ? 0 : (!isNaN(valorInput) && valorInput >= 0 ? valorInput : (clinicaAtual?.valor_consulta_padrao ?? null));
   // Offset fixo de São Paulo (-03:00) para evitar conversão errada de fuso
@@ -3427,8 +3471,6 @@ async function salvarConsulta() {
   });
   if (!error) {
     fecharModal(); toast(usandoPacote ? 'Sessão do pacote agendada ✓' : 'Consulta agendada ✓');
-    document.getElementById('novo-nome').value = '';
-    document.getElementById('novo-wpp').value = '';
     document.getElementById('novo-queixa').value = '';
     document.getElementById('novo-valor').value = '';
     await db.from('alertas').insert({clinica_id:clinicaId, tipo:'novo_agendamento', mensagem:`Nova consulta agendada: ${nome}`});
@@ -3649,6 +3691,11 @@ function abrirModalSlot(data, hora) {
 function abrirModal() {
   agendarPacoteId = null;
   document.getElementById('novo-pacote-hint').style.display = 'none';
+  consultaPacienteId = null;
+  document.getElementById('novo-busca-paciente').value = '';
+  document.getElementById('novo-pac-resultados').innerHTML = '';
+  document.getElementById('novo-pac-selecionado-wrap').style.display = 'none';
+  document.getElementById('novo-pac-busca-wrap').style.display = 'block';
   const valorEl = document.getElementById('novo-valor');
   if (clinicaAtual?.valor_consulta_padrao && !valorEl.value) valorEl.placeholder = `Padrão: ${fmtBRL(clinicaAtual.valor_consulta_padrao)}`;
   document.getElementById('modal').classList.add('aberto');
@@ -3984,10 +4031,9 @@ function usarPacoteAgendar(pacoteId) {
   const pk = pacotesCacheFicha.find(x => x.id === pacoteId);
   const p = pacienteAtual;
   fecharFicha();
-  document.getElementById('novo-nome').value = p?.nome || '';
-  document.getElementById('novo-wpp').value = p?.whatsapp || '';
-  document.getElementById('novo-queixa').value = p?.queixa_principal || '';
+  document.getElementById('novo-queixa').value = '';
   abrirModal();
+  if (p) setPacienteConsulta(p.id, p);
   agendarPacoteId = pacoteId;
   document.getElementById('novo-pacote-nome').textContent = pk?.nome || 'pacote';
   document.getElementById('novo-pacote-hint').style.display = 'block';
@@ -4003,6 +4049,72 @@ async function verificarPacoteAcabando(pacoteId, nomePaciente) {
       : `Pacote de ${nomePaciente} está acabando (restam ${restantes} sessões).`;
     await db.from('alertas').insert({ clinica_id: clinicaId, tipo: 'pacote', mensagem: msg });
   }
+}
+
+// ===== BUSCA / SELEÇÃO DE PACIENTE (agendamento) + CPF =====
+let consultaPacienteId = null;
+
+function normalizarCPF(v) { return (v || '').replace(/\D/g, ''); }
+function formatarCPF(v) {
+  const d = (v || '').replace(/\D/g, '');
+  if (d.length !== 11) return d;
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+}
+function mascararCPF(input) {
+  const d = input.value.replace(/\D/g, '').slice(0, 11);
+  let out = d;
+  if (d.length > 9) out = `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+  else if (d.length > 6) out = `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  else if (d.length > 3) out = `${d.slice(0,3)}.${d.slice(3)}`;
+  input.value = out;
+}
+
+function buscarPacienteConsulta(termo) {
+  const el = document.getElementById('novo-pac-resultados');
+  const t = (termo || '').toLowerCase().trim();
+  const tDig = t.replace(/\D/g, '');
+  if (!t) { el.innerHTML = ''; return; }
+  const matches = todosOsPacientes.filter(p => {
+    if ((p.nome || '').toLowerCase().includes(t)) return true;
+    if (tDig && (p.cpf || '').replace(/\D/g,'').includes(tDig)) return true;
+    if (tDig && (p.whatsapp || '').replace(/\D/g,'').includes(tDig)) return true;
+    return false;
+  }).slice(0, 8);
+  let html = matches.map(p => `
+    <div class="pac-res-item" onclick="setPacienteConsulta('${p.id}')">
+      <div class="pac-res-nome">${esc(p.nome)}</div>
+      <div class="pac-res-sub">${p.cpf ? 'CPF ' + formatarCPF(p.cpf) + ' · ' : ''}${p.whatsapp ? esc(p.whatsapp) : 'sem WhatsApp'}</div>
+    </div>`).join('');
+  html += `<div class="pac-res-novo" onclick="novoPacienteDaConsulta()">+ Cadastrar novo paciente</div>`;
+  el.innerHTML = html;
+}
+
+function setPacienteConsulta(id, pacObj) {
+  const p = todosOsPacientes.find(x => x.id === id) || pacObj;
+  if (!p) return;
+  consultaPacienteId = id;
+  document.getElementById('novo-pac-sel-nome').textContent = p.nome;
+  const sub = [p.cpf ? 'CPF ' + formatarCPF(p.cpf) : null, p.whatsapp || null].filter(Boolean).join(' · ');
+  document.getElementById('novo-pac-sel-sub').textContent = sub || 'Sem CPF/WhatsApp cadastrado';
+  document.getElementById('novo-pac-busca-wrap').style.display = 'none';
+  document.getElementById('novo-pac-selecionado-wrap').style.display = 'block';
+  document.getElementById('novo-pac-resultados').innerHTML = '';
+}
+
+function trocarPacienteConsulta() {
+  consultaPacienteId = null;
+  document.getElementById('novo-busca-paciente').value = '';
+  document.getElementById('novo-pac-resultados').innerHTML = '';
+  document.getElementById('novo-pac-selecionado-wrap').style.display = 'none';
+  document.getElementById('novo-pac-busca-wrap').style.display = 'block';
+  document.getElementById('novo-busca-paciente').focus();
+}
+
+function novoPacienteDaConsulta() {
+  const termo = document.getElementById('novo-busca-paciente').value.trim();
+  pacienteParaConsulta = true;
+  fecharModal();
+  abrirModalPaciente(/^\d/.test(termo) ? '' : termo);
 }
 
 init();
