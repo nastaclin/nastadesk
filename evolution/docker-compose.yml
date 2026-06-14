@@ -1,21 +1,12 @@
-# Evolution API — instalação pronta (servidor de WhatsApp do NastaDesk)
+# Servidor Evolution com HTTPS automático (Caddy) — versão de PRODUÇÃO.
+# Usa um domínio (definido como DOMINIO no .env) e o Caddy emite o certificado
+# SSL sozinho. A porta 8080 NÃO fica exposta — só o Caddy (80/443) acessa.
 #
-# Este arquivo sobe TUDO que o WhatsApp precisa, com HTTPS automático:
-#   - Evolution API (o servidor que conversa com o WhatsApp)
-#   - PostgreSQL (banco do Evolution)
-#   - Redis (cache do Evolution)
-#   - Caddy (gera o certificado HTTPS sozinho)
-#
-# COMO USAR (num servidor/VPS com Docker instalado):
-#   1) Copie esta pasta inteira para o servidor
-#   2) Renomeie ".env.example" para ".env" e preencha os 3 valores
-#   3) No Caddyfile, nada a fazer (ele lê o domínio do .env)
-#   4) Rode:  docker compose up -d
-#   5) Pronto! Sua URL é https://SEU_DOMINIO e a chave é a do .env
-#
-# Depois, no Supabase (passo 2 do guia), preencha:
-#   EVOLUTION_API_URL = https://SEU_DOMINIO
-#   EVOLUTION_API_KEY = o mesmo valor de EVOLUTION_API_KEY do .env
+# COMO USAR:
+#   1) No .env, defina: DOMINIO, EVOLUTION_API_KEY, DB_PASSWORD
+#   2) Aponte o domínio (registro DNS tipo A) para o IP do servidor
+#   3) docker compose up -d
+#   4) No Supabase, EVOLUTION_API_URL = https://SEU_DOMINIO
 
 services:
   caddy:
@@ -33,8 +24,10 @@ services:
       - evolution-api
 
   evolution-api:
-    image: atendai/evolution-api:v2.1.1
+    image: evoapicloud/evolution-api:v2.3.7
     restart: always
+    expose:
+      - "8080"
     env_file: .env
     environment:
       - SERVER_URL=https://${DOMINIO}
@@ -51,8 +44,10 @@ services:
       - CACHE_REDIS_ENABLED=true
       - CACHE_REDIS_URI=redis://redis:6379/6
       - CACHE_REDIS_PREFIX_KEY=evolution
-      - CACHE_REDIS_SAVE_INSTANCES=true
+      - CACHE_REDIS_SAVE_INSTANCES=false
       - CACHE_LOCAL_ENABLED=false
+      - DEL_INSTANCE=false
+      - QRCODE_LIMIT=30
     depends_on:
       - postgres
       - redis
@@ -62,6 +57,7 @@ services:
   postgres:
     image: postgres:15-alpine
     restart: always
+    env_file: .env
     environment:
       - POSTGRES_USER=evolution
       - POSTGRES_PASSWORD=${DB_PASSWORD}
