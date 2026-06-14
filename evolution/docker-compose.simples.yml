@@ -1,10 +1,10 @@
-# Versão SIMPLES do servidor Evolution (sem domínio, acesso por IP).
-# Use esta para colocar pra funcionar rápido. Roda Evolution + banco + cache.
-# (Para produção com HTTPS depois, use o docker-compose.yml com Caddy.)
+# Versão SIMPLES e FUNCIONAL do servidor Evolution (sem domínio, acesso por IP).
+# Imagem evoapicloud/evolution-api:v2.3.7 (a atendai v2.2.3 tinha bug de loop no QR).
+# Para HTTPS/produção, use o docker-compose.yml com Caddy (mesma imagem/env).
 
 services:
   evolution-api:
-    image: atendai/evolution-api:v2.1.1
+    image: evoapicloud/evolution-api:v2.3.7
     restart: always
     ports:
       - "8080:8080"
@@ -24,14 +24,15 @@ services:
       - CACHE_REDIS_ENABLED=true
       - CACHE_REDIS_URI=redis://redis:6379/6
       - CACHE_REDIS_PREFIX_KEY=evolution
-      - CACHE_REDIS_SAVE_INSTANCES=true
+      - CACHE_REDIS_SAVE_INSTANCES=false
       - CACHE_LOCAL_ENABLED=false
+      - DEL_INSTANCE=false
+      - QRCODE_LIMIT=30
     depends_on:
       - postgres
       - redis
     volumes:
       - evolution_instances:/evolution/instances
-
   postgres:
     image: postgres:15-alpine
     restart: always
@@ -42,13 +43,11 @@ services:
       - POSTGRES_DB=evolution
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
   redis:
     image: redis:7-alpine
     restart: always
     volumes:
       - redis_data:/data
-
 volumes:
   evolution_instances:
   postgres_data:
