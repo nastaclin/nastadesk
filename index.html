@@ -479,6 +479,31 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .agend-pill.remarcado { background: #EFE4FB; color: #7B5CF0; }
 .semana-loading { text-align: center; padding: 60px; color: var(--cinza-medio); }
 
+/* ===== PACOTES DE SESSÕES ===== */
+.pacote-card { background: var(--creme); border: 1px solid var(--cinza-claro); border-radius: var(--raio-m); padding: 15px 16px; margin-bottom: 12px; }
+.pacote-card.concluido { opacity: .7; }
+.pacote-card.cancelado { opacity: .5; }
+.pacote-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.pacote-nome { font-size: 14px; font-weight: 600; color: var(--cinza-escuro); }
+.pacote-sub { font-size: 12px; color: var(--cinza-medio); margin-top: 2px; }
+.pacote-restantes { text-align: right; flex-shrink: 0; }
+.pacote-restantes-num { font-family: 'DM Serif Display', serif; font-size: 22px; line-height: 1; color: var(--verde); }
+.pacote-restantes-lbl { font-size: 10px; color: var(--cinza-medio); }
+.pacote-barra { height: 8px; background: var(--cinza-claro); border-radius: 4px; overflow: hidden; margin: 8px 0; }
+.pacote-barra-fill { height: 100%; background: var(--verde-medio); border-radius: 4px; transition: width .5s ease; }
+.pacote-barra-fill.baixo { background: var(--laranja); }
+.pacote-barra-fill.cheio { background: var(--cinza-medio); }
+.pacote-rodape { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.pacote-info { font-size: 12px; color: var(--cinza-medio); }
+.pacote-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+.pacote-btn { font-size: 11px; font-weight: 500; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--cinza-claro); background: white; cursor: pointer; transition: all .15s; }
+.pacote-btn:hover { background: var(--verde-suave); border-color: var(--verde-claro); }
+.pacote-btn.verde { background: var(--verde-claro); color: var(--verde); border-color: var(--verde-claro); }
+.pacote-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; }
+.pacote-tag-pago { background: var(--verde-claro); color: var(--verde); }
+.pacote-tag-pendente { background: #FBF0D4; color: #A0680A; }
+.pacote-tag-vencido { background: #FAE3E3; color: var(--vermelho); }
+
 /* ===== WHATSAPP / CONVERSAS ===== */
 .wpp-layout { display: grid; grid-template-columns: 340px 1fr; gap: 16px; height: calc(100vh - 170px); min-height: 460px; }
 .wpp-lista-card, .wpp-chat-card { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio); box-shadow: var(--sombra); display: flex; flex-direction: column; overflow: hidden; }
@@ -1327,6 +1352,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
   <div class="ficha-tabs">
     <div class="ficha-tab ativa" onclick="fichaTab('dados',this)">Dados</div>
     <div class="ficha-tab" onclick="fichaTab('consultas',this)">Consultas</div>
+    <div class="ficha-tab" onclick="fichaTab('pacotes',this)">Pacotes</div>
     <div class="ficha-tab" onclick="fichaTab('evolucao',this)">Evolução</div>
     <div class="ficha-tab" onclick="fichaTab('anamnese',this)">Anamnese</div>
   </div>
@@ -1389,6 +1415,12 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div id="ficha-lista-consultas"><div class="loading"><div class="loading-spinner"></div></div></div>
     </div>
 
+    <!-- TAB: PACOTES -->
+    <div id="ficha-tab-pacotes" style="display:none">
+      <button class="btn btn-primario" onclick="abrirModalPacote()" style="width:100%;padding:11px;margin-bottom:16px">+ Novo pacote de sessões</button>
+      <div id="ficha-lista-pacotes"><div class="loading"><div class="loading-spinner"></div></div></div>
+    </div>
+
     <!-- TAB: EVOLUÇÃO -->
     <div id="ficha-tab-evolucao" style="display:none">
       <div class="ficha-secao">
@@ -1441,6 +1473,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 <div class="overlay" id="modal" onclick="fecharModalClick(event)">
   <div class="modal">
     <div class="modal-header"><div class="modal-titulo">Nova consulta</div><button class="modal-fechar" onclick="fecharModal()">×</button></div>
+    <div id="novo-pacote-hint" style="display:none;background:var(--verde-suave);border:1px solid var(--verde-claro);border-radius:var(--raio-p);padding:10px 13px;margin-bottom:14px;font-size:13px;color:var(--verde)">📦 Esta sessão será descontada do pacote <strong id="novo-pacote-nome">—</strong>.</div>
     <div class="config-campo"><label>Nome do paciente</label><input type="text" id="novo-nome" placeholder="Ex: Maria Silva" list="lista-nomes-pacientes"><datalist id="lista-nomes-pacientes"></datalist></div>
     <div class="modal-grid">
       <div class="config-campo"><label>Data</label><input type="date" id="novo-data"></div>
@@ -1520,6 +1553,34 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="modal-acoes">
       <button class="btn btn-secundario" onclick="fecharModalRemarcar()">Cancelar</button>
       <button class="btn btn-primario" onclick="confirmarRemarcar()">Remarcar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO PACOTE -->
+<div class="overlay" id="modal-pacote" onclick="if(event.target===this)fecharModalPacote()">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-titulo">Novo pacote de sessões</div><div class="modal-sub" id="pacote-sub">—</div></div><button class="modal-fechar" onclick="fecharModalPacote()">×</button></div>
+    <div class="config-campo"><label>Nome do pacote</label><input type="text" id="pac-nome" placeholder="Ex: Pacote Fisioterapia"></div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Quantidade de sessões</label><input type="number" id="pac-total" placeholder="Ex: 10" min="1" step="1"></div>
+      <div class="config-campo"><label>Valor total (R$)</label><input type="number" id="pac-valor" placeholder="Ex: 900" min="0" step="0.01"></div>
+    </div>
+    <div class="config-campo"><label>Validade (opcional)</label><input type="date" id="pac-validade"></div>
+    <div class="config-campo"><label>Pagamento</label>
+      <div class="forma-pag-grid" id="pac-formas">
+        <button class="forma-pag-btn selecionado" data-forma="" onclick="selecionarFormaPac(this)">Deixar pendente</button>
+        <button class="forma-pag-btn" data-forma="pix" onclick="selecionarFormaPac(this)">Pix</button>
+        <button class="forma-pag-btn" data-forma="dinheiro" onclick="selecionarFormaPac(this)">Dinheiro</button>
+        <button class="forma-pag-btn" data-forma="cartao_credito" onclick="selecionarFormaPac(this)">Crédito</button>
+        <button class="forma-pag-btn" data-forma="cartao_debito" onclick="selecionarFormaPac(this)">Débito</button>
+        <button class="forma-pag-btn" data-forma="transferencia" onclick="selecionarFormaPac(this)">Transferência</button>
+      </div>
+      <div class="cfg-vars" style="margin-top:6px">Se escolher uma forma de pagamento, o pacote já entra como <strong>pago</strong> no financeiro.</div>
+    </div>
+    <div class="modal-acoes">
+      <button class="btn btn-secundario" onclick="fecharModalPacote()">Cancelar</button>
+      <button class="btn btn-primario" onclick="salvarPacote()">Criar pacote</button>
     </div>
   </div>
 </div>
@@ -2434,11 +2495,13 @@ function fecharFicha() {
 }
 
 function fichaTab(tab, el) {
-  ['dados','consultas','evolucao','anamnese'].forEach(t => {
-    document.getElementById(`ficha-tab-${t}`).style.display = t === tab ? 'block' : 'none';
+  ['dados','consultas','pacotes','evolucao','anamnese'].forEach(t => {
+    const e = document.getElementById(`ficha-tab-${t}`);
+    if (e) e.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('.ficha-tab').forEach(t => t.classList.remove('ativa'));
   if (el) el.classList.add('ativa');
+  if (tab === 'pacotes' && pacienteAtual) carregarPacotesFicha(pacienteAtual.id);
 }
 
 function fichaEditado() {
@@ -2567,6 +2630,7 @@ async function toggleStatusPaciente() {
 // ===== FINANCEIRO =====
 let finData = new Date();
 let finConsultas = [];
+let finPacotes = [];
 let finFiltro = 'todos';
 
 function navFin(dir) {
@@ -2593,14 +2657,25 @@ async function carregarFinanceiro() {
     .order('data_hora', { ascending: false });
   finConsultas = data || [];
 
+  // Pacotes pagos no mês (faturamento separado das consultas)
+  const { data: pacs } = await db.from('pacotes').select('*, pacientes(nome)')
+    .eq('clinica_id', clinicaId).eq('pagamento_status', 'pago')
+    .gte('pago_em', inicio.toISOString()).lte('pago_em', fim.toISOString())
+    .order('pago_em', { ascending: false });
+  finPacotes = pacs || [];
+
   const pagas = finConsultas.filter(c => c.pagamento_status === 'pago');
   const pendentes = finConsultas.filter(c => c.pagamento_status === 'pendente' && c.status !== 'cancelado');
-  const recebido = pagas.reduce((s,c) => s + (Number(c.valor) || 0), 0);
+  const recebidoConsultas = pagas.reduce((s,c) => s + (Number(c.valor) || 0), 0);
+  const recebidoPacotes = finPacotes.reduce((s,p) => s + (Number(p.valor_pago) || 0), 0);
+  const recebido = recebidoConsultas + recebidoPacotes;
   const aReceber = pendentes.reduce((s,c) => s + (Number(c.valor) || 0), 0);
-  const ticket = pagas.length ? recebido / pagas.length : 0;
+  const ticket = pagas.length ? recebidoConsultas / pagas.length : 0;
 
   document.getElementById('fin-recebido').textContent = fmtBRL(recebido);
-  document.getElementById('fin-recebido-sub').textContent = `${pagas.length} consulta${pagas.length!==1?'s':''}`;
+  document.getElementById('fin-recebido-sub').textContent = finPacotes.length
+    ? `${pagas.length} consulta${pagas.length!==1?'s':''} + ${finPacotes.length} pacote${finPacotes.length!==1?'s':''}`
+    : `${pagas.length} consulta${pagas.length!==1?'s':''}`;
   document.getElementById('fin-pendente').textContent = fmtBRL(aReceber);
   document.getElementById('fin-pendente-sub').textContent = `${pendentes.length} pendente${pendentes.length!==1?'s':''}`;
   document.getElementById('fin-ticket').textContent = fmtBRL(ticket);
@@ -2615,31 +2690,50 @@ function renderFinLista() {
   let lista = finConsultas;
   if (finFiltro === 'pendente') lista = lista.filter(c => c.pagamento_status === 'pendente' && c.status !== 'cancelado');
   if (finFiltro === 'pago') lista = lista.filter(c => c.pagamento_status === 'pago');
-  if (!lista.length) { el.innerHTML = emptyState('Nenhuma consulta neste filtro', 'dinheiro'); return; }
+  const pacs = finFiltro === 'pendente' ? [] : finPacotes;
+  if (!lista.length && !pacs.length) { el.innerHTML = emptyState('Nenhum lançamento neste filtro', 'dinheiro'); return; }
 
   const stLabel = { confirmado:'Confirmado', aguardando:'Aguardando', cancelado:'Cancelada', atendido:'Atendido', agendado:'Agendado', remarcado:'Remarcado' };
-  const pagLabel = { pago:'Pago', pendente:'Pendente', isento:'Isento' };
+  const pagLabel = { pago:'Pago', pendente:'Pendente', isento:'Isento', pacote:'Pacote' };
   const formaLabel = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito', cartao_debito:'Débito', convenio:'Convênio', transferencia:'Transferência' };
 
-  el.innerHTML = lista.map(c => {
+  const linhasPacotes = pacs.map(p => {
+    const dia = p.pago_em ? new Date(p.pago_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', timeZone: TZ }) : '';
+    return `<div class="fin-row">
+      <div class="fin-data" style="color:#7B5CF0"><strong>Pacote</strong>${dia}</div>
+      <div class="fin-info">
+        <div class="fin-nome">📦 ${esc(p.nome)}</div>
+        <div class="fin-sub">${esc(p.pacientes?.nome || '—')} · ${p.total_sessoes} sessões</div>
+      </div>
+      <div class="fin-valor">${fmtBRL(p.valor_pago)}</div>
+      <span class="pag-pill pag-pago">Pago</span>
+    </div>`;
+  }).join('');
+
+  const linhasConsultas = lista.map(c => {
     const d = new Date(c.data_hora);
     const dia = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', timeZone: TZ });
     const cancelada = c.status === 'cancelado';
     const pag = c.pagamento_status || 'pendente';
     const forma = c.forma_pagamento ? ` · ${formaLabel[c.forma_pagamento]||c.forma_pagamento}` : '';
+    const viaPacote = pag === 'pacote';
     return `<div class="fin-row${cancelada?' cancelada':''}">
       <div class="fin-data"><strong>${dia}</strong>${horaSP(c.data_hora)}</div>
       <div class="fin-info">
         <div class="fin-nome">${esc(c.pacientes?.nome || '—')}</div>
-        <div class="fin-sub">${stLabel[c.status]||esc(c.status)}${forma}${c.origem==='online'?' · agendado online':''}</div>
+        <div class="fin-sub">${stLabel[c.status]||esc(c.status)}${viaPacote?' · via pacote':forma}${c.origem==='online'?' · agendado online':''}</div>
       </div>
-      <div class="fin-valor">${fmtBRL(c.valor)}</div>
+      <div class="fin-valor">${viaPacote?'<span style="color:var(--cinza-medio);font-size:12px">incluído</span>':fmtBRL(c.valor)}</div>
       ${cancelada
         ? '<span class="pag-pill pag-isento">—</span>'
-        : `<button class="pag-pill pag-${pag}" onclick="abrirModalPagamento(finConsultaPorId('${c.id}'))">${pagLabel[pag]||pag}</button>`}
+        : viaPacote
+          ? '<span class="pag-pill" style="background:#EFE4FB;color:#7B5CF0">Pacote</span>'
+          : `<button class="pag-pill pag-${pag}" onclick="abrirModalPagamento(finConsultaPorId('${c.id}'))">${pagLabel[pag]||pag}</button>`}
       ${pag === 'pago' ? `<button class="btn-icone" title="Gerar recibo" onclick="gerarRecibo('${c.id}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></button>` : ''}
     </div>`;
   }).join('');
+
+  el.innerHTML = linhasPacotes + linhasConsultas;
 }
 
 function finConsultaPorId(id) {
@@ -3320,21 +3414,25 @@ async function salvarConsulta() {
     await db.from('pacientes').update({ whatsapp: wpp }).eq('id', pacienteId);
   }
   if (!pacienteId) { toast('Erro ao salvar paciente'); return; }
-  const valor = !isNaN(valorInput) && valorInput >= 0 ? valorInput : (clinicaAtual?.valor_consulta_padrao ?? null);
+  const usandoPacote = !!agendarPacoteId;
+  const valor = usandoPacote ? 0 : (!isNaN(valorInput) && valorInput >= 0 ? valorInput : (clinicaAtual?.valor_consulta_padrao ?? null));
   // Offset fixo de São Paulo (-03:00) para evitar conversão errada de fuso
   const dataHoraISO = `${data}T${hora}:00-03:00`;
+  const pacoteIdUsado = agendarPacoteId;
   const { error } = await db.from('consultas').insert({
     clinica_id: clinicaId, paciente_id: pacienteId, data_hora: dataHoraISO,
     queixa: queixa || null, status: 'agendado', origem: 'manual',
-    valor, pagamento_status: 'pendente'
+    valor, pagamento_status: usandoPacote ? 'pacote' : 'pendente',
+    pacote_id: usandoPacote ? pacoteIdUsado : null
   });
   if (!error) {
-    fecharModal(); toast('Consulta agendada ✓');
+    fecharModal(); toast(usandoPacote ? 'Sessão do pacote agendada ✓' : 'Consulta agendada ✓');
     document.getElementById('novo-nome').value = '';
     document.getElementById('novo-wpp').value = '';
     document.getElementById('novo-queixa').value = '';
     document.getElementById('novo-valor').value = '';
     await db.from('alertas').insert({clinica_id:clinicaId, tipo:'novo_agendamento', mensagem:`Nova consulta agendada: ${nome}`});
+    if (pacoteIdUsado) await verificarPacoteAcabando(pacoteIdUsado, nome);
     recarregarSecaoAtual(); carregarAlertas(); carregarPacientes();
   } else toast('Erro ao agendar. Tente novamente.');
 }
@@ -3549,11 +3647,17 @@ function abrirModalSlot(data, hora) {
 
 // ===== MODAL =====
 function abrirModal() {
+  agendarPacoteId = null;
+  document.getElementById('novo-pacote-hint').style.display = 'none';
   const valorEl = document.getElementById('novo-valor');
   if (clinicaAtual?.valor_consulta_padrao && !valorEl.value) valorEl.placeholder = `Padrão: ${fmtBRL(clinicaAtual.valor_consulta_padrao)}`;
   document.getElementById('modal').classList.add('aberto');
 }
-function fecharModal() { document.getElementById('modal').classList.remove('aberto'); }
+function fecharModal() {
+  document.getElementById('modal').classList.remove('aberto');
+  agendarPacoteId = null;
+  document.getElementById('novo-pacote-hint').style.display = 'none';
+}
 function fecharModalClick(e) { if(e.target===document.getElementById('modal')) fecharModal(); }
 
 // ===== TOAST =====
@@ -3751,6 +3855,154 @@ async function salvarConfigBot() {
   const { error } = await db.from('configuracoes').upsert(payload, { onConflict: 'clinica_id' });
   if (!error) configAtual = Object.assign(configAtual || {}, payload);
   toast(error ? 'Erro ao salvar' : 'Chatbot salvo ✓');
+}
+
+// ===== PACOTES DE SESSÕES =====
+let agendarPacoteId = null;
+let pacoteFormaSel = '';
+let pacotesCacheFicha = [];
+
+function fmtDataBR(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+async function carregarPacotesFicha(pacienteId) {
+  const el = document.getElementById('ficha-lista-pacotes');
+  if (!el) return;
+  const { data } = await db.from('pacotes').select('*').eq('paciente_id', pacienteId).order('criado_em', { ascending: false });
+  pacotesCacheFicha = data || [];
+  if (!pacotesCacheFicha.length) {
+    el.innerHTML = '<div class="empty" style="padding:30px 16px">Nenhum pacote ainda.<br>Crie um quando o paciente comprar um pacote de sessões.</div>';
+    return;
+  }
+  const hoje = dataLocalISO(new Date());
+  el.innerHTML = pacotesCacheFicha.map(p => {
+    const restantes = Math.max(0, p.total_sessoes - p.sessoes_usadas);
+    const pct = Math.min(100, Math.round((p.sessoes_usadas / p.total_sessoes) * 100));
+    const vencido = p.validade && p.validade < hoje && p.status === 'ativo';
+    let fillCls = '';
+    if (p.status === 'concluido') fillCls = 'cheio';
+    else if (restantes <= 2) fillCls = 'baixo';
+    const tagPag = p.pagamento_status === 'pago'
+      ? '<span class="pacote-tag pacote-tag-pago">pago</span>'
+      : '<span class="pacote-tag pacote-tag-pendente">a receber</span>';
+    const tagVenc = vencido ? '<span class="pacote-tag pacote-tag-vencido">vencido</span>' : '';
+    const validadeTxt = p.validade ? `Válido até ${fmtDataBR(p.validade)}` : 'Sem validade';
+    const podeUsar = p.status === 'ativo' && restantes > 0;
+    return `<div class="pacote-card ${p.status}">
+      <div class="pacote-topo">
+        <div>
+          <div class="pacote-nome">${esc(p.nome)} ${tagPag} ${tagVenc}</div>
+          <div class="pacote-sub">${fmtBRL(p.valor_total)} · ${validadeTxt}</div>
+        </div>
+        <div class="pacote-restantes">
+          <div class="pacote-restantes-num">${restantes}</div>
+          <div class="pacote-restantes-lbl">de ${p.total_sessoes} restantes</div>
+        </div>
+      </div>
+      <div class="pacote-barra"><div class="pacote-barra-fill ${fillCls}" style="width:${pct}%"></div></div>
+      <div class="pacote-rodape">
+        <div class="pacote-info">${p.sessoes_usadas} de ${p.total_sessoes} sessões usadas</div>
+        <div class="pacote-acoes">
+          ${podeUsar ? `<button class="pacote-btn verde" onclick="usarPacoteAgendar('${p.id}')">Agendar sessão</button>` : ''}
+          ${p.pagamento_status !== 'pago' && p.status !== 'cancelado' ? `<button class="pacote-btn" onclick="marcarPacotePago('${p.id}')">Marcar pago</button>` : ''}
+          ${p.status !== 'cancelado' ? `<button class="pacote-btn" onclick="cancelarPacote('${p.id}')">Cancelar</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirModalPacote() {
+  if (!pacienteAtual) return;
+  document.getElementById('pacote-sub').textContent = pacienteAtual.nome;
+  document.getElementById('pac-nome').value = '';
+  document.getElementById('pac-total').value = '';
+  document.getElementById('pac-valor').value = '';
+  document.getElementById('pac-validade').value = '';
+  pacoteFormaSel = '';
+  document.querySelectorAll('#pac-formas .forma-pag-btn').forEach(b => b.classList.toggle('selecionado', b.dataset.forma === ''));
+  document.getElementById('modal-pacote').classList.add('aberto');
+}
+function fecharModalPacote() { document.getElementById('modal-pacote').classList.remove('aberto'); }
+function selecionarFormaPac(btn) {
+  document.querySelectorAll('#pac-formas .forma-pag-btn').forEach(b => b.classList.remove('selecionado'));
+  btn.classList.add('selecionado');
+  pacoteFormaSel = btn.dataset.forma;
+}
+
+async function salvarPacote() {
+  if (!pacienteAtual || !clinicaId) return;
+  const nome = document.getElementById('pac-nome').value.trim();
+  const total = parseInt(document.getElementById('pac-total').value);
+  const valor = parseFloat(document.getElementById('pac-valor').value);
+  const validade = document.getElementById('pac-validade').value || null;
+  if (!nome || !total || total < 1) { toast('Preencha o nome e a quantidade de sessões'); return; }
+  const pago = !!pacoteFormaSel;
+  const payload = {
+    clinica_id: clinicaId, paciente_id: pacienteAtual.id, nome,
+    total_sessoes: total,
+    valor_total: !isNaN(valor) && valor >= 0 ? valor : null,
+    validade,
+    pagamento_status: pago ? 'pago' : 'pendente',
+    forma_pagamento: pago ? pacoteFormaSel : null,
+    valor_pago: pago && !isNaN(valor) ? valor : 0,
+    pago_em: pago ? new Date().toISOString() : null,
+  };
+  const { error } = await db.from('pacotes').insert(payload);
+  if (error) { toast('Erro ao criar pacote'); return; }
+  fecharModalPacote();
+  toast('Pacote criado ✓');
+  carregarPacotesFicha(pacienteAtual.id);
+  if (secAtiva === 'financeiro') carregarFinanceiro();
+}
+
+async function marcarPacotePago(id) {
+  const p = pacotesCacheFicha.find(x => x.id === id);
+  abrirModalConfirm('Marcar pacote como pago?', 'O valor entra no faturamento do mês atual.', 'Marcar pago', async () => {
+    await db.from('pacotes').update({
+      pagamento_status: 'pago', valor_pago: p?.valor_total || 0, pago_em: new Date().toISOString()
+    }).eq('id', id);
+    document.getElementById('confirm-btn').style.background = '';
+    toast('Pacote marcado como pago ✓');
+    if (pacienteAtual) carregarPacotesFicha(pacienteAtual.id);
+    if (secAtiva === 'financeiro') carregarFinanceiro();
+  });
+}
+
+function cancelarPacote(id) {
+  abrirModalConfirm('Cancelar este pacote?', 'As sessões já usadas continuam registradas, mas o pacote fica inativo.', 'Cancelar pacote', async () => {
+    await db.from('pacotes').update({ status: 'cancelado' }).eq('id', id);
+    toast('Pacote cancelado');
+    if (pacienteAtual) carregarPacotesFicha(pacienteAtual.id);
+  });
+}
+
+function usarPacoteAgendar(pacoteId) {
+  const pk = pacotesCacheFicha.find(x => x.id === pacoteId);
+  const p = pacienteAtual;
+  fecharFicha();
+  document.getElementById('novo-nome').value = p?.nome || '';
+  document.getElementById('novo-wpp').value = p?.whatsapp || '';
+  document.getElementById('novo-queixa').value = p?.queixa_principal || '';
+  abrirModal();
+  agendarPacoteId = pacoteId;
+  document.getElementById('novo-pacote-nome').textContent = pk?.nome || 'pacote';
+  document.getElementById('novo-pacote-hint').style.display = 'block';
+}
+
+async function verificarPacoteAcabando(pacoteId, nomePaciente) {
+  const { data: p } = await db.from('pacotes').select('total_sessoes,sessoes_usadas').eq('id', pacoteId).maybeSingle();
+  if (!p) return;
+  const restantes = p.total_sessoes - p.sessoes_usadas;
+  if (restantes === 2 || restantes === 0) {
+    const msg = restantes === 0
+      ? `Pacote de ${nomePaciente} acabou — todas as sessões foram usadas. Ofereça uma renovação!`
+      : `Pacote de ${nomePaciente} está acabando (restam ${restantes} sessões).`;
+    await db.from('alertas').insert({ clinica_id: clinicaId, tipo: 'pacote', mensagem: msg });
+  }
 }
 
 init();
