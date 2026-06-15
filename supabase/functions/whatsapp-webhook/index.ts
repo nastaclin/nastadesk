@@ -410,6 +410,13 @@ Deno.serve(async (req) => {
     // Carrega config da clínica
     const { data: cli } = await db.from("clinicas").select("*").eq("id", conexao.clinica_id).maybeSingle();
     if (!cli) continue;
+
+    // Chatbot é exclusivo dos planos Profissional+ e exige a conta ativa.
+    // No plano Básico o WhatsApp serve apenas para os lembretes manuais (via wa.me),
+    // então o bot não recebe nem responde mensagens — evita custo de IA e respostas indevidas.
+    const podeChatbot = cli.ativo === true && (cli.plano === "profissional" || cli.plano === "premium");
+    if (!podeChatbot) continue;
+
     const { data: cfg } = await db.from("configuracoes").select("*").eq("clinica_id", conexao.clinica_id).maybeSingle();
 
     // Pega/cria conversa
