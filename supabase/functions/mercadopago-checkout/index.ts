@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     return json({ erro: "Não foi possível abrir o pagamento. Tente novamente em instantes.", detalhe: r.body }, 502);
   }
 
-  await admin.from("assinaturas").insert({
+  const { error: insErr } = await admin.from("assinaturas").insert({
     clinica_id: clinica.id,
     plano,
     provedor: "mercadopago",
@@ -100,6 +100,13 @@ Deno.serve(async (req) => {
     payer_email: email,
     init_point: r.body.init_point,
   });
+  if (insErr) {
+    // Não deixa um link de pagamento sem assinatura registrada (o webhook não conseguiria ativar).
+    // Desfaz o preapproval recém-criado para não virar uma cobrança órfã no Mercado Pago.
+    console.error("Falha ao registrar assinatura:", insErr, "preapproval:", r.body.id);
+    await mpFetch(`/preapproval/${r.body.id}`, { method: "PUT", body: JSON.stringify({ status: "cancelled" }) });
+    return json({ erro: "Não foi possível registrar a assinatura. Tente novamente em instantes." }, 500);
+  }
 
   return json({ ok: true, init_point: r.body.init_point });
 });
