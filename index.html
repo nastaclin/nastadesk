@@ -1369,6 +1369,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="topbar-titulo"><h1>Planos</h1><p id="planos-sub">Escolha o plano ideal para a sua clínica</p></div>
       </div>
       <div id="planos-grid" class="planos-grid"></div>
+      <div id="planos-gerenciar" style="max-width:920px;margin-top:14px"></div>
       <div class="card" style="padding:22px;margin-top:18px;max-width:920px">
         <div class="card-titulo" style="margin-bottom:8px">Como funciona a cobrança</div>
         <div style="font-size:13.5px;color:var(--cinza-medio);line-height:1.7">
@@ -1773,6 +1774,7 @@ const db = createClient(SUPA_URL, SUPA_KEY);
 
 let clinicaId = null;
 let clinicaAtual = null;
+let assinaturaAtual = null;
 let configAtual = null;
 let calData = new Date();
 let todosOsPacientes = [];
@@ -2112,6 +2114,8 @@ async function carregarDados(user) {
     document.getElementById('sb-plano').textContent = planos[clinica.plano] || clinica.plano || '—';
     if (!clinica.onboarding_completo) mostrarOnboarding(clinica);
     aplicarGatesDePlano();
+    verificarAssinatura();
+    tratarRetornoPagamento();
   }
 
   await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
@@ -4251,10 +4255,139 @@ function carregarPlanos() {
       ${btn}
     </div>`;
   }).join('');
+
+  // Gestão da assinatura (só quando há uma assinatura real no Mercado Pago)
+  const ger = document.getElementById('planos-gerenciar');
+  if (ger) {
+    const a = assinaturaAtual;
+    if (a && (a.status === 'ativa' || a.status === 'em_atraso' || a.status === 'pendente')) {
+      const venc = a.proximo_pagamento ? new Date(a.proximo_pagamento).toLocaleDateString('pt-BR') : null;
+      let info;
+      if (a.status === 'em_atraso') info = '<span style="color:#8A5A00">⚠️ Pagamento não confirmado — regularize para manter o acesso.</span>';
+      else if (a.status === 'pendente') info = 'Aguardando a confirmação do pagamento...';
+      else info = 'Assinatura ativa via Mercado Pago' + (venc ? ` · próxima cobrança em ${venc}` : '') + '.';
+      ger.innerHTML = `<div class="card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+        <div style="font-size:13.5px;color:var(--cinza-medio)">${info}</div>
+        <a onclick="cancelarAssinatura()" style="font-size:13px;color:var(--cinza-medio);cursor:pointer;text-decoration:underline;white-space:nowrap">Cancelar assinatura</a>
+      </div>`;
+    } else {
+      ger.innerHTML = '';
+    }
+  }
 }
 
-function assinarPlano(chave) {
-  toast('Pagamento online em breve. Por enquanto, fale com o NastaDesk para mudar de plano.');
+async function assinarPlano(chave) {
+  if (!PLANOS[chave]) return;
+  if (chave === planoAtualChave() && clinicaAtual?.ativo !== false) {
+    toast('Este já é o seu plano atual.');
+    return;
+  }
+  toast('Abrindo o pagamento...');
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) { toast('Faça login novamente.'); return; }
+    const r = await fetch(`${SUPA_URL}/functions/v1/mercadopago-checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPA_KEY },
+      body: JSON.stringify({ acao: 'criar', plano: chave, origin: location.origin }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (j.init_point) { window.location.href = j.init_point; return; }
+    toast(j.erro || 'Não foi possível abrir o pagamento. Tente novamente.');
+  } catch (e) {
+    console.error('assinarPlano:', e);
+    toast('Erro ao abrir o pagamento. Verifique sua conexão.');
+  }
+}
+
+// Cancelar a assinatura (Mercado Pago) — usado na página de Planos.
+async function cancelarAssinatura() {
+  abrirModalConfirm(
+    'Cancelar assinatura?',
+    'Seu plano continua ativo até o fim do período já pago. Depois disso o acesso é suspenso até você assinar de novo. Seus dados ficam salvos.',
+    'Cancelar assinatura',
+    async () => {
+      try {
+        const { data: { session } } = await db.auth.getSession();
+        const r = await fetch(`${SUPA_URL}/functions/v1/mercadopago-checkout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPA_KEY },
+          body: JSON.stringify({ acao: 'cancelar' }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (j.ok) toast('Assinatura cancelada. O acesso continua até o fim do período pago.');
+        else toast(j.erro || 'Não foi possível cancelar agora.');
+      } catch (e) { toast('Erro ao cancelar. Tente novamente.'); }
+    }
+  );
+}
+
+// Verifica o estado de cobrança da clínica: bloqueio (suspensa) ou aviso (em atraso).
+async function verificarAssinatura() {
+  if (!clinicaAtual) return;
+  if (clinicaAtual.ativo === false) { mostrarBloqueio(); return; }
+  removerBloqueio();
+  try {
+    const { data: ass } = await db.from('assinaturas')
+      .select('*').eq('clinica_id', clinicaId)
+      .order('criado_em', { ascending: false }).limit(1).maybeSingle();
+    assinaturaAtual = ass || null;
+  } catch (e) { assinaturaAtual = null; }
+  mostrarBannerAtraso(!!assinaturaAtual && assinaturaAtual.status === 'em_atraso');
+  if (secAtiva === 'planos') carregarPlanos();
+}
+
+function mostrarBannerAtraso(show) {
+  let b = document.getElementById('banner-pagamento');
+  if (!show) { if (b) b.remove(); document.body.style.paddingTop = ''; return; }
+  if (b) return;
+  b = document.createElement('div');
+  b.id = 'banner-pagamento';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9000;background:#FFF4E5;color:#8A5A00;border-bottom:1px solid #F0D9A8;padding:9px 16px;font-size:13px;text-align:center;font-weight:500';
+  b.innerHTML = '⚠️ Não identificamos seu último pagamento. Regularize para não perder o acesso. <a onclick="irPara(\'planos\')" style="color:#0B6E4F;font-weight:700;cursor:pointer;text-decoration:underline">Ver planos</a>';
+  document.body.appendChild(b);
+}
+
+function mostrarBloqueio() {
+  mostrarBannerAtraso(false);
+  if (document.getElementById('bloqueio-overlay')) return;
+  const plano = (clinicaAtual && clinicaAtual.plano) || 'basico';
+  const nome = (PLANOS[plano] && PLANOS[plano].nome) || 'sua assinatura';
+  const ov = document.createElement('div');
+  ov.id = 'bloqueio-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(247,250,248,.97);display:flex;align-items:center;justify-content:center;padding:24px';
+  ov.innerHTML =
+    '<div style="max-width:440px;text-align:center;background:#fff;border:1px solid var(--cinza-claro);border-radius:18px;padding:40px 30px;box-shadow:var(--sombra-alta)">' +
+      '<div style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--cinza-escuro);margin-bottom:10px">Assinatura suspensa</div>' +
+      '<p style="font-size:14px;color:var(--cinza-medio);line-height:1.6;margin-bottom:22px">Não identificamos o pagamento do plano ' + esc(nome) + '. Reative para voltar a usar o NastaDesk — seus dados estão salvos.</p>' +
+      '<button onclick="assinarPlano(\'' + plano + '\')" style="width:100%;padding:13px;border:none;border-radius:12px;background:var(--verde);color:#fff;font-weight:600;font-size:15px;cursor:pointer;margin-bottom:10px">Reativar assinatura</button>' +
+      '<button onclick="fazerLogout()" style="width:100%;padding:11px;border:1px solid var(--cinza-claro);border-radius:12px;background:#fff;color:var(--cinza-escuro);font-size:14px;cursor:pointer">Sair</button>' +
+    '</div>';
+  document.body.appendChild(ov);
+}
+
+function removerBloqueio() {
+  const ov = document.getElementById('bloqueio-overlay');
+  if (ov) ov.remove();
+}
+
+// Quando o cliente volta do Mercado Pago (?assinatura=sucesso), avisa e atualiza o plano.
+// A ativação real é feita pelo webhook; aqui só damos o feedback e recarregamos.
+function tratarRetornoPagamento() {
+  const p = new URLSearchParams(location.search).get('assinatura');
+  if (p !== 'sucesso') return;
+  history.replaceState({}, '', location.pathname);
+  toast('Pagamento recebido! Seu plano será ativado em instantes.');
+  let tentativas = 0;
+  const planoAntes = clinicaAtual && clinicaAtual.plano;
+  const timer = setInterval(async () => {
+    tentativas++;
+    await carregarInfoClinica();
+    verificarAssinatura();
+    const mudou = clinicaAtual && (clinicaAtual.plano !== planoAntes || clinicaAtual.ativo !== false);
+    if (mudou && clinicaAtual.ativo !== false) { clearInterval(timer); }
+    if (tentativas >= 6) clearInterval(timer);
+  }, 5000);
 }
 
 init();
