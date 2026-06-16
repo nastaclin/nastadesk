@@ -1,0 +1,241 @@
+============================================================
+   SCRIPTS DE WHATSAPP - NASTADESK
+   Sistema de gestao para clinicas de fisioterapia
+============================================================
+
+COMO USAR
+- Copie a mensagem e cole no WhatsApp. As mensagens ja vem
+  com os emojis prontos.
+- Antes de enviar, troque os campos entre colchetes:
+     [NOME]        = nome da pessoa ou da clinica
+     [SEU NOME]    = seu nome (assinatura)
+     [DIAS]        = duracao da cortesia (sugestao: 30 dias)
+  Link do sistema: nastadesk.vercel.app
+  WhatsApp de contato: +55 21 98407-2359
+
+DICAS RAPIDAS
+- Mande mensagens curtas primeiro. Texto gigante de cara espanta.
+- Sempre termine com uma pergunta (puxa resposta).
+- Audio curto (ate 40s) converte bem depois do primeiro "oi".
+- Tenha 2 ou 3 telas do sistema pra mandar quando pedirem.
+
+
+============================================================
+   FASE 1 - PRIMEIROS CLIENTES DE TESTE (CORTESIA GRATIS)
+============================================================
+Objetivo: colocar 2 ou 3 clinicas usando de graca pra gerar
+feedback e depoimentos. Posicione como "vaga de fundadora":
+acesso gratis em troca de opiniao sincera.
+
+------------------------------------------------------------
+1.1  CONTATO QUE VOCE JA CONHECE
+------------------------------------------------------------
+Oi, [NOME]! Tudo bem? 😊
+
+To lancando uma ferramenta pra organizar clinica de fisio:
+agenda, ficha do paciente, financeiro e lembrete no WhatsApp,
+tudo num lugar so.
+
+To escolhendo 3 clinicas pra usar de graca por [DIAS] dias e me
+darem a opiniao sincera. Lembrei de voce na hora. Posso te
+mostrar como funciona rapidinho?
+
+------------------------------------------------------------
+1.2  INDICACAO / AMIGA DE AMIGA
+------------------------------------------------------------
+Oi, [NOME]! Aqui e a [SEU NOME], a [quem indicou] me passou seu
+contato 🙌
+
+Eu cuido de um sistema pra clinicas de fisioterapia (agenda,
+prontuario, financeiro e WhatsApp num so lugar).
+
+To liberando acesso gratuito por [DIAS] dias pra algumas
+clinicas testarem antes de todo mundo. Faz sentido eu te mostrar
+como ficaria na sua clinica?
+
+------------------------------------------------------------
+1.3  ABORDAGEM FRIA (CLINICA QUE VOCE NAO CONHECE)
+------------------------------------------------------------
+Oi! Tudo bem? Aqui e a [SEU NOME] 😊
+
+Conheci a clinica de voces e queria mostrar uma ferramenta que
+organiza tudo num lugar so: agenda, ficha do paciente, financeiro
+e lembrete de consulta no WhatsApp (ajuda muito a diminuir falta).
+
+To abrindo algumas vagas pra usar de graca por [DIAS] dias. Quem
+cuida da agenda ai e voce mesmo?
+
+------------------------------------------------------------
+1.4  FOLLOW-UP (sem resposta, ~2 dias depois)
+------------------------------------------------------------
+Oi, [NOME]! Passando so pra nao perder o contato 🙂
+
+A vaga pra testar gratuito ainda esta de pe. Posso te mandar um
+video de 1 minuto mostrando como funciona?
+
+------------------------------------------------------------
+1.5  FOLLOW-UP FINAL (mais ~3 dias, sem resposta)
+------------------------------------------------------------
+Oi, [NOME]! Ultima passadinha por aqui 😄 se agora nao for um bom
+momento, sem problema.
+
+Deixo o convite aberto: se quiser testar de graca depois, e so me
+chamar. Sucesso com a clinica! 🙌
+
+------------------------------------------------------------
+1.6  QUANDO DEMONSTRA INTERESSE -> MARCAR A DEMONSTRACAO
+------------------------------------------------------------
+Que otimo! 🎉 E bem rapido, uns 15 minutinhos por chamada ou
+pessoalmente.
+
+Te mostro funcionando e ja deixo sua clinica configurada (agenda,
+link de agendamento e mensagens). Pode amanha as [horario] ou
+prefere [outro horario]?
+
+------------------------------------------------------------
+1.7  ATIVANDO A CORTESIA (depois da demo)
+------------------------------------------------------------
+Prontinho, [NOME]! Sua clinica ja esta configurada e o acesso
+liberado por [DIAS] dias, sem custo nenhum. 🙌
+
+Pode comecar a usar hoje:
+nastadesk.vercel.app
+
+Qualquer duvida me chama aqui que eu te ajudo na hora. Combinado:
+ao final voce me conta com sinceridade o que achou, beleza?
+
+------------------------------------------------------------
+1.8  PEDIDO DE FEEDBACK / DEPOIMENTO (fim da cortesia)
+------------------------------------------------------------
+Oi, [NOME]! Como foram esses dias usando o NastaDesk? 😊
+
+Queria muito saber: o que te ajudou mais e o que voce sentiu
+falta?
+
+E, se curtiu, voce toparia me mandar um depoimento curtinho?
+Ajuda demais nesse comeco 🙏 (Se quiser continuar, te passo as
+condicoes pra seguir usando.)
+
+
+============================================================
+   FASE 2 - VENDA PAGA (APRESENTAR E VENDER)
+============================================================
+Objetivo: apresentar a ferramenta e vender no preco normal.
+Use prova social ("clinicas ja usando") quando tiver os
+primeiros clientes.
+
+------------------------------------------------------------
+2.1  ABORDAGEM APRESENTANDO A FERRAMENTA
+------------------------------------------------------------
+Oi, [NOME]! Tudo bem? Aqui e a [SEU NOME] 😊
+
+Eu trabalho com o NastaDesk, um sistema feito pra clinicas de
+fisioterapia: agenda, prontuario, financeiro e lembrete no
+WhatsApp, tudo num lugar so, pra parar de gerenciar a clinica no
+papel e na planilha.
+
+Posso te mandar uma apresentacao rapida pra voce ver se faz
+sentido pra sua clinica?
+
+------------------------------------------------------------
+2.2  COM PROVA SOCIAL (quando ja tiver clientes)
+------------------------------------------------------------
+Oi, [NOME]! 😊 Aqui e a [SEU NOME], do NastaDesk.
+
+Algumas clinicas de fisio ja estao usando pra organizar agenda,
+ficha do paciente e financeiro num so lugar. O que mais ajuda e o
+lembrete automatico no WhatsApp, que reduz bastante as faltas.
+
+Queria te mostrar como funcionaria ai. Pode ser?
+
+------------------------------------------------------------
+2.3  FOLLOW-UP DEPOIS DE MANDAR O MATERIAL / PDF
+------------------------------------------------------------
+Oi, [NOME]! Conseguiu dar uma olhada na apresentacao? 🙂
+
+Se quiser, marco 15 minutos e te mostro funcionando na pratica,
+ja com a cara da sua clinica. Que dia fica bom pra voce?
+
+------------------------------------------------------------
+2.4  CONVITE PRA DEMONSTRACAO
+------------------------------------------------------------
+Show! A melhor forma de ver e eu te mostrar funcionando ao vivo,
+e rapido (uns 15 minutos).
+
+Te mostro a agenda, a ficha do paciente e o financeiro, e tiro
+qualquer duvida. Prefere hoje as [horario] ou amanha as [horario]?
+
+------------------------------------------------------------
+2.5  ENVIANDO OS PLANOS / PRECO
+------------------------------------------------------------
+Os planos sao bem diretos:
+
+- Basica - R$97/mes: agenda, prontuario, agendamento online,
+  financeiro e lembretes no WhatsApp.
+
+- Profissional - R$197/mes (mais popular): tudo da Basica +
+  chatbot de IA no WhatsApp, lembretes automaticos e pacotes de
+  sessoes.
+
+- Premium - R$347/mes: tudo do Profissional + IA ilimitada,
+  varios profissionais e suporte prioritario.
+
+Sem fidelidade, cancela quando quiser. Qual faz mais sentido pra
+sua rotina hoje?
+
+------------------------------------------------------------
+2.6  FOLLOW-UP (sem resposta)
+------------------------------------------------------------
+Oi, [NOME]! So passando pra saber se ficou alguma duvida sobre o
+NastaDesk 🙂
+
+Se quiser, eu ja configuro sua clinica e voce comeca a usar hoje
+mesmo. Bora?
+
+------------------------------------------------------------
+2.7  FECHAMENTO
+------------------------------------------------------------
+Perfeito, [NOME]! 🎉 Entao vou seguir assim:
+
+1) Te mando o link do pagamento (Mercado Pago, mensal);
+2) Configuro sua clinica certinha (agenda, agendamento online e
+   mensagens);
+3) Te dou um passo a passo pra comecar hoje.
+
+Pode confirmar que eu ja te envio?
+
+
+============================================================
+   QUEBRA DE OBJECOES (serve pras duas fases)
+============================================================
+
+"TA CARO / NAO SEI SE CABE NO ORCAMENTO"
+Entendo total! Pensa assim: 1 ou 2 pacientes que deixam de faltar
+no mes por causa do lembrete automatico ja cobrem a mensalidade.
+Fora o tempo que voce economiza sem planilha e papelada. Quer
+comecar pela Basica (R$97) e subir so se fizer sentido?
+
+"NAO TENHO TEMPO DE APRENDER OUTRO SISTEMA"
+Esse e o melhor: eu deixo tudo configurado pra voce e e bem
+simples de usar, da pra mexer pelo celular. Em 15 minutos voce ja
+esta usando. Posso configurar pra voce sem compromisso?
+
+"JA USO OUTRO SISTEMA / FACO NO CADERNO E NO ZAP"
+Faz sentido! A maioria comeca assim mesmo. A diferenca aqui e ter
+agenda, ficha, financeiro e WhatsApp no mesmo lugar, sem ficar
+pulando de app. Posso te mostrar a diferenca em 10 minutos e voce
+decide?
+
+"VOU PENSAR"
+Claro, sem pressa! 🙂 Posso so deixar sua clinica configurada pra
+voce testar e sentir na pratica? Ai fica bem mais facil decidir.
+Topas?
+
+"TENHO POUCOS PACIENTES AINDA"
+Entao e o momento ideal: organizar desde cedo faz a clinica
+crescer mais redonda, e o agendamento online + WhatsApp ajudam
+justamente a trazer mais paciente. Quer ver como ficaria?
+
+============================================================
+   NastaDesk - nastadesk.vercel.app - +55 21 98407-2359
+============================================================
