@@ -81,6 +81,9 @@
   .phone{width:255px;border-radius:34px;background:#0e1714;padding:9px;box-shadow:0 30px 60px -22px rgba(16,40,32,.55),0 6px 14px -6px rgba(16,40,32,.3)}
   .phone .scr{border-radius:26px;overflow:hidden;background:var(--creme);position:relative}
   .phone .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:84px;height:18px;background:#0e1714;border-radius:0 0 12px 12px;z-index:5}
+  .scr3{min-height:282px;display:flex;flex-direction:column}
+  .scr3 > .ui,.scr3 > .wa{flex:1;display:flex;flex-direction:column}
+  .scr3 .body,.scr3 .chat{flex:1}
   .laptop{width:100%}
   .laptop .lid{border:9px solid #0e1714;border-radius:14px;background:#0e1714;box-shadow:0 26px 56px -24px rgba(16,40,32,.5)}
   .laptop .scr{border-radius:5px;overflow:hidden;background:var(--creme)}
@@ -214,7 +217,7 @@
 <section class="page cover">
  <div class="cover-inner">
   <div class="brandbar" style="border:none;padding:0">
-    <img src="logo.png" class="lg-cover" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-cover&quot;>NASTA<b>CLIN</b></span>'">
+    <img src="logo-mark.png" class="lg-cover" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-cover&quot;>NASTA<b>CLIN</b></span>'">
     <span class="hsite">nastadesk.vercel.app</span>
   </div>
 
@@ -270,7 +273,7 @@
 <!-- ============ PÁGINA 2 — POR QUE USAR ============ -->
 <section class="page">
   <div class="brandbar">
-    <div class="brand"><img src="logo.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
     <span class="hsite">nastadesk.vercel.app</span>
   </div>
 
@@ -314,7 +317,7 @@
 <!-- ============ PÁGINA 3 — POR DENTRO (MOCKUPS) ============ -->
 <section class="page">
   <div class="brandbar">
-    <div class="brand"><img src="logo.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
     <span class="hsite">nastadesk.vercel.app</span>
   </div>
 
@@ -328,7 +331,7 @@
   <div class="laptop" style="max-width:560px;margin:6px auto 0">
     <div class="lid">
       <div class="scr">
-        <div class="dash" style="height:300px">
+        <div class="dash" style="height:258px">
           <div class="side">
             <div class="lo">N</div>
             <i class="on"></i><i></i><i></i><i></i><i></i>
@@ -365,22 +368,23 @@
   </div>
 
   <!-- two phones -->
-  <div style="display:flex;justify-content:center;gap:34px;margin-top:26px">
-    <div class="phone" style="width:212px">
-      <div class="scr"><div class="notch"></div>
+  <div style="display:flex;justify-content:center;align-items:flex-start;gap:30px;margin-top:16px">
+    <div class="phone" style="width:206px">
+      <div class="scr scr3"><div class="notch"></div>
         <div class="ui">
           <div class="top"><div class="k">Ficha do paciente</div><div class="d">Mariana Lopes</div></div>
           <div class="body" style="gap:7px">
             <div class="appt" style="padding:8px 10px"><div class="nm"><b>Anamnese</b><span>Lombalgia · há 3 meses</span></div><span class="chip ok">Preenchida</span></div>
             <div class="appt" style="padding:8px 10px"><div class="nm"><b>Evolução · sessão 4</b><span>Boa amplitude, sem dor</span></div><span class="chip pkg">Hoje</span></div>
             <div class="appt" style="padding:8px 10px"><div class="nm"><b>Pacote 10 sessões</b><span>Válido até 30/07</span></div><span class="chip ok">6 restantes</span></div>
+            <div class="appt" style="padding:8px 10px"><div class="nm"><b>Próxima sessão</b><span>Quinta, 18/06 · 09:00</span></div><span class="chip wait">Agendada</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="phone" style="width:212px">
-      <div class="scr"><div class="notch"></div>
+    <div class="phone" style="width:206px">
+      <div class="scr scr3"><div class="notch"></div>
         <div class="wa">
           <div class="top"><span class="av">N</span><div><b>NastaClin</b><span>online agora</span></div></div>
           <div class="chat">
@@ -399,7 +403,7 @@
 <!-- ============ PÁGINA 4 — RECURSOS ============ -->
 <section class="page">
   <div class="brandbar">
-    <div class="brand"><img src="logo.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
     <span class="hsite">nastadesk.vercel.app</span>
   </div>
 
@@ -426,7 +430,7 @@
 <!-- ============ PÁGINA 5 — PLANOS ============ -->
 <section class="page">
   <div class="brandbar">
-    <div class="brand"><img src="logo.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
     <span class="hsite">nastadesk.vercel.app</span>
   </div>
 
@@ -488,7 +492,7 @@
 <!-- ============ PÁGINA 6 — FAQ ============ -->
 <section class="page">
   <div class="brandbar">
-    <div class="brand"><img src="logo.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
     <span class="hsite">nastadesk.vercel.app</span>
   </div>
 
@@ -512,7 +516,7 @@
 <!-- ============ PÁGINA 7 — COMEÇAR + CONTATO ============ -->
 <section class="page">
   <div class="brandbar">
-    <div class="brand"><img src="logo.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext lgtext-head&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
     <span class="hsite">nastadesk.vercel.app</span>
   </div>
 

@@ -6,10 +6,11 @@
 COMO USAR
 - Copie a mensagem e cole no WhatsApp. As mensagens ja vem
   com os emojis prontos.
+- As mensagens ja estao assinadas como Roberta.
 - Antes de enviar, troque os campos entre colchetes:
      [NOME]        = nome da pessoa ou da clinica
-     [SEU NOME]    = seu nome (assinatura)
      [DIAS]        = duracao da cortesia (sugestao: 30 dias)
+     [horario]     = horario sugerido pra demo
   Link do sistema: nastadesk.vercel.app
   WhatsApp de contato: +55 21 98407-2359
 
@@ -43,7 +44,7 @@ mostrar como funciona rapidinho?
 ------------------------------------------------------------
 1.2  INDICACAO / AMIGA DE AMIGA
 ------------------------------------------------------------
-Oi, [NOME]! Aqui e a [SEU NOME], a [quem indicou] me passou seu
+Oi, [NOME]! Aqui e a Roberta, a [quem indicou] me passou seu
 contato 🙌
 
 Eu cuido de um sistema pra clinicas de fisioterapia (agenda,
@@ -56,7 +57,7 @@ como ficaria na sua clinica?
 ------------------------------------------------------------
 1.3  ABORDAGEM FRIA (CLINICA QUE VOCE NAO CONHECE)
 ------------------------------------------------------------
-Oi! Tudo bem? Aqui e a [SEU NOME] 😊
+Oi! Tudo bem? Aqui e a Roberta 😊
 
 Conheci a clinica de voces e queria mostrar uma ferramenta que
 organiza tudo num lugar so: agenda, ficha do paciente, financeiro
@@ -127,7 +128,7 @@ primeiros clientes.
 ------------------------------------------------------------
 2.1  ABORDAGEM APRESENTANDO A FERRAMENTA
 ------------------------------------------------------------
-Oi, [NOME]! Tudo bem? Aqui e a [SEU NOME] 😊
+Oi, [NOME]! Tudo bem? Aqui e a Roberta 😊
 
 Eu trabalho com o NastaDesk, um sistema feito pra clinicas de
 fisioterapia: agenda, prontuario, financeiro e lembrete no
@@ -140,7 +141,7 @@ sentido pra sua clinica?
 ------------------------------------------------------------
 2.2  COM PROVA SOCIAL (quando ja tiver clientes)
 ------------------------------------------------------------
-Oi, [NOME]! 😊 Aqui e a [SEU NOME], do NastaDesk.
+Oi, [NOME]! 😊 Aqui e a Roberta, do NastaDesk.
 
 Algumas clinicas de fisio ja estao usando pra organizar agenda,
 ficha do paciente e financeiro num so lugar. O que mais ajuda e o
