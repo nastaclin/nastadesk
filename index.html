@@ -656,7 +656,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 }
 @media (max-width: 900px) {
   .sidebar { display: none; }
-  .mobile-nav { display: block; }
+  body.app-ativo .mobile-nav { display: block; }
   .main { margin-left: 0; padding: 16px; padding-bottom: 84px; }
   .metricas, .metricas.cinco { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .metrica-valor { font-size: 26px; }
@@ -1967,6 +1967,7 @@ async function entrarNoApp(user) {
   try {
     document.getElementById('auth-wrap').style.display = 'none';
     document.getElementById('app-wrap').classList.add('visivel');
+    document.body.classList.add('app-ativo');
     await carregarDados(user);
   } catch(e) {
     console.error('Erro ao carregar dados:', e);
@@ -1977,6 +1978,7 @@ async function entrarNoApp(user) {
 
 function voltarParaLogin() {
   document.getElementById('app-wrap').classList.remove('visivel');
+  document.body.classList.remove('app-ativo');
   document.getElementById('auth-wrap').style.display = 'flex';
   clinicaId = null;
   clinicaAtual = null;
@@ -2039,11 +2041,14 @@ async function fazerCadastro() {
   btn.disabled = true; btn.textContent = 'Criando conta...';
   const { error } = await db.auth.signUp({
     email, password: senha,
-    options: { data: { nome_clinica: clinica, responsavel: nome, whatsapp: wpp } }
+    options: {
+      data: { nome_clinica: clinica, responsavel: nome, whatsapp: wpp },
+      emailRedirectTo: location.origin + '/confirmado.html'
+    }
   });
   btn.disabled = false; btn.textContent = 'Criar minha conta';
   if (error) { erro.textContent = traduzirErro(error.message); erro.classList.add('visivel'); }
-  else { sucesso.textContent = 'Conta criada! Verifique seu e-mail para confirmar o cadastro.'; sucesso.classList.add('visivel'); }
+  else { sucesso.textContent = 'Conta criada! Enviamos um link de confirmação para o seu e-mail — clique nele para ativar sua conta.'; sucesso.classList.add('visivel'); }
 }
 
 function abrirModalConfirm(titulo, texto, btnLabel, callback) {
