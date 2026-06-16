@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>NastaDesk — Scripts de WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --verde:#0B6E4F; --verde-escuro:#07523A; --verde-medio:#17A076; --verde-claro:#D6F2E6;
+    --verde-suave:#F1FAF6; --creme:#F8F7F3; --tinta:#13201B; --cinza-medio:#5E6B64;
+    --linha:#E7E9E4; --bolha:#DCF8C6;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-family:'DM Sans',sans-serif;color:var(--tinta);background:#e9ebe7;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .page{width:210mm;min-height:297mm;background:var(--creme);margin:18px auto;position:relative;overflow:hidden;
+    box-shadow:0 12px 44px -14px rgba(16,40,32,.4);padding:16mm 15mm 13mm;display:flex;flex-direction:column}
+  @page{size:A4;margin:0}
+  @media print{body{background:none}.page{margin:0;box-shadow:none;break-after:page;page-break-after:always}.page:last-child{break-after:auto;page-break-after:auto}}
+
+  .brandbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--linha)}
+  .brand{display:flex;align-items:center;gap:11px}
+  .lg-head{height:32px;width:auto;display:block}
+  .lgtext{font-family:'DM Serif Display',serif;color:var(--verde);line-height:1;font-size:20px}
+  .lgtext b{color:var(--verde-escuro)}
+  .brand .prod{font-size:12px;color:var(--cinza-medio);border-left:1px solid var(--linha);padding-left:11px}
+  .brand .prod b{color:var(--tinta);font-weight:600}
+  .hsite{font-size:12px;color:var(--cinza-medio)}
+  .pagefoot{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:var(--cinza-medio);margin-top:auto;padding-top:13px;border-top:1px solid var(--linha)}
+
+  .title{margin:22px 0 16px}
+  .title .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--verde-medio)}
+  .title h1{font-family:'DM Serif Display',serif;font-size:38px;line-height:1.05;margin:9px 0 6px;color:var(--tinta)}
+  .title p{color:var(--cinza-medio);font-size:14.5px;max-width:46em}
+
+  .info{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:20px}
+  .box{background:#fff;border:1px solid var(--linha);border-radius:13px;padding:15px 17px}
+  .box h3{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--verde-escuro);margin-bottom:9px}
+  .box ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .box li{font-size:12.5px;color:var(--tinta);display:flex;gap:8px;align-items:flex-start}
+  .box li b{color:var(--verde-escuro)}
+  .box li svg{width:14px;height:14px;color:var(--verde-medio);flex:0 0 auto;margin-top:3px}
+  .fldlegend{font-size:12.5px;line-height:1.9}
+
+  .secband{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+  .secband .n{font-family:'DM Serif Display',serif;background:var(--verde);color:#fff;font-size:15px;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .secband .tx h2{font-family:'DM Serif Display',serif;font-size:21px;line-height:1.1;color:var(--tinta)}
+  .secband .tx p{font-size:11.5px;color:var(--cinza-medio)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .scard{background:#fff;border:1px solid var(--linha);border-radius:14px;padding:14px 15px;break-inside:avoid;display:flex;flex-direction:column}
+  .shead{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+  .shead .b{font-size:10.5px;font-weight:700;color:var(--verde);background:var(--verde-claro);padding:3px 8px;border-radius:6px;flex:0 0 auto}
+  .shead .t{font-weight:700;font-size:12.5px;color:var(--tinta);line-height:1.2}
+  .bubble{background:var(--bolha);border-radius:10px;border-top-left-radius:3px;padding:11px 13px;font-size:11.5px;line-height:1.5;color:#13201b;position:relative}
+  .bubble::after{content:"";position:absolute;left:-6px;top:0;border-width:0 7px 7px 0;border-style:solid;border-color:transparent var(--bolha) transparent transparent}
+  .fld{background:#fff3d6;color:#8a6d1a;border-radius:5px;padding:0 4px;font-weight:600;font-size:.94em}
+
+  .obj{background:#fff;border:1px solid var(--linha);border-radius:13px;padding:13px 16px;margin-bottom:11px;break-inside:avoid}
+  .obj .q{font-weight:700;font-size:13px;color:var(--tinta);display:flex;gap:9px;align-items:center;margin-bottom:7px}
+  .obj .q .mk{color:#b06a5e;font-size:11px;background:#fbe9e4;padding:3px 8px;border-radius:6px;font-weight:700;white-space:nowrap}
+  .obj .bubble{font-size:11.5px}
+</style>
+</head>
+<body>
+
+<!-- ===== PÁGINA 1 ===== -->
+<section class="page">
+  <div class="brandbar">
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <span class="hsite">nastadesk.vercel.app</span>
+  </div>
+
+  <div class="title">
+    <span class="eyebrow">Material de vendas</span>
+    <h1>Scripts de WhatsApp</h1>
+    <p>Mensagens prontas pra atrair, demonstrar e vender o NastaDesk. Copie pelo arquivo de texto (as mensagens já vêm com emojis prontos) e troque os campos destacados.</p>
+  </div>
+
+  <div class="info">
+    <div class="box">
+      <h3>Como usar</h3>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Mande mensagens curtas primeiro — texto gigante espanta.</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Sempre termine com uma pergunta (puxa resposta).</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Áudio curto (até 40s) converte bem depois do primeiro "oi".</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Tenha 2–3 telas do sistema pra mandar quando pedirem.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Campos pra trocar</h3>
+      <div class="fldlegend">
+        <span class="fld">[NOME]</span> nome da pessoa ou da clínica<br>
+        <span class="fld">[quem indicou]</span> quem te indicou (script 1.2)<br>
+        <span class="fld">[DIAS]</span> dias de cortesia (sugestão: 30)<br>
+        <span class="fld">[horário]</span> horário sugerido pra demo<br>
+        <br>
+        Assinatura: <b>Roberta</b> · Link: <b>nastadesk.vercel.app</b><br>WhatsApp: <b>+55 21 98407-2359</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="secband"><div class="n">1</div><div class="tx"><h2>Fase 1 — Primeiros clientes de teste</h2><p>Cortesia grátis. Coloque 2–3 clínicas usando de graça pra gerar feedback e depoimentos.</p></div></div>
+
+  <div class="grid2">
+    <div class="scard"><div class="shead"><span class="b">1.1</span><span class="t">Contato que você já conhece</span></div>
+      <div class="bubble">Oi, [NOME]! Tudo bem?<br><br>Tô lançando uma ferramenta pra organizar clínica de fisio: agenda, ficha do paciente, financeiro e lembrete no WhatsApp, tudo num lugar só.<br><br>Tô escolhendo 3 clínicas pra usar de graça por [DIAS] dias e me darem a opinião sincera. Lembrei de você na hora. Posso te mostrar como funciona rapidinho?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">1.2</span><span class="t">Indicação / amiga de amiga</span></div>
+      <div class="bubble">Oi, [NOME]! Aqui é a Roberta, a [quem indicou] me passou seu contato.<br><br>Eu cuido de um sistema pra clínicas de fisioterapia (agenda, prontuário, financeiro e WhatsApp num só lugar).<br><br>Tô liberando acesso gratuito por [DIAS] dias pra algumas clínicas testarem antes de todo mundo. Faz sentido eu te mostrar como ficaria na sua clínica?</div>
+    </div>
+  </div>
+
+  <div class="pagefoot"><span>NastaDesk · Scripts de WhatsApp</span><span>nastadesk.vercel.app · +55 21 98407-2359</span></div>
+</section>
+
+<!-- ===== PÁGINA 2 ===== -->
+<section class="page">
+  <div class="brandbar">
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <span class="hsite">nastadesk.vercel.app</span>
+  </div>
+
+  <div class="secband" style="margin-top:24px"><div class="n">1</div><div class="tx"><h2>Fase 1 — Primeiros clientes de teste</h2><p>Abordagem fria e follow-ups.</p></div></div>
+
+  <div class="grid2">
+    <div class="scard"><div class="shead"><span class="b">1.3</span><span class="t">Abordagem fria (não conhece)</span></div>
+      <div class="bubble">Oi! Tudo bem? Aqui é a Roberta.<br><br>Conheci a clínica de vocês e queria mostrar uma ferramenta que organiza tudo num lugar só: agenda, ficha do paciente, financeiro e lembrete de consulta no WhatsApp (ajuda muito a diminuir falta).<br><br>Tô abrindo algumas vagas pra usar de graça por [DIAS] dias. Quem cuida da agenda aí é você mesmo?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">1.4</span><span class="t">Follow-up (~2 dias depois)</span></div>
+      <div class="bubble">Oi, [NOME]! Passando só pra não perder o contato.<br><br>A vaga pra testar gratuito ainda está de pé. Posso te mandar um vídeo de 1 minuto mostrando como funciona?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">1.5</span><span class="t">Follow-up final (~3 dias)</span></div>
+      <div class="bubble">Oi, [NOME]! Última passadinha por aqui — se agora não for um bom momento, sem problema.<br><br>Deixo o convite aberto: se quiser testar de graça depois, é só me chamar. Sucesso com a clínica!</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">1.6</span><span class="t">Demonstrou interesse → marcar demo</span></div>
+      <div class="bubble">Que ótimo! É bem rápido, uns 15 minutinhos por chamada ou pessoalmente.<br><br>Te mostro funcionando e já deixo sua clínica configurada (agenda, link de agendamento e mensagens). Pode amanhã às [horário] ou prefere [horário]?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">1.7</span><span class="t">Ativando a cortesia (após a demo)</span></div>
+      <div class="bubble">Prontinho, [NOME]! Sua clínica já está configurada e o acesso liberado por [DIAS] dias, sem custo nenhum.<br><br>Pode começar a usar hoje: nastadesk.vercel.app<br><br>Qualquer dúvida me chama que eu te ajudo na hora. Combinado: ao final você me conta com sinceridade o que achou, beleza?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">1.8</span><span class="t">Pedido de feedback / depoimento</span></div>
+      <div class="bubble">Oi, [NOME]! Como foram esses dias usando o NastaDesk?<br><br>Queria muito saber: o que te ajudou mais e o que você sentiu falta?<br><br>E, se curtiu, você toparia me mandar um depoimento curtinho? Ajuda demais nesse começo. (Se quiser continuar, te passo as condições pra seguir usando.)</div>
+    </div>
+  </div>
+
+  <div class="pagefoot"><span>NastaDesk · Scripts de WhatsApp</span><span>nastadesk.vercel.app · +55 21 98407-2359</span></div>
+</section>
+
+<!-- ===== PÁGINA 3 ===== -->
+<section class="page">
+  <div class="brandbar">
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <span class="hsite">nastadesk.vercel.app</span>
+  </div>
+
+  <div class="secband" style="margin-top:24px"><div class="n">2</div><div class="tx"><h2>Fase 2 — Venda paga</h2><p>Apresentar e vender no preço normal. Use prova social quando já tiver clientes.</p></div></div>
+
+  <div class="grid2">
+    <div class="scard"><div class="shead"><span class="b">2.1</span><span class="t">Abordagem apresentando</span></div>
+      <div class="bubble">Oi, [NOME]! Tudo bem? Aqui é a Roberta.<br><br>Eu trabalho com o NastaDesk, um sistema feito pra clínicas de fisioterapia: agenda, prontuário, financeiro e lembrete no WhatsApp, tudo num lugar só, pra parar de gerenciar a clínica no papel e na planilha.<br><br>Posso te mandar uma apresentação rápida pra você ver se faz sentido pra sua clínica?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">2.2</span><span class="t">Com prova social</span></div>
+      <div class="bubble">Oi, [NOME]! Aqui é a Roberta, do NastaDesk.<br><br>Algumas clínicas de fisio já estão usando pra organizar agenda, ficha do paciente e financeiro num só lugar. O que mais ajuda é o lembrete automático no WhatsApp, que reduz bastante as faltas.<br><br>Queria te mostrar como funcionaria aí. Pode ser?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">2.3</span><span class="t">Follow-up após mandar o material</span></div>
+      <div class="bubble">Oi, [NOME]! Conseguiu dar uma olhada na apresentação?<br><br>Se quiser, marco 15 minutos e te mostro funcionando na prática, já com a cara da sua clínica. Que dia fica bom pra você?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">2.4</span><span class="t">Convite pra demonstração</span></div>
+      <div class="bubble">Show! A melhor forma de ver é eu te mostrar funcionando ao vivo, é rápido (uns 15 minutos).<br><br>Te mostro a agenda, a ficha do paciente e o financeiro, e tiro qualquer dúvida. Prefere hoje às [horário] ou amanhã às [horário]?</div>
+    </div>
+  </div>
+
+  <div class="pagefoot"><span>NastaDesk · Scripts de WhatsApp</span><span>nastadesk.vercel.app · +55 21 98407-2359</span></div>
+</section>
+
+<!-- ===== PÁGINA 4 ===== -->
+<section class="page">
+  <div class="brandbar">
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <span class="hsite">nastadesk.vercel.app</span>
+  </div>
+
+  <div class="secband" style="margin-top:24px"><div class="n">2</div><div class="tx"><h2>Fase 2 — Venda paga</h2><p>Preço e fechamento.</p></div></div>
+
+  <div class="grid2">
+    <div class="scard"><div class="shead"><span class="b">2.5</span><span class="t">Enviando os planos / preço</span></div>
+      <div class="bubble">Os planos são bem diretos:<br><br>• Básica — R$97/mês: agenda, prontuário, agendamento online, financeiro e lembretes no WhatsApp.<br><br>• Profissional — R$197/mês (mais popular): tudo da Básica + chatbot de IA no WhatsApp, lembretes automáticos e pacotes de sessões.<br><br>• Premium — R$347/mês: tudo do Profissional + IA ilimitada, vários profissionais e suporte prioritário.<br><br>Sem fidelidade, cancela quando quiser. Qual faz mais sentido pra sua rotina hoje?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">2.6</span><span class="t">Follow-up (sem resposta)</span></div>
+      <div class="bubble">Oi, [NOME]! Só passando pra saber se ficou alguma dúvida sobre o NastaDesk.<br><br>Se quiser, eu já configuro sua clínica e você começa a usar hoje mesmo. Bora?</div>
+    </div>
+    <div class="scard"><div class="shead"><span class="b">2.7</span><span class="t">Fechamento</span></div>
+      <div class="bubble">Perfeito, [NOME]! Então vou seguir assim:<br><br>1) Te mando o link do pagamento (Mercado Pago, mensal);<br>2) Configuro sua clínica certinha (agenda, agendamento online e mensagens);<br>3) Te dou um passo a passo pra começar hoje.<br><br>Pode confirmar que eu já te envio?</div>
+    </div>
+    <div class="scard" style="background:var(--verde-suave);border-color:var(--verde-claro)"><div class="shead"><span class="b" style="background:#fff">Dica</span><span class="t">Ritmo do follow-up</span></div>
+      <div class="bubble" style="background:#fff">Não saber se "insistir" trava muita venda. Um bom ritmo: <b>dia 0</b> primeira mensagem, <b>dia 2</b> follow-up leve, <b>dia 5</b> follow-up final. Depois disso, deixe o convite aberto e siga em frente sem pressão.</div>
+    </div>
+  </div>
+
+  <div class="pagefoot"><span>NastaDesk · Scripts de WhatsApp</span><span>nastadesk.vercel.app · +55 21 98407-2359</span></div>
+</section>
+
+<!-- ===== PÁGINA 5 — OBJEÇÕES ===== -->
+<section class="page">
+  <div class="brandbar">
+    <div class="brand"><img src="logo-mark.png" class="lg-head" alt="NastaClin" onerror="this.outerHTML='<span class=&quot;lgtext&quot;>NASTA<b>CLIN</b></span>'"><span class="prod"><b>NastaDesk</b> · Gestão de clínica</span></div>
+    <span class="hsite">nastadesk.vercel.app</span>
+  </div>
+
+  <div class="secband" style="margin-top:24px"><div class="n">3</div><div class="tx"><h2>Quebra de objeções</h2><p>Respostas prontas pras dúvidas mais comuns — serve pras duas fases.</p></div></div>
+
+  <div class="obj"><div class="q"><span class="mk">"Tá caro"</span> Não sei se cabe no orçamento</div>
+    <div class="bubble">Entendo total! Pensa assim: 1 ou 2 pacientes que deixam de faltar no mês por causa do lembrete automático já cobrem a mensalidade. Fora o tempo que você economiza sem planilha e papelada. Quer começar pela Básica (R$97) e subir só se fizer sentido?</div>
+  </div>
+  <div class="obj"><div class="q"><span class="mk">"Não tenho tempo"</span> de aprender outro sistema</div>
+    <div class="bubble">Esse é o melhor: eu deixo tudo configurado pra você e é bem simples de usar, dá pra mexer pelo celular. Em 15 minutos você já está usando. Posso configurar pra você sem compromisso?</div>
+  </div>
+  <div class="obj"><div class="q"><span class="mk">"Já uso outro"</span> / faço no caderno e no zap</div>
+    <div class="bubble">Faz sentido! A maioria começa assim mesmo. A diferença aqui é ter agenda, ficha, financeiro e WhatsApp no mesmo lugar, sem ficar pulando de app. Posso te mostrar a diferença em 10 minutos e você decide?</div>
+  </div>
+  <div class="obj"><div class="q"><span class="mk">"Vou pensar"</span></div>
+    <div class="bubble">Claro, sem pressa! Posso só deixar sua clínica configurada pra você testar e sentir na prática? Aí fica bem mais fácil decidir. Topas?</div>
+  </div>
+  <div class="obj"><div class="q"><span class="mk">"Tenho poucos pacientes"</span> ainda</div>
+    <div class="bubble">Então é o momento ideal: organizar desde cedo faz a clínica crescer mais redonda, e o agendamento online + WhatsApp ajudam justamente a trazer mais paciente. Quer ver como ficaria?</div>
+  </div>
+
+  <div class="pagefoot"><span>NastaDesk · Scripts de WhatsApp</span><span>nastadesk.vercel.app · +55 21 98407-2359</span></div>
+</section>
+
+<script>
+  document.querySelectorAll('.bubble').forEach(function(b){
+    b.innerHTML = b.innerHTML.replace(/\[([^\]]+)\]/g,'<span class="fld">[$1]</span>');
+  });
+</script>
+</body>
+</html>
