@@ -675,6 +675,16 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
   .lem-hora { display: flex; gap: 8px; align-items: baseline; }
   .fin-row { flex-wrap: wrap; }
 }
+
+/* ===== SALAS / SALÕES ===== */
+.sala-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--verde-claro); color: var(--verde-escuro); white-space: nowrap; }
+.sala-tag .sala-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+.sala-select { font-family: inherit; font-size: 12px; color: var(--cinza-escuro); border: 1px solid var(--cinza-claro); border-radius: 8px; padding: 5px 8px; background: white; max-width: 170px; cursor: pointer; }
+.filtro-sala { font-family: inherit; font-size: 13px; color: var(--cinza-escuro); border: 1px solid var(--cinza-claro); border-radius: 10px; padding: 8px 12px; background: white; cursor: pointer; }
+.salas-lista-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border: 1px solid var(--cinza-claro); border-radius: 10px; margin-bottom: 8px; }
+.salas-lista-item .nome { display: flex; align-items: center; gap: 9px; font-weight: 500; font-size: 14px; }
+.salas-add-row { display: flex; gap: 10px; margin-bottom: 18px; }
+.salas-add-row input { flex: 1; }
 </style>
 </head>
 <body>
@@ -972,7 +982,10 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           <div class="card">
             <div class="card-header">
               <div><div class="card-titulo">Consultas de hoje</div><div class="card-sub">Atualizado em tempo real</div></div>
-              <div style="display:flex;align-items:center;gap:6px"><div class="dot-live"></div><span style="font-size:12px;color:var(--cinza-medio)">Ao vivo</span></div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <select class="filtro-sala" id="filtro-sala-dia" onchange="carregarConsultas()" style="display:none"></select>
+                <div style="display:flex;align-items:center;gap:6px"><div class="dot-live"></div><span style="font-size:12px;color:var(--cinza-medio)">Ao vivo</span></div>
+              </div>
             </div>
             <div id="lista-consultas"><div class="loading"><div class="loading-spinner"></div>Carregando consultas...</div></div>
           </div>
@@ -1007,6 +1020,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="topbar">
         <div class="topbar-titulo"><h1>Agendamentos</h1><p id="agend-periodo">—</p></div>
         <div class="topbar-acoes">
+          <select class="filtro-sala" id="filtro-sala-semana" onchange="renderGradeSemanal()" style="display:none"></select>
           <button class="btn btn-secundario" id="btn-toggle-view" onclick="toggleViewAgend()" style="display:none">Lista</button>
           <button class="btn btn-primario" onclick="abrirModal()">+ Agendar</button>
         </div>
@@ -1213,6 +1227,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="cfg-tab" data-cfg="whatsapp" onclick="cfgTab('whatsapp',this)">WhatsApp & Chatbot</div>
         <div class="cfg-tab" data-cfg="clinica" onclick="cfgTab('clinica',this)">Clínica</div>
         <div class="cfg-tab" data-cfg="agenda" onclick="cfgTab('agenda',this)">Agenda</div>
+        <div class="cfg-tab" data-cfg="salas" onclick="cfgTab('salas',this)">Salas</div>
       </div>
 
       <!-- ABA MENSAGENS -->
@@ -1288,6 +1303,19 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           <div class="card-titulo" style="margin:20px 0 16px;font-size:13px">Horários por dia</div>
           <div id="cfg-dias-horarios"></div>
           <button class="btn btn-primario" style="margin-top:8px" onclick="salvarHorarios()">Salvar horários</button>
+        </div>
+      </div>
+
+      <!-- ABA SALAS -->
+      <div id="cfg-tab-salas" style="display:none;max-width:580px">
+        <div class="card" style="padding:28px">
+          <div class="card-titulo" style="margin-bottom:6px">Salões de atendimento</div>
+          <div class="card-sub" style="margin-bottom:20px">Cadastre seus salões (salas) para organizar os atendimentos por ambiente, e não só por horário. Depois é só escolher o salão em cada agendamento.</div>
+          <div class="salas-add-row">
+            <input type="text" id="nova-sala-nome" placeholder="Ex: Salão 1, Sala de Pilates..." onkeydown="if(event.key==='Enter')adicionarSala()">
+            <button class="btn btn-primario" onclick="adicionarSala()">Adicionar</button>
+          </div>
+          <div id="salas-lista"></div>
         </div>
       </div>
 
@@ -1561,6 +1589,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     </div>
     <div class="config-campo"><label>Queixa principal</label><input type="text" id="novo-queixa" placeholder="Ex: Dor no joelho direito"></div>
     <div class="config-campo"><label>Valor da consulta (R$)</label><input type="number" id="novo-valor" placeholder="Valor padrão da clínica" min="0" step="0.01"></div>
+    <div class="config-campo" id="novo-sala-wrap" style="display:none"><label>Salão (opcional)</label><select id="novo-sala"></select></div>
     <div class="modal-acoes">
       <button class="btn btn-secundario" onclick="fecharModal()">Cancelar</button>
       <button class="btn btn-primario" onclick="salvarConsulta()">Agendar</button>
@@ -1777,6 +1806,9 @@ const db = createClient(SUPA_URL, SUPA_KEY);
 
 let clinicaId = null;
 let clinicaAtual = null;
+let salas = [];
+let salasDisponivel = false;
+const SALA_CORES = ['#0B6E4F','#3B6FD4','#E87040','#9B59B6','#E8A820','#17A076','#D4476F','#5B7C99'];
 let assinaturaAtual = null;
 let configAtual = null;
 let calData = new Date();
@@ -1890,6 +1922,7 @@ async function onbConcluir() {
   // Clínica configurada → agora escolhe o plano e paga para entrar.
   // Só libera a plataforma quem já tem acesso (pagamento confirmado ou cortesia).
   if (clinicaAtual && clinicaAtual.ativo === true) {
+    await carregarSalas();
     await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
     atualizarBadgeLembretes();
     toast('Bem-vindo ao NastaDesk! 🎉');
@@ -2132,6 +2165,7 @@ async function carregarDados(user) {
     tratarRetornoPagamento();
   }
 
+  await carregarSalas();
   await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
   renderCalendario();
   carregarRelatorio();
@@ -2167,6 +2201,111 @@ async function carregarDados(user) {
   notifInterval = setInterval(verificarNotificacoes, 60000);
 }
 
+// ===== SALAS / SALÕES =====
+async function carregarSalas() {
+  if (!clinicaId) return;
+  const { data, error } = await db.from('salas').select('*').eq('clinica_id', clinicaId).order('ordem').order('criado_em');
+  if (error) { salasDisponivel = false; salas = []; }
+  else { salasDisponivel = true; salas = data || []; }
+  renderSalasConfig();
+  refreshSalaSelectors();
+}
+function salasAtivas() { return salas.filter(s => s.ativo); }
+function salaPorId(id) { return salas.find(s => s.id === id) || null; }
+function corSala(id) {
+  const idx = salasAtivas().findIndex(s => s.id === id);
+  return idx < 0 ? 'var(--cinza-medio)' : SALA_CORES[idx % SALA_CORES.length];
+}
+function nomeSala(id) { const s = salaPorId(id); return s ? s.nome : ''; }
+
+// Opções <option> de salão para os selects de cada consulta
+function optsSala(valor) {
+  const ativas = salasAtivas();
+  let html = `<option value=""${!valor ? ' selected' : ''}>Sem salão</option>`;
+  ativas.forEach(s => { html += `<option value="${s.id}"${valor === s.id ? ' selected' : ''}>${esc(s.nome)}</option>`; });
+  if (valor && !ativas.some(s => s.id === valor)) {
+    const s = salaPorId(valor);
+    if (s) html += `<option value="${s.id}" selected>${esc(s.nome)} (inativo)</option>`;
+  }
+  return html;
+}
+
+// Popula um <select> de salão (usado no modal e nos filtros)
+function popularSelectSalas(sel, valor, opts) {
+  if (!sel) return;
+  opts = opts || {};
+  let html = '';
+  if (opts.todos) html += `<option value="__todos">Todos os salões</option>`;
+  html += `<option value="">Sem salão</option>`;
+  salasAtivas().forEach(s => { html += `<option value="${s.id}">${esc(s.nome)}</option>`; });
+  if (valor && valor !== '__todos' && valor !== '' && !salasAtivas().some(s => s.id === valor)) {
+    const s = salaPorId(valor);
+    if (s) html += `<option value="${s.id}">${esc(s.nome)} (inativo)</option>`;
+  }
+  sel.innerHTML = html;
+  sel.value = (valor != null) ? valor : '';
+}
+
+function refreshSalaSelectors() {
+  const temSalas = salasAtivas().length > 0;
+  ['filtro-sala-dia','filtro-sala-semana'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    popularSelectSalas(el, el.value || '__todos', { todos: true });
+    el.style.display = temSalas ? '' : 'none';
+  });
+}
+
+function renderSalasConfig() {
+  const el = document.getElementById('salas-lista');
+  if (!el) return;
+  if (!salasDisponivel) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--cinza-medio);padding:6px 0">Recurso de salões ainda não ativado no banco de dados.</div>`;
+    return;
+  }
+  const ativas = salasAtivas();
+  if (!ativas.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--cinza-medio);padding:6px 0">Nenhum salão cadastrado ainda. Adicione o primeiro acima.</div>`;
+    return;
+  }
+  el.innerHTML = ativas.map(s => `
+    <div class="salas-lista-item">
+      <span class="nome"><span style="width:10px;height:10px;border-radius:50%;background:${corSala(s.id)};flex:0 0 auto"></span>${esc(s.nome)}</span>
+      <button class="btn-icone" title="Remover salão" onclick="removerSala('${s.id}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M3 6h18M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+async function adicionarSala() {
+  if (!clinicaId) return;
+  const inp = document.getElementById('nova-sala-nome');
+  const nome = inp.value.trim();
+  if (!nome) { toast('Digite o nome do salão'); return; }
+  const { error } = await db.from('salas').insert({ clinica_id: clinicaId, nome, ordem: salasAtivas().length });
+  if (error) { toast('Erro ao adicionar salão'); return; }
+  inp.value = '';
+  toast('Salão adicionado ✓');
+  await carregarSalas();
+}
+
+function removerSala(id) {
+  abrirModalConfirm('Remover salão?', 'Os agendamentos que estavam nesse salão ficam sem salão. Você pode cadastrá-lo de novo depois.', 'Remover', async () => {
+    const { error } = await db.from('salas').update({ ativo: false }).eq('id', id);
+    if (error) { toast('Erro ao remover'); return; }
+    toast('Salão removido');
+    await carregarSalas();
+    recarregarSecaoAtual();
+  });
+}
+
+async function mudarSalaConsulta(id, valor) {
+  const { error } = await db.from('consultas').update({ sala_id: valor || null }).eq('id', id);
+  if (error) { toast('Erro ao mudar o salão'); return; }
+  toast('Salão atualizado ✓');
+  recarregarSecaoAtual();
+}
+
 // ===== CONSULTAS DO DIA =====
 async function carregarConsultas() {
   if (!clinicaId) return;
@@ -2175,8 +2314,11 @@ async function carregarConsultas() {
     .eq('clinica_id', clinicaId)
     .gte('data_hora', diaInicioISO(hojeStr)).lte('data_hora', diaFimISO(hojeStr))
     .order('data_hora');
-  renderConsultas(data || []);
-  atualizarMetricas(data || []);
+  let lista = data || [];
+  const filtroSala = document.getElementById('filtro-sala-dia')?.value || '__todos';
+  if (filtroSala !== '__todos') lista = lista.filter(c => filtroSala === '' ? !c.sala_id : c.sala_id === filtroSala);
+  renderConsultas(lista);
+  atualizarMetricas(lista);
   carregarSatisfacao();
 }
 
@@ -2226,6 +2368,9 @@ function renderConsultas(lista) {
       <div class="consulta-info">
         <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
         <div class="consulta-queixa">${esc(c.queixa||'—')}</div>
+        ${(salasDisponivel && salasAtivas().length)
+          ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
+          : (c.sala_id ? `<div class="sala-tag" style="margin-top:7px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : '')}
       </div>
       <span class="status-pill ${stClass[c.status]||'status-agendado'}">${stLabel[c.status]||esc(c.status)}</span>
       <div class="consulta-acoes" onclick="event.stopPropagation()">
@@ -3259,7 +3404,7 @@ async function enviarLembrete(consultaId, tipo) {
 
 // ===== CONFIGURAÇÕES =====
 function cfgTab(nome, el) {
-  ['mensagens','online','whatsapp','clinica','agenda'].forEach(t => {
+  ['mensagens','online','whatsapp','clinica','agenda','salas'].forEach(t => {
     const tab = document.getElementById(`cfg-tab-${t}`);
     if (tab) tab.style.display = t===nome ? 'block' : 'none';
   });
@@ -3530,12 +3675,14 @@ async function salvarConsulta() {
   // Offset fixo de São Paulo (-03:00) para evitar conversão errada de fuso
   const dataHoraISO = `${data}T${hora}:00-03:00`;
   const pacoteIdUsado = agendarPacoteId;
-  const { error } = await db.from('consultas').insert({
+  const payloadConsulta = {
     clinica_id: clinicaId, paciente_id: pacienteId, data_hora: dataHoraISO,
     queixa: queixa || null, status: 'agendado', origem: 'manual',
     valor, pagamento_status: usandoPacote ? 'pacote' : 'pendente',
     pacote_id: usandoPacote ? pacoteIdUsado : null
-  });
+  };
+  if (salasDisponivel) payloadConsulta.sala_id = document.getElementById('novo-sala')?.value || null;
+  const { error } = await db.from('consultas').insert(payloadConsulta);
   if (!error) {
     fecharModal(); toast(usandoPacote ? 'Sessão do pacote agendada ✓' : 'Consulta agendada ✓');
     document.getElementById('novo-queixa').value = '';
@@ -3645,6 +3792,8 @@ async function renderGradeSemanal() {
   const { data: clinica } = await db.from('clinicas').select('horario_inicio,horario_fim,intervalo_consulta,horarios_por_dia,dias_atendimento').eq('id', clinicaId).single();
   const { data: consultas } = await db.from('consultas').select('*, pacientes(nome)').eq('clinica_id', clinicaId).gte('data_hora', seg.toISOString()).lte('data_hora', dom.toISOString()).order('data_hora');
   consultasSemana = consultas || [];
+  const filtroSalaSem = document.getElementById('filtro-sala-semana')?.value || '__todos';
+  if (filtroSalaSem !== '__todos') consultasSemana = consultasSemana.filter(c => filtroSalaSem === '' ? !c.sala_id : c.sala_id === filtroSalaSem);
 
   const fmtDia = d => d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
   document.getElementById('semana-periodo-label').textContent = `${fmtDia(seg)} – ${fmtDia(dom)}`;
@@ -3674,6 +3823,7 @@ async function renderGradeSemanal() {
             <div class="lista-agend-info">
               <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}</div>
               <div class="lista-agend-queixa">${esc(c.queixa||'—')}</div>
+              ${c.sala_id ? `<div class="sala-tag" style="margin-top:5px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : ''}
             </div>
             <span class="status-pill ${stClass[c.status]||'status-agendado'}">${stLabel[c.status]||esc(c.status)}</span>
           </div>`).join('');
@@ -3741,7 +3891,9 @@ async function renderGradeSemanal() {
       html += `<div class="grade-slot ${foraClass}" ${onclick}>`;
       for (const c of consultasSlot) {
         const nome = c.pacientes?.nome?.split(' ')[0] || '—';
-        html += `<div class="agend-pill ${c.status}" title="${esc(c.pacientes?.nome||'')} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${esc(nome)}</div>`;
+        const estiloSala = c.sala_id ? `style="border-left:3px solid ${corSala(c.sala_id)}"` : '';
+        const tituloSala = c.sala_id ? ` — ${esc(nomeSala(c.sala_id))}` : '';
+        html += `<div class="agend-pill ${c.status}" ${estiloSala} title="${esc(c.pacientes?.nome||'')}${tituloSala} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${esc(nome)}</div>`;
       }
       html += '</div>';
     }
@@ -3768,6 +3920,8 @@ function abrirModal() {
   document.getElementById('novo-pac-busca-wrap').style.display = 'block';
   const valorEl = document.getElementById('novo-valor');
   if (clinicaAtual?.valor_consulta_padrao && !valorEl.value) valorEl.placeholder = `Padrão: ${fmtBRL(clinicaAtual.valor_consulta_padrao)}`;
+  popularSelectSalas(document.getElementById('novo-sala'), '');
+  document.getElementById('novo-sala-wrap').style.display = (salasDisponivel && salasAtivas().length) ? 'block' : 'none';
   document.getElementById('modal').classList.add('aberto');
 }
 function fecharModal() {
