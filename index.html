@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NastaDesk — Gestão de Clínica</title>
-<!-- build: salao-view-deploy -->
+<!-- build: import-export-deploy -->
 <meta name="description" content="Painel de gestão para clínicas de fisioterapia: agenda, pacientes, financeiro, lembretes de WhatsApp e agendamento online.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif' fill='white'>N</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -702,6 +702,18 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .salao-card-queixa { font-size: 12px; color: var(--cinza-medio); margin-top: 2px; }
 .salao-card-acoes { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
 .salao-card-acoes .sala-select { max-width: 118px; padding: 3px 6px; font-size: 11px; }
+/* Importar pacientes */
+#imp-file { font-size: 13px; }
+.imp-info { font-size: 12px; color: var(--cinza-medio); margin: 6px 0; line-height: 1.5; }
+.imp-info a { color: var(--verde); font-weight: 600; }
+.imp-resumo { font-size: 14px; margin: 10px 0 4px; color: var(--cinza-escuro); }
+.imp-erro { font-size: 13px; color: var(--vermelho); background: #FAE3E3; padding: 10px 12px; border-radius: 8px; margin-top: 8px; }
+.imp-erro a { color: var(--vermelho); font-weight: 700; }
+.imp-tabela-wrap { max-height: 210px; overflow: auto; border: 1px solid var(--cinza-claro); border-radius: 8px; margin-top: 8px; }
+.imp-tabela { width: 100%; border-collapse: collapse; font-size: 12px; }
+.imp-tabela th, .imp-tabela td { text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--cinza-claro); white-space: nowrap; }
+.imp-tabela th { background: #f5f8f6; position: sticky; top: 0; font-weight: 600; color: var(--cinza-escuro); }
+.imp-tabela tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -1161,6 +1173,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="topbar">
         <div class="topbar-titulo"><h1>Pacientes</h1><p id="total-pacientes">—</p></div>
         <div class="topbar-acoes">
+          <button class="btn btn-secundario" onclick="exportarPacientes()" title="Baixar seus pacientes em CSV (Excel)">↓ Exportar</button>
+          <button class="btn btn-secundario" onclick="abrirModalImportar()" title="Importar pacientes de um arquivo CSV">↑ Importar</button>
           <button class="btn btn-secundario" onclick="abrirModalPaciente()">+ Novo paciente</button>
           <button class="btn btn-primario" onclick="abrirModal()">+ Agendar consulta</button>
         </div>
@@ -1636,6 +1650,23 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="modal-acoes">
       <button class="btn btn-secundario" onclick="fecharModalPaciente()">Cancelar</button>
       <button class="btn btn-primario" onclick="salvarNovoPaciente()">Cadastrar paciente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR PACIENTES -->
+<div class="overlay" id="modal-importar" onclick="if(event.target===this)fecharModalImportar()">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-titulo">Importar pacientes</div><div class="modal-sub">Suba um arquivo CSV (ex.: exportado do seu sistema atual)</div></div><button class="modal-fechar" onclick="fecharModalImportar()">×</button></div>
+    <div class="config-campo">
+      <label>Arquivo CSV</label>
+      <input type="file" id="imp-file" accept=".csv,text/csv,text/plain" onchange="onImportFile(this)">
+    </div>
+    <div class="imp-info">A primeira linha deve ter os nomes das colunas (Nome, WhatsApp, CPF, E-mail, Data de nascimento…). Reconhecemos vários nomes automaticamente. <a href="#" onclick="baixarModeloPacientes();return false;">Baixar modelo de exemplo</a></div>
+    <div id="imp-preview"></div>
+    <div class="modal-acoes">
+      <button class="btn btn-secundario" onclick="fecharModalImportar()">Cancelar</button>
+      <button class="btn btn-primario" id="imp-confirmar" onclick="confirmarImportacao()" disabled>Importar</button>
     </div>
   </div>
 </div>
@@ -2742,6 +2773,217 @@ function filtrarPacientes(status, el) {
   document.querySelectorAll('#sec-pacientes .tab').forEach(t=>t.classList.remove('ativa'));
   el.classList.add('ativa');
   renderPacientes(status==='todos' ? todosOsPacientes : todosOsPacientes.filter(p=>p.status===status));
+}
+
+// ===== EXPORTAR / IMPORTAR PACIENTES =====
+const PAC_COLS = [
+  ['nome','Nome'], ['cpf','CPF'], ['whatsapp','WhatsApp'], ['data_nascimento','Data de nascimento'],
+  ['email','E-mail'], ['genero','Genero'], ['profissao','Profissao'], ['convenio','Convenio'],
+  ['endereco','Endereco'], ['queixa_principal','Queixa principal'], ['historico_medico','Historico medico'],
+  ['medicamentos','Medicamentos'], ['alergias','Alergias'], ['observacoes','Observacoes'], ['status','Status'],
+];
+const PAC_ALIASES = {
+  nome: ['nome','paciente','nomecompleto','nomedopaciente','name','cliente'],
+  cpf: ['cpf','documento','doc'],
+  whatsapp: ['whatsapp','whats','telefone','celular','fone','tel','contato','telefonecelular','numero','telefone1'],
+  email: ['email','emailpaciente'],
+  data_nascimento: ['datadenascimento','nascimento','datanascimento','dtnascimento','aniversario','nasc','dn','datanasc'],
+  genero: ['genero','sexo'],
+  profissao: ['profissao','ocupacao'],
+  convenio: ['convenio','planodesaude','plano','seguro'],
+  endereco: ['endereco','logradouro','enderecocompleto'],
+  queixa_principal: ['queixa','queixaprincipal','diagnostico','queixas'],
+  historico_medico: ['historico','historicomedico','historicoclinico'],
+  medicamentos: ['medicamentos','medicacao','remedios'],
+  alergias: ['alergias','alergia'],
+  observacoes: ['observacoes','observacao','obs','anotacoes','notas','comentarios'],
+  status: ['status','situacao'],
+};
+const PAC_LABEL = { nome:'Nome', cpf:'CPF', whatsapp:'WhatsApp', email:'E-mail', data_nascimento:'Nascimento', genero:'Gênero', profissao:'Profissão', convenio:'Convênio', endereco:'Endereço', queixa_principal:'Queixa', historico_medico:'Histórico', medicamentos:'Medicamentos', alergias:'Alergias', observacoes:'Observações', status:'Status' };
+
+function csvCell(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function baixarCSV(nomeArquivo, conteudo) {
+  const blob = new Blob(['﻿' + conteudo], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nomeArquivo;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+function dataExport(campo, valor) {
+  if (valor === null || valor === undefined) return '';
+  if (campo === 'data_nascimento') {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(valor));
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(valor);
+  }
+  return valor;
+}
+function exportarPacientes() {
+  const lista = todosOsPacientes || [];
+  if (!lista.length) { toast('Nenhum paciente para exportar'); return; }
+  const header = PAC_COLS.map(c => c[1]).join(';');
+  const linhas = lista.map(p => PAC_COLS.map(c => csvCell(dataExport(c[0], p[c[0]]))).join(';'));
+  baixarCSV(`pacientes-nastadesk-${dataLocalISO(new Date())}.csv`, [header].concat(linhas).join('\r\n'));
+  toast(`${lista.length} paciente${lista.length!==1?'s':''} exportado${lista.length!==1?'s':''} ✓`);
+}
+function baixarModeloPacientes() {
+  const header = PAC_COLS.map(c => c[1]).join(';');
+  const exemplo = ['Maria Silva','000.000.000-00','11999990001','15/03/1985','maria@email.com','Feminino','Professora','Unimed','Rua das Flores, 100','Dor lombar','','','','Paciente de exemplo','ativo'].join(';');
+  baixarCSV('modelo-importar-pacientes.csv', [header, exemplo].join('\r\n'));
+}
+
+// ---- Importação ----
+let importLinhas = [];
+function abrirModalImportar() {
+  importLinhas = [];
+  const f = document.getElementById('imp-file'); if (f) f.value = '';
+  document.getElementById('imp-preview').innerHTML = '';
+  const btn = document.getElementById('imp-confirmar');
+  btn.disabled = true; btn.textContent = 'Importar';
+  document.getElementById('modal-importar').classList.add('aberto');
+}
+function fecharModalImportar() { document.getElementById('modal-importar').classList.remove('aberto'); }
+
+function normHeader(h) {
+  return (h||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'').trim();
+}
+function detectarDelim(linha) {
+  let best = ',', max = -1;
+  [';','\t',','].forEach(d => { const n = linha.split(d).length; if (n > max) { max = n; best = d; } });
+  return best;
+}
+function parseCSV(texto, delim) {
+  const rows = []; let row = [], field = '', i = 0, inQ = false; const n = texto.length;
+  while (i < n) {
+    const ch = texto[i];
+    if (inQ) {
+      if (ch === '"') { if (texto[i+1] === '"') { field += '"'; i += 2; continue; } inQ = false; i++; continue; }
+      field += ch; i++; continue;
+    }
+    if (ch === '"') { inQ = true; i++; continue; }
+    if (ch === delim) { row.push(field); field = ''; i++; continue; }
+    if (ch === '\r') { i++; continue; }
+    if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+    field += ch; i++;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+function parseDataBR(v) {
+  if (!v) return null;
+  const s = String(v).trim();
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
+  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/.exec(s);
+  if (m) {
+    let d = parseInt(m[1],10), mo = parseInt(m[2],10), y = m[3];
+    if (y.length === 2) y = (parseInt(y,10) > 30 ? '19' : '20') + y;
+    if (d < 1 || d > 31 || mo < 1 || mo > 12) return null;
+    return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  return null;
+}
+function statusImport(v) {
+  const s = normHeader(v);
+  if (['inativo','inativa','semretorno','arquivado'].includes(s)) return 'inativo';
+  if (['listaespera','espera'].includes(s)) return 'lista_espera';
+  return 'ativo';
+}
+function onImportFile(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try { processarImport(String(e.target.result)); }
+    catch (err) { document.getElementById('imp-preview').innerHTML = `<div class="imp-erro">Não consegui ler o arquivo: ${esc(err.message)}</div>`; }
+  };
+  reader.onerror = () => { document.getElementById('imp-preview').innerHTML = '<div class="imp-erro">Erro ao ler o arquivo.</div>'; };
+  reader.readAsText(file, 'utf-8');
+}
+function processarImport(textoRaw) {
+  const btn = document.getElementById('imp-confirmar');
+  const prev = document.getElementById('imp-preview');
+  importLinhas = []; btn.disabled = true; btn.textContent = 'Importar';
+  const texto = textoRaw.replace(/^﻿/, '');
+  const delim = detectarDelim((texto.split(/\r?\n/)[0] || ''));
+  const linhas = parseCSV(texto, delim).filter(r => r.some(c => (c||'').trim() !== ''));
+  if (linhas.length < 2) { prev.innerHTML = '<div class="imp-erro">O arquivo precisa ter um cabeçalho e ao menos uma linha de paciente.</div>'; return; }
+  const headers = linhas[0].map(normHeader);
+  const colMap = {};
+  headers.forEach((h, idx) => {
+    for (const campo in PAC_ALIASES) {
+      if (PAC_ALIASES[campo].includes(h) && colMap[campo] === undefined) { colMap[campo] = idx; break; }
+    }
+  });
+  if (colMap.nome === undefined) {
+    prev.innerHTML = '<div class="imp-erro">Não encontrei a coluna de <strong>Nome</strong>. Renomeie a coluna do nome para "Nome" e tente de novo. <a href="#" onclick="baixarModeloPacientes();return false;">Baixar modelo</a></div>';
+    return;
+  }
+  const cpfsExist = new Set((todosOsPacientes||[]).map(p => (p.cpf||'').replace(/\D/g,'')).filter(Boolean));
+  const wppExist = new Set((todosOsPacientes||[]).map(p => (p.whatsapp||'').replace(/\D/g,'')).filter(Boolean));
+  const cpfsNovos = new Set(), wppNovos = new Set();
+  let dup = 0, semNome = 0;
+  for (let r = 1; r < linhas.length; r++) {
+    const cols = linhas[r];
+    const get = campo => colMap[campo] !== undefined ? (cols[colMap[campo]]||'').trim() : '';
+    const nome = get('nome');
+    if (!nome) { semNome++; continue; }
+    const cpfDig = (get('cpf')||'').replace(/\D/g,'');
+    const wppDig = (get('whatsapp')||'').replace(/\D/g,'');
+    if (cpfDig && (cpfsExist.has(cpfDig) || cpfsNovos.has(cpfDig))) { dup++; continue; }
+    if (!cpfDig && wppDig && (wppExist.has(wppDig) || wppNovos.has(wppDig))) { dup++; continue; }
+    if (cpfDig) cpfsNovos.add(cpfDig);
+    if (wppDig) wppNovos.add(wppDig);
+    importLinhas.push({
+      clinica_id: clinicaId, nome, whatsapp: wppDig, cpf: cpfDig || null,
+      email: get('email') || null, data_nascimento: parseDataBR(get('data_nascimento')),
+      genero: get('genero') || null, profissao: get('profissao') || null, convenio: get('convenio') || null,
+      endereco: get('endereco') || null, queixa_principal: get('queixa_principal') || null,
+      historico_medico: get('historico_medico') || null, medicamentos: get('medicamentos') || null,
+      alergias: get('alergias') || null, observacoes: get('observacoes') || null, status: statusImport(get('status')),
+    });
+  }
+  const total = importLinhas.length;
+  const camposOk = Object.keys(colMap).map(c => PAC_LABEL[c] || c);
+  let html = `<div class="imp-resumo"><strong>${total}</strong> paciente${total!==1?'s':''} pronto${total!==1?'s':''} para importar.</div>`;
+  if (camposOk.length) html += `<div class="imp-info">Colunas reconhecidas: ${camposOk.map(esc).join(', ')}.</div>`;
+  if (dup) html += `<div class="imp-info">${dup} ignorado${dup!==1?'s':''} por já existir (mesmo CPF/WhatsApp).</div>`;
+  if (semNome) html += `<div class="imp-info">${semNome} linha${semNome!==1?'s':''} ignorada${semNome!==1?'s':''} por estar sem nome.</div>`;
+  if (total) {
+    html += '<div class="imp-tabela-wrap"><table class="imp-tabela"><thead><tr><th>Nome</th><th>WhatsApp</th><th>CPF</th><th>Nasc.</th></tr></thead><tbody>';
+    importLinhas.slice(0,5).forEach(p => {
+      html += `<tr><td>${esc(p.nome)}</td><td>${esc(p.whatsapp||'—')}</td><td>${esc(p.cpf||'—')}</td><td>${esc(p.data_nascimento||'—')}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    if (total > 5) html += `<div class="imp-info">…e mais ${total-5}.</div>`;
+  }
+  prev.innerHTML = html;
+  btn.disabled = total === 0;
+  btn.textContent = total ? `Importar ${total} paciente${total!==1?'s':''}` : 'Importar';
+}
+async function confirmarImportacao() {
+  if (!importLinhas.length || !clinicaId) return;
+  const btn = document.getElementById('imp-confirmar');
+  btn.disabled = true; btn.textContent = 'Importando...';
+  let inseridos = 0, falhas = 0;
+  for (let i = 0; i < importLinhas.length; i += 200) {
+    const chunk = importLinhas.slice(i, i + 200);
+    const { error, data } = await db.from('pacientes').insert(chunk).select('id');
+    if (!error) { inseridos += (data ? data.length : chunk.length); continue; }
+    // Fallback linha a linha para salvar as válidas e isolar erros
+    for (const reg of chunk) {
+      const { error: e2 } = await db.from('pacientes').insert(reg);
+      if (e2) falhas++; else inseridos++;
+    }
+  }
+  fecharModalImportar();
+  if (inseridos) toast(`${inseridos} paciente${inseridos!==1?'s':''} importado${inseridos!==1?'s':''} ✓${falhas?` · ${falhas} com erro`:''}`);
+  else toast('Não foi possível importar. Verifique o arquivo.');
+  await carregarPacientes();
 }
 
 // Modal novo paciente
