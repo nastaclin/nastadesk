@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NastaDesk — Gestão de Clínica</title>
-<!-- build: salas-feature-deploy -->
+<!-- build: salao-view-deploy -->
 <meta name="description" content="Painel de gestão para clínicas de fisioterapia: agenda, pacientes, financeiro, lembretes de WhatsApp e agendamento online.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif' fill='white'>N</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -686,6 +686,22 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .salas-lista-item .nome { display: flex; align-items: center; gap: 9px; font-weight: 500; font-size: 14px; }
 .salas-add-row { display: flex; gap: 10px; margin-bottom: 18px; }
 .salas-add-row input { flex: 1; }
+/* Visão "Por salão" (mapa do dia em colunas) */
+.salao-board { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 12px; align-items: flex-start; }
+.salao-coluna { flex: 0 0 250px; max-width: 250px; background: #f5f8f6; border: 1px solid var(--cinza-claro); border-radius: 12px; display: flex; flex-direction: column; max-height: 72vh; }
+.salao-coluna-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; background: white; border-bottom: 1px solid var(--cinza-claro); border-radius: 12px 12px 0 0; }
+.salao-coluna-nome { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; color: var(--cinza-escuro); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.salao-coluna-count { font-size: 12px; font-weight: 600; color: var(--cinza-medio); background: var(--cinza-claro); border-radius: 999px; padding: 1px 9px; flex: 0 0 auto; }
+.salao-coluna-body { padding: 10px; display: flex; flex-direction: column; gap: 9px; overflow-y: auto; }
+.salao-vazio { font-size: 12px; color: var(--cinza-medio); text-align: center; padding: 16px 0; }
+.salao-card { background: white; border: 1px solid var(--cinza-claro); border-radius: 10px; padding: 9px 11px; cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.salao-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.07); transform: translateY(-1px); }
+.salao-card-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.salao-card-hora { font-size: 13px; font-weight: 700; color: var(--verde-escuro); }
+.salao-card-nome { font-size: 13px; font-weight: 600; color: var(--cinza-escuro); }
+.salao-card-queixa { font-size: 12px; color: var(--cinza-medio); margin-top: 2px; }
+.salao-card-acoes { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.salao-card-acoes .sala-select { max-width: 118px; padding: 3px 6px; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -984,6 +1000,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <div class="card-header">
               <div><div class="card-titulo">Consultas de hoje</div><div class="card-sub">Atualizado em tempo real</div></div>
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-secundario" id="btn-view-dia" onclick="toggleViewDia()" style="display:none;padding:7px 12px">Por salão</button>
                 <select class="filtro-sala" id="filtro-sala-dia" onchange="carregarConsultas()" style="display:none"></select>
                 <div style="display:flex;align-items:center;gap:6px"><div class="dot-live"></div><span style="font-size:12px;color:var(--cinza-medio)">Ao vivo</span></div>
               </div>
@@ -1809,7 +1826,11 @@ let clinicaId = null;
 let clinicaAtual = null;
 let salas = [];
 let salasDisponivel = false;
+let viewDiaSalao = false;
+let consultasHojeAll = [];
 const SALA_CORES = ['#0B6E4F','#3B6FD4','#E87040','#9B59B6','#E8A820','#17A076','#D4476F','#5B7C99'];
+const ST_CLASS = { confirmado:'status-confirmado', aguardando:'status-aguardando', cancelado:'status-cancelado', atendido:'status-atendido', agendado:'status-agendado', remarcado:'status-agendado' };
+const ST_LABEL = { confirmado:'Confirmado', aguardando:'Aguardando', cancelado:'Cancelado', atendido:'Atendido', agendado:'Agendado', remarcado:'Remarcado' };
 let assinaturaAtual = null;
 let configAtual = null;
 let calData = new Date();
@@ -2249,12 +2270,21 @@ function popularSelectSalas(sel, valor, opts) {
 
 function refreshSalaSelectors() {
   const temSalas = salasAtivas().length > 0;
+  if (!temSalas) viewDiaSalao = false;
   ['filtro-sala-dia','filtro-sala-semana'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     popularSelectSalas(el, el.value || '__todos', { todos: true });
     el.style.display = temSalas ? '' : 'none';
   });
+  const btnView = document.getElementById('btn-view-dia');
+  if (btnView) {
+    btnView.style.display = temSalas ? '' : 'none';
+    btnView.textContent = viewDiaSalao ? 'Por horário' : 'Por salão';
+  }
+  // No modo "por salão" o filtro não se aplica (as colunas já separam por salão)
+  const fdia = document.getElementById('filtro-sala-dia');
+  if (fdia && viewDiaSalao) fdia.style.display = 'none';
 }
 
 function renderSalasConfig() {
@@ -2315,12 +2345,100 @@ async function carregarConsultas() {
     .eq('clinica_id', clinicaId)
     .gte('data_hora', diaInicioISO(hojeStr)).lte('data_hora', diaFimISO(hojeStr))
     .order('data_hora');
-  let lista = data || [];
+  consultasHojeAll = data || [];
+  renderDiaAtual();
+  carregarSatisfacao();
+}
+
+// Renderiza o dia conforme o modo atual (lista por horário OU colunas por salão)
+function renderDiaAtual() {
+  if (viewDiaSalao && salasDisponivel && salasAtivas().length) {
+    renderConsultasSalao(consultasHojeAll);
+    atualizarMetricas(consultasHojeAll);
+    return;
+  }
   const filtroSala = document.getElementById('filtro-sala-dia')?.value || '__todos';
+  let lista = consultasHojeAll;
   if (filtroSala !== '__todos') lista = lista.filter(c => filtroSala === '' ? !c.sala_id : c.sala_id === filtroSala);
   renderConsultas(lista);
   atualizarMetricas(lista);
-  carregarSatisfacao();
+}
+
+// Alterna entre "Por horário" (lista) e "Por salão" (colunas) — sem refazer a consulta
+function toggleViewDia() {
+  viewDiaSalao = !viewDiaSalao;
+  const btn = document.getElementById('btn-view-dia');
+  if (btn) btn.textContent = viewDiaSalao ? 'Por horário' : 'Por salão';
+  const fdia = document.getElementById('filtro-sala-dia');
+  if (fdia) fdia.style.display = viewDiaSalao ? 'none' : (salasAtivas().length ? '' : 'none');
+  renderDiaAtual();
+}
+
+// Visão "Por salão": uma coluna por salão (mapa do dia), + coluna "Sem salão" quando houver
+function renderConsultasSalao(lista) {
+  const el = document.getElementById('lista-consultas');
+  if (!lista.length) {
+    el.innerHTML = emptyState('Nenhuma consulta agendada para hoje.<br>Clique em "+ Agendar" para adicionar.', 'calendario');
+    return;
+  }
+  const ativas = salasAtivas();
+  const grupos = {};
+  ativas.forEach(s => { grupos[s.id] = []; });
+  const semSala = [];
+  lista.forEach(c => {
+    if (c.sala_id && grupos[c.sala_id]) grupos[c.sala_id].push(c);
+    else semSala.push(c);
+  });
+  let html = '<div class="salao-board">';
+  ativas.forEach(s => {
+    const cor = corSala(s.id);
+    const itens = grupos[s.id];
+    html += `<div class="salao-coluna">
+      <div class="salao-coluna-head">
+        <span class="salao-coluna-nome"><span class="sala-dot" style="width:9px;height:9px;border-radius:50%;background:${cor};flex:0 0 auto"></span>${esc(s.nome)}</span>
+        <span class="salao-coluna-count">${itens.length}</span>
+      </div>
+      <div class="salao-coluna-body">
+        ${itens.length ? itens.map(c => cardSalao(c, cor)).join('') : '<div class="salao-vazio">Sem atendimentos</div>'}
+      </div>
+    </div>`;
+  });
+  if (semSala.length) {
+    const cor = 'var(--cinza-medio)';
+    html += `<div class="salao-coluna">
+      <div class="salao-coluna-head">
+        <span class="salao-coluna-nome"><span class="sala-dot" style="width:9px;height:9px;border-radius:50%;background:${cor};flex:0 0 auto"></span>Sem salão</span>
+        <span class="salao-coluna-count">${semSala.length}</span>
+      </div>
+      <div class="salao-coluna-body">
+        ${semSala.map(c => cardSalao(c, cor)).join('')}
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function cardSalao(c, cor) {
+  const hora = horaSP(c.data_hora);
+  const nome = c.pacientes?.nome || '—';
+  const cancelada = c.status === 'cancelado';
+  const wpp = c.pacientes?.whatsapp ? `55${c.pacientes.whatsapp.replace(/\D/g,'')}` : '';
+  return `<div class="salao-card" style="border-left:3px solid ${cor}" onclick="abrirFicha('${c.paciente_id}')">
+    <div class="salao-card-topo">
+      <span class="salao-card-hora">${hora}</span>
+      <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
+    </div>
+    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
+    ${c.queixa?`<div class="salao-card-queixa">${esc(c.queixa)}</div>`:''}
+    <div class="salao-card-acoes" onclick="event.stopPropagation()">
+      <select class="sala-select" title="Mover de salão" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select>
+      <button class="btn-icone" title="Alterar status" onclick="abrirMenuStatus('${c.id}', this)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg>
+      </button>
+      ${wpp?`<button class="btn-icone" title="WhatsApp" onclick="window.open('https://wa.me/${wpp}','_blank')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></button>`:''}
+    </div>
+  </div>`;
 }
 
 async function carregarSatisfacao() {
@@ -2355,8 +2473,6 @@ function renderConsultas(lista) {
     el.innerHTML = emptyState('Nenhuma consulta agendada para hoje.<br>Clique em "+ Agendar" para adicionar.', 'calendario');
     return;
   }
-  const stClass = { confirmado:'status-confirmado', aguardando:'status-aguardando', cancelado:'status-cancelado', atendido:'status-atendido', agendado:'status-agendado', remarcado:'status-agendado' };
-  const stLabel = { confirmado:'Confirmado', aguardando:'Aguardando', cancelado:'Cancelado', atendido:'Atendido', agendado:'Agendado', remarcado:'Remarcado' };
   el.innerHTML = lista.map((c,i) => {
     const hora = horaSP(c.data_hora);
     const nome = c.pacientes?.nome || '—';
@@ -2373,7 +2489,7 @@ function renderConsultas(lista) {
           ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
           : (c.sala_id ? `<div class="sala-tag" style="margin-top:7px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : '')}
       </div>
-      <span class="status-pill ${stClass[c.status]||'status-agendado'}">${stLabel[c.status]||esc(c.status)}</span>
+      <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
       <div class="consulta-acoes" onclick="event.stopPropagation()">
         <button class="btn-icone" title="Alterar status" onclick="abrirMenuStatus('${c.id}', this)">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg>
