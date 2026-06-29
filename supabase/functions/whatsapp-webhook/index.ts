@@ -114,6 +114,28 @@ async function chamarClaude(system: string, mensagens: { role: string; content: 
   }
 }
 
+// Registra o consumo de tokens da chamada ao Claude, por clínica, para o painel
+// admin calcular o custo REAL da API. Tolerante a falhas de propósito: se a
+// tabela ainda não existir ou a gravação falhar, apenas loga e segue — o bot
+// nunca deve quebrar por causa do rastreio de custo.
+async function registrarUsoIA(clinicaId: string, conversaId: string | null, resp: any) {
+  try {
+    const u = resp?.usage;
+    if (!u) return;
+    await db.from("ia_uso").insert({
+      clinica_id: clinicaId,
+      conversa_id: conversaId,
+      modelo: resp?.model || "claude-haiku-4-5",
+      input_tokens: u.input_tokens || 0,
+      output_tokens: u.output_tokens || 0,
+      cache_creation_input_tokens: u.cache_creation_input_tokens || 0,
+      cache_read_input_tokens: u.cache_read_input_tokens || 0,
+    });
+  } catch (e) {
+    console.error("Falha ao registrar uso de IA (ignorado):", e);
+  }
+}
+
 // ---------- Persistência da conversa ----------
 async function salvarMsg(conversaId: string, clinicaId: string, direcao: string, autor: string, conteudo: string, externaId?: string) {
   await db.from("mensagens").insert({ conversa_id: conversaId, clinica_id: clinicaId, direcao, autor, conteudo, msg_externa_id: externaId || null });
@@ -295,6 +317,7 @@ Sempre chame exatamente UMA ferramenta.`;
   ];
 
   const resp = await chamarClaude(system, [...historico, { role: "user", content: txt }], tools);
+  if (resp && resp.usage) await registrarUsoIA(conv.clinica_id, conv.id, resp);
   if (!resp || !resp.content) {
     await responder(conv, instancia, "Desculpe, tive um problema. " + MENU);
     return;
