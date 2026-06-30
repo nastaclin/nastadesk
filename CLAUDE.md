@@ -33,7 +33,7 @@ Esta seção fixa (entre os marcadores 🔒) NÃO deve ser alterada.
 
 # NastaDesk — Contexto da ferramenta
 
-> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-06-29**.
+> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-06-30**.
 
 ## 1. Visão geral
 
@@ -69,7 +69,7 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 - **WhatsApp:** integração via **Evolution API** (uma instância por clínica).
 - **IA do chatbot:** **Claude (Anthropic)**, modelo **Haiku 4.5**, chamado pela
   Edge Function do webhook do WhatsApp.
-- **Pagamentos / assinaturas:** **Mercado Pago**.
+- **Pagamentos / assinaturas:** **em migração de Mercado Pago → Cakto** (ver Histórico, seção 9). O Mercado Pago segue no código, porém **dormindo**.
 - Segredos (chaves de API etc.) ficam em **variáveis de ambiente** das Edge
   Functions — nunca no front.
 
@@ -81,8 +81,9 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | `whatsapp-enviar` | Envio de mensagens pelo WhatsApp. |
 | `whatsapp-conexao` | Gerencia a conexão/instância da clínica na Evolution. |
 | `lembretes-auto` | Lembretes automáticos (disparados por cron a cada 10 min). |
-| `mercadopago-checkout` | Cria checkout de assinatura no Mercado Pago. |
-| `mercadopago-webhook` | Recebe eventos de cobrança do Mercado Pago. |
+| `mercadopago-checkout` | Cria checkout de assinatura no Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
+| `mercadopago-webhook` | Recebe eventos de cobrança do Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
+| `cakto-webhook` | Recebe eventos da Cakto (compra aprovada, assinatura criada/renovada/cancelada, reembolso, chargeback) e libera/suspende o acesso da clínica. Mapeia o comprador pelo **e-mail**, identifica o plano pelo **valor** (97/197/347) e **nunca derruba clínica em cortesia**. |
 | `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. |
 
 ## 4. Funcionalidades do app (nastadesk)
@@ -193,6 +194,16 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-06-30** — *Em andamento:* migração do provedor de pagamento de **Mercado
+  Pago → Cakto** (motivo: o dono quer concentrar as vendas na Cakto). Como as 3
+  clínicas estão em **cortesia** e **ninguém está pagando**, a troca é segura.
+  Já feito: criada e deployada a Edge Function **`cakto-webhook`** (libera/suspende
+  acesso por e-mail, identifica plano pelo valor, protege cortesia); a Cakto já
+  tem os 3 produtos de assinatura. **Pendente:** cadastrar o secret do webhook no
+  sistema; trocar os botões "Assinar/Upgrade" do app para os **links de checkout
+  da Cakto**; confirmar os nomes dos campos do payload com um evento de teste; e,
+  depois de tudo validado, aposentar o Mercado Pago. Plano/preços inalterados
+  (Básica 97 / Profissional 197 / Premium 347).
 - **2026-06-29** — Card "API Claude / Anthropic" do painel passou de estimativa
   fixa (~R$3/clínica) para **custo real por cliente** baseado em tokens; criada a
   tabela `ia_uso`; `whatsapp-webhook` passou a registrar consumo por clínica;
