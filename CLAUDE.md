@@ -69,7 +69,7 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 - **WhatsApp:** integração via **Evolution API** (uma instância por clínica).
 - **IA do chatbot:** **Claude (Anthropic)**, modelo **Haiku 4.5**, chamado pela
   Edge Function do webhook do WhatsApp.
-- **Pagamentos / assinaturas:** **em migração de Mercado Pago → Cakto** (ver Histórico, seção 9). O Mercado Pago segue no código, porém **dormindo**.
+- **Pagamentos / assinaturas:** **Cakto** (assinatura mensal, checkout hospedado por plano + webhook `cakto-webhook`). O **Mercado Pago foi substituído** e está **dormindo**: as funções continuam no código, mas o app não cria mais cobranças no MP. Mapeamento comprador→clínica é **por e-mail**; o secret do webhook fica em `admin_config` (`cakto_webhook_secret`).
 - Segredos (chaves de API etc.) ficam em **variáveis de ambiente** das Edge
   Functions — nunca no front.
 
@@ -127,7 +127,8 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 - O acesso é liberado de duas formas:
   - **Cortesia** — o admin concede acesso grátis controlado (pode ter data de
     expiração, `cortesia_expira_em`). Feito pelo painel admin.
-  - **Assinatura paga** — via Mercado Pago.
+  - **Assinatura paga** — via **Cakto** (botões "Assinar/Upgrade" abrem o checkout
+    da Cakto com o e-mail da conta pré-preenchido; o `cakto-webhook` libera o acesso).
 - O admin também pode **remover acesso** pelo painel.
 
 ## 6. Chatbot de WhatsApp (detalhe)
@@ -194,16 +195,20 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
-- **2026-06-30** — *Em andamento:* migração do provedor de pagamento de **Mercado
-  Pago → Cakto** (motivo: o dono quer concentrar as vendas na Cakto). Como as 3
-  clínicas estão em **cortesia** e **ninguém está pagando**, a troca é segura.
-  Já feito: criada e deployada a Edge Function **`cakto-webhook`** (libera/suspende
-  acesso por e-mail, identifica plano pelo valor, protege cortesia); a Cakto já
-  tem os 3 produtos de assinatura. **Pendente:** cadastrar o secret do webhook no
-  sistema; trocar os botões "Assinar/Upgrade" do app para os **links de checkout
-  da Cakto**; confirmar os nomes dos campos do payload com um evento de teste; e,
-  depois de tudo validado, aposentar o Mercado Pago. Plano/preços inalterados
-  (Básica 97 / Profissional 197 / Premium 347).
+- **2026-06-30** — **Migração de pagamento Mercado Pago → Cakto (concluída).** Como
+  as 3 clínicas estão em cortesia e ninguém estava pagando, a troca foi segura.
+  Feito: (1) Edge Function **`cakto-webhook`** criada, deployada e validada — lê o
+  payload real da Cakto (`body.event`, `body.data.customer.email`, valor, id da
+  assinatura), libera/suspende o acesso, **protege cortesia** e verifica o secret
+  (guardado em `admin_config.cakto_webhook_secret`); (2) os botões "Assinar/Upgrade"
+  do app agora abrem os **links de checkout da Cakto** (e-mail pré-preenchido p/ o
+  webhook casar); (3) "Cancelar assinatura" da Cakto orienta pelo portal/suporte
+  (cancelamento do MP legado mantido); (4) **Mercado Pago dormindo** — funções
+  mantidas, mas o app não cria mais cobranças nele. Planos/preços inalterados
+  (Básica 97 / Profissional 197 / Premium 347). *Obs.:* mapeamento por e-mail — a
+  clínica deve pagar com o mesmo e-mail da conta. Falta só o teste end-to-end com
+  um pagamento real (eventos de teste da Cakto usam e-mail fictício e não ativam
+  nada). Opcional: mapear plano por ID do produto/oferta (hoje é pelo valor).
 - **2026-06-29** — Card "API Claude / Anthropic" do painel passou de estimativa
   fixa (~R$3/clínica) para **custo real por cliente** baseado em tokens; criada a
   tabela `ia_uso`; `whatsapp-webhook` passou a registrar consumo por clínica;

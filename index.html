@@ -4797,7 +4797,7 @@ function carregarPlanos() {
       let info;
       if (a.status === 'em_atraso') info = '<span style="color:#8A5A00">⚠️ Pagamento não confirmado — regularize para manter o acesso.</span>';
       else if (a.status === 'pendente') info = 'Aguardando a confirmação do pagamento...';
-      else info = 'Assinatura ativa via Mercado Pago' + (venc ? ` · próxima cobrança em ${venc}` : '') + '.';
+      else info = `Assinatura ativa via ${a.provedor === 'cakto' ? 'Cakto' : 'Mercado Pago'}` + (venc ? ` · próxima cobrança em ${venc}` : '') + '.';
       ger.innerHTML = `<div class="card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
         <div style="font-size:13.5px;color:var(--cinza-medio)">${info}</div>
         <a onclick="cancelarAssinatura()" style="font-size:13px;color:var(--cinza-medio);cursor:pointer;text-decoration:underline;white-space:nowrap">Cancelar assinatura</a>
@@ -4808,32 +4808,43 @@ function carregarPlanos() {
   }
 }
 
+// Links de checkout da Cakto (assinatura mensal) — um por plano.
+const LINKS_CAKTO = {
+  basico: 'https://pay.cakto.com.br/ad8vfmf_949243',
+  profissional: 'https://pay.cakto.com.br/w3ryxws_949248',
+  premium: 'https://pay.cakto.com.br/cvv64ck_949254',
+};
+
 async function assinarPlano(chave) {
   if (!PLANOS[chave]) return;
   if (chave === planoAtualChave() && clinicaAtual?.ativo !== false) {
     toast('Este já é o seu plano atual.');
     return;
   }
+  const link = LINKS_CAKTO[chave];
+  if (!link) { toast('Plano indisponível no momento. Fale com o suporte.'); return; }
   toast('Abrindo o pagamento...');
+  // Pré-preenche o e-mail da conta: é por ele que o pagamento é vinculado à sua clínica.
+  // Importante: pague com este mesmo e-mail para a liberação ser automática.
+  let email = (clinicaAtual && clinicaAtual.email) || '';
   try {
-    const { data: { session } } = await db.auth.getSession();
-    if (!session) { toast('Faça login novamente.'); return; }
-    const r = await fetch(`${SUPA_URL}/functions/v1/mercadopago-checkout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPA_KEY },
-      body: JSON.stringify({ acao: 'criar', plano: chave, origin: location.origin }),
-    });
-    const j = await r.json().catch(() => ({}));
-    if (j.init_point) { window.location.href = j.init_point; return; }
-    toast(j.erro || 'Não foi possível abrir o pagamento. Tente novamente.');
-  } catch (e) {
-    console.error('assinarPlano:', e);
-    toast('Erro ao abrir o pagamento. Verifique sua conexão.');
-  }
+    if (!email) { const { data: { user } } = await db.auth.getUser(); email = (user && user.email) || ''; }
+  } catch (_e) { /* sem e-mail: segue sem pré-preencher */ }
+  window.location.href = email ? `${link}?email=${encodeURIComponent(email)}` : link;
 }
 
-// Cancelar a assinatura (Mercado Pago) — usado na página de Planos.
+// Cancelar a assinatura. Cakto: gerenciada pela própria Cakto. MP (legado): cancela via API.
 async function cancelarAssinatura() {
+  const prov = assinaturaAtual && assinaturaAtual.provedor;
+  if (prov !== 'mercadopago') {
+    abrirModalConfirm(
+      'Cancelar assinatura',
+      'Sua assinatura é gerenciada pela Cakto. Para cancelar, use o link de gerenciamento enviado no seu e-mail de compra da Cakto, ou fale com o nosso suporte. Seu acesso continua até o fim do período já pago e seus dados ficam salvos.',
+      'Entendi',
+      async () => {}
+    );
+    return;
+  }
   abrirModalConfirm(
     'Cancelar assinatura?',
     'Seu plano continua ativo até o fim do período já pago. Depois disso o acesso é suspenso até você assinar de novo. Seus dados ficam salvos.',
