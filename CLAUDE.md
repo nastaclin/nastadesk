@@ -98,10 +98,18 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 - **Lembretes WhatsApp** — mensagens prontas (confirmação, véspera, dia) com
   envio em 1 clique (via `wa.me`), além dos lembretes automáticos.
 - **Pacientes** — ficha completa: anamnese, evoluções, histórico, convênio, CPF;
-  importação/exportação por CSV.
+  **modalidade** (Fisio/Pilates/…) e **cobrança** (mensalidade fixa OU por sessão,
+  com valor e dia de vencimento); importação/exportação por CSV.
+- **Modalidades** — lista configurável de tipos de atendimento (Fisioterapia,
+  Pilates, RPG…), com cor por modalidade. Vira etiqueta no paciente, na agenda do
+  dia e no financeiro, e dá pra filtrar pacientes por modalidade. Gerenciada em
+  Configurações → Modalidades (cada clínica já nasce com Fisioterapia + Pilates).
 - **Pacotes de sessões** — venda/controle de pacotes de sessões.
-- **Financeiro** — valor por consulta, registro de pagamento (Pix, cartão,
-  dinheiro…), recibo em PDF, faturamento do mês.
+- **Financeiro** — **(a) por consulta** (inalterado): valor por consulta, registro
+  de pagamento (Pix, cartão, dinheiro…), recibo em PDF, faturamento do mês;
+  **(b) Mensalidades** (novo): cobrança recorrente por paciente (valor + dia de
+  vencimento), controle **pago / pendente / vencido** mês a mês com histórico. A aba
+  "Mensalidades" abre as cobranças do mês automaticamente e marca pago em 1 clique.
 - **Relatório mensal** — comparecimento, faturamento, origem dos agendamentos,
   formas de pagamento.
 - **Chatbot de WhatsApp** — ver seção 6.
@@ -195,6 +203,25 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-06-30** — **Modalidades (Fisio/Pilates) + cobrança por paciente (mensalidades).**
+  Pedido de uma clínica cliente (faz Fisio e Pilates e precisava diferenciar, além de
+  controlar valor/dia de pagamento/pago por paciente). Feito, **tudo aditivo e opcional**:
+  (1) tabela **`modalidades`** (lista configurável por clínica, em Configurações →
+  Modalidades; semeada com Fisioterapia + Pilates p/ todas as clínicas); (2)
+  `pacientes.modalidade_id` e `consultas.modalidade_id` — etiqueta colorida na lista de
+  pacientes, na agenda do dia e no financeiro, filtro por modalidade, e select no modal
+  de agendamento (já vem preenchido com a modalidade do paciente); (3) cobrança por
+  paciente: `pacientes.cobranca_tipo` (`nenhuma` | `mensalidade` | `sessao`),
+  `cobranca_valor`, `cobranca_dia_vencimento`; (4) tabela **`mensalidades`** (ledger mês a
+  mês, único por paciente/competência) + RPC **`gerar_mensalidades(competencia)`**
+  (SECURITY DEFINER, idempotente, escopo por `auth.uid()`, só gera p/ mês corrente/futuro —
+  nunca fabrica dívida retroativa); (5) Financeiro ganhou seletor **Consultas |
+  Mensalidades** — a aba de mensalidades abre as cobranças do mês sozinha, mostra
+  recebido/a receber/mensalistas, marca pago em 1 clique (com forma opcional) e destaca
+  vencidas. **O financeiro por consulta continua idêntico**; clínicas sem modalidade/
+  mensalidade não veem diferença. Migração `20260630120000_modalidades_mensalidades.sql`
+  **aplicada no Supabase**. Mudança de front só no `nastadesk/index.html` (o `dashboard`
+  não muda; só este `CLAUDE.md`). *Falta:* deploy do front (merge na `main` → Vercel).
 - **2026-06-30** — **Migração de pagamento Mercado Pago → Cakto (concluída).** Como
   as 3 clínicas estão em cortesia e ninguém estava pagando, a troca foi segura.
   Feito: (1) Edge Function **`cakto-webhook`** criada, deployada e validada — lê o

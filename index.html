@@ -618,6 +618,25 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .satis-btn { flex: 1; padding: 9px 4px; border-radius: var(--raio-p); border: 1.5px solid var(--cinza-claro); background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--cinza-medio); transition: all .15s; }
 .satis-btn.selecionado { background: var(--verde-claro); border-color: var(--verde-medio); color: var(--verde); }
 
+/* ===== MODALIDADES / COBRANÇA ===== */
+.mod-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; white-space: nowrap; vertical-align: middle; }
+.mod-dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 6px 13px; border-radius: 20px; border: 1px solid var(--cinza-claro); background: white; color: var(--cinza-medio); cursor: pointer; transition: all .15s; white-space: nowrap; }
+.chip:hover { border-color: var(--verde-medio); color: var(--cinza-escuro); }
+.chip.on { background: var(--verde-suave); border-color: var(--verde-medio); color: var(--verde); }
+.pac-mod-filtros { display: flex; gap: 7px; flex-wrap: wrap; padding: 12px 22px; border-bottom: 1px solid var(--cinza-claro); }
+.mod-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--cinza-claro); }
+.mod-row:last-child { border-bottom: none; }
+.mod-row input[type="color"] { width: 34px; height: 34px; padding: 2px; border: 1px solid var(--cinza-claro); border-radius: 8px; background: white; cursor: pointer; flex: 0 0 auto; }
+.mod-nome-input { flex: 1; padding: 8px 11px; border: 1px solid transparent; border-radius: 8px; font-size: 14px; color: var(--cinza-escuro); background: transparent; }
+.mod-nome-input:hover { background: var(--creme); }
+.mod-nome-input:focus { border-color: var(--verde-medio); background: white; outline: none; box-shadow: var(--anel); }
+.fin-segmented { display: flex; gap: 8px; margin-bottom: 18px; }
+.fin-seg-btn { padding: 9px 18px; border-radius: 20px; border: 1px solid var(--cinza-claro); background: white; font-size: 13px; font-weight: 600; color: var(--cinza-medio); cursor: pointer; transition: all .15s; }
+.fin-seg-btn:hover { border-color: var(--verde-medio); }
+.fin-seg-btn.ativa { background: var(--verde); border-color: var(--verde); color: white; }
+.pag-vencido { background: #FAE3E3; color: var(--vermelho); }
+
 /* ===== TOAST ===== */
 .toast { position: fixed; bottom: 28px; right: 28px; background: var(--cinza-escuro); color: white; padding: 13px 18px; border-radius: var(--raio-m); font-size: 13px; z-index: 700; transform: translateY(20px); opacity: 0; transition: all .3s; display: flex; align-items: center; gap: 10px; box-shadow: var(--sombra-alta); max-width: min(420px, calc(100vw - 32px)); }
 .toast.visivel { transform: translateY(0); opacity: 1; }
@@ -1137,6 +1156,11 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           </div>
         </div>
       </div>
+      <div class="fin-segmented">
+        <button class="fin-seg-btn ativa" id="fin-seg-consultas" onclick="finView('consultas')">Consultas</button>
+        <button class="fin-seg-btn" id="fin-seg-mensalidades" onclick="finView('mensalidades')">Mensalidades</button>
+      </div>
+      <div id="fin-view-consultas">
       <div class="metricas">
         <div class="metrica-card verde">
           <div class="metrica-topo"><div class="metrica-label">Recebido no mês</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div></div>
@@ -1166,6 +1190,30 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         </div>
         <div id="fin-lista"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
       </div>
+      </div><!-- /fin-view-consultas -->
+
+      <div id="fin-view-mensalidades" style="display:none">
+        <div class="metricas">
+          <div class="metrica-card verde">
+            <div class="metrica-topo"><div class="metrica-label">Recebido (mensalidades)</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div></div>
+            <div class="metrica-valor menor" id="mens-recebido">—</div><span class="metrica-badge badge-verde">pagas no mês</span>
+          </div>
+          <div class="metrica-card amarelo">
+            <div class="metrica-topo"><div class="metrica-label">A receber</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div></div>
+            <div class="metrica-valor menor" id="mens-areceber">—</div><span class="metrica-badge badge-amarelo">pendentes</span>
+          </div>
+          <div class="metrica-card azul">
+            <div class="metrica-topo"><div class="metrica-label">Mensalistas</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/></svg></div></div>
+            <div class="metrica-valor" id="mens-count">—</div><span class="metrica-badge badge-azul">no mês</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-titulo">Mensalidades do mês</div><div class="card-sub">Clique no status para registrar o pagamento. Cada mês abre uma cobrança nova automaticamente.</div></div>
+          </div>
+          <div id="mens-lista"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
+        </div>
+      </div>
     </section>
 
     <!-- PACIENTES -->
@@ -1188,6 +1236,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           <div class="tab" onclick="filtrarPacientes('ativo',this)">Ativos</div>
           <div class="tab" onclick="filtrarPacientes('inativo',this)">Sem retorno</div>
         </div>
+        <div id="pac-mod-filtros" class="pac-mod-filtros" style="display:none"></div>
         <div id="lista-pacientes"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
       </div>
     </section>
@@ -1260,6 +1309,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="cfg-tab" data-cfg="clinica" onclick="cfgTab('clinica',this)">Clínica</div>
         <div class="cfg-tab" data-cfg="agenda" onclick="cfgTab('agenda',this)">Agenda</div>
         <div class="cfg-tab" data-cfg="salas" onclick="cfgTab('salas',this)">Salas</div>
+        <div class="cfg-tab" data-cfg="modalidades" onclick="cfgTab('modalidades',this)">Modalidades</div>
       </div>
 
       <!-- ABA MENSAGENS -->
@@ -1348,6 +1398,20 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <button class="btn btn-primario" onclick="adicionarSala()">Adicionar</button>
           </div>
           <div id="salas-lista"></div>
+        </div>
+      </div>
+
+      <!-- ABA MODALIDADES -->
+      <div id="cfg-tab-modalidades" style="display:none;max-width:580px">
+        <div class="card" style="padding:28px">
+          <div class="card-titulo" style="margin-bottom:6px">Modalidades de atendimento</div>
+          <div class="card-sub" style="margin-bottom:20px">Cadastre os tipos de atendimento da sua clínica (ex.: Fisioterapia, Pilates, RPG). Depois é só escolher a modalidade em cada paciente e consulta — vira etiqueta colorida e ajuda a separar a agenda e o financeiro.</div>
+          <div class="salas-add-row">
+            <input type="text" id="nova-mod-nome" placeholder="Ex: Pilates, RPG, Acupuntura..." onkeydown="if(event.key==='Enter')adicionarModalidade()">
+            <input type="color" id="nova-mod-cor" value="#7B5CF0" title="Cor da etiqueta" style="width:46px;height:42px;padding:4px;border:1px solid var(--cinza-claro);border-radius:9px;background:white;cursor:pointer;flex:0 0 auto">
+            <button class="btn btn-primario" onclick="adicionarModalidade()">Adicionar</button>
+          </div>
+          <div id="modalidades-lista"></div>
         </div>
       </div>
 
@@ -1527,11 +1591,37 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <div class="ficha-campo-label">Convênio</div>
             <input class="ficha-campo-input" id="fi-convenio" placeholder="Ex: Unimed" oninput="fichaEditado()">
           </div>
+          <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">Modalidade</div>
+            <select class="ficha-campo-input" id="fi-modalidade" onchange="fichaEditado()" style="cursor:pointer"></select>
+          </div>
           <div class="ficha-campo editavel full">
             <div class="ficha-campo-label">Endereço</div>
             <input class="ficha-campo-input" id="fi-endereco" placeholder="Rua, número, bairro" oninput="fichaEditado()">
           </div>
         </div>
+      </div>
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Cobrança</div>
+        <div class="ficha-grid">
+          <div class="ficha-campo editavel">
+            <div class="ficha-campo-label">Tipo de cobrança</div>
+            <select class="ficha-campo-input" id="fi-cobranca-tipo" onchange="fichaEditado();toggleCobrancaFi()" style="cursor:pointer">
+              <option value="nenhuma">Sem cobrança fixa</option>
+              <option value="mensalidade">Mensalidade (valor fixo/mês)</option>
+              <option value="sessao">Por sessão</option>
+            </select>
+          </div>
+          <div class="ficha-campo editavel" id="fi-valor-wrap">
+            <div class="ficha-campo-label" id="fi-valor-label">Valor (R$)</div>
+            <input class="ficha-campo-input" id="fi-cobranca-valor" type="number" min="0" step="0.01" placeholder="Ex: 280" oninput="fichaEditado()">
+          </div>
+          <div class="ficha-campo editavel" id="fi-venc-wrap">
+            <div class="ficha-campo-label">Dia de vencimento</div>
+            <input class="ficha-campo-input" id="fi-cobranca-dia" type="number" min="1" max="31" placeholder="Ex: 5" oninput="fichaEditado()">
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">Na <strong>mensalidade</strong>, todo mês abre uma cobrança no dia de vencimento (acompanhe em Financeiro → Mensalidades). No <strong>por sessão</strong>, o valor entra como padrão a cada consulta.</div>
       </div>
       <button class="btn btn-primario ficha-salvar" id="ficha-salvar-btn" onclick="salvarFicha()" style="width:100%;padding:12px">Salvar alterações</button>
     </div>
@@ -1622,6 +1712,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="config-campo"><label>Queixa principal</label><input type="text" id="novo-queixa" placeholder="Ex: Dor no joelho direito"></div>
     <div class="config-campo"><label>Valor da consulta (R$)</label><input type="number" id="novo-valor" placeholder="Valor padrão da clínica" min="0" step="0.01"></div>
     <div class="config-campo" id="novo-sala-wrap" style="display:none"><label>Salão (opcional)</label><select id="novo-sala"></select></div>
+    <div class="config-campo" id="novo-modalidade-wrap" style="display:none"><label>Modalidade (opcional)</label><select id="novo-modalidade"></select></div>
     <div class="modal-acoes">
       <button class="btn btn-secundario" onclick="fecharModal()">Cancelar</button>
       <button class="btn btn-primario" onclick="salvarConsulta()">Agendar</button>
@@ -1645,6 +1736,20 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="modal-grid">
       <div class="config-campo"><label>Convênio (opcional)</label><input type="text" id="np-convenio" placeholder="Ex: Unimed"></div>
       <div class="config-campo"><label>Profissão (opcional)</label><input type="text" id="np-profissao" placeholder="Ex: Professor"></div>
+    </div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Modalidade</label><select id="np-modalidade"></select></div>
+      <div class="config-campo"><label>Cobrança</label>
+        <select id="np-cobranca-tipo" onchange="toggleCobrancaNp()">
+          <option value="nenhuma">Sem cobrança fixa</option>
+          <option value="mensalidade">Mensalidade (valor fixo/mês)</option>
+          <option value="sessao">Por sessão</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-grid" id="np-cobranca-campos" style="display:none">
+      <div class="config-campo"><label id="np-valor-label">Valor (R$)</label><input type="number" id="np-cobranca-valor" min="0" step="0.01" placeholder="Ex: 280"></div>
+      <div class="config-campo" id="np-venc-wrap"><label>Dia de vencimento</label><input type="number" id="np-cobranca-dia" min="1" max="31" placeholder="Ex: 5"></div>
     </div>
     <div class="config-campo"><label>Queixa principal (opcional)</label><input type="text" id="np-queixa" placeholder="Ex: Dor lombar"></div>
     <div class="modal-acoes">
@@ -1698,6 +1803,28 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <button class="btn btn-secundario" id="pag-btn-depois" onclick="pagDeixarPendente()">Deixar pendente</button>
       <button class="btn btn-secundario" onclick="marcarIsento()">Isento</button>
       <button class="btn btn-primario" onclick="confirmarPagamento()">Confirmar pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MENSALIDADE -->
+<div class="overlay" id="modal-mensalidade" onclick="if(event.target===this)fecharModalMensalidade()">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-titulo">Mensalidade</div><div class="modal-sub" id="mens-sub">—</div></div><button class="modal-fechar" onclick="fecharModalMensalidade()">×</button></div>
+    <div class="config-campo"><label>Valor (R$)</label><input type="number" id="mens-valor" min="0" step="0.01" placeholder="Ex: 280"></div>
+    <div class="config-campo"><label>Forma de pagamento (opcional)</label>
+      <div class="forma-pag-grid" id="mens-formas">
+        <button class="forma-pag-btn" data-forma="pix" onclick="selecionarFormaMens(this)">Pix</button>
+        <button class="forma-pag-btn" data-forma="dinheiro" onclick="selecionarFormaMens(this)">Dinheiro</button>
+        <button class="forma-pag-btn" data-forma="cartao_credito" onclick="selecionarFormaMens(this)">Crédito</button>
+        <button class="forma-pag-btn" data-forma="cartao_debito" onclick="selecionarFormaMens(this)">Débito</button>
+        <button class="forma-pag-btn" data-forma="convenio" onclick="selecionarFormaMens(this)">Convênio</button>
+        <button class="forma-pag-btn" data-forma="transferencia" onclick="selecionarFormaMens(this)">Transferência</button>
+      </div>
+    </div>
+    <div class="modal-acoes">
+      <button class="btn btn-secundario" id="mens-btn-pendente" onclick="mensDeixarPendente()">Deixar pendente</button>
+      <button class="btn btn-primario" onclick="mensRegistrarPago()">Registrar pagamento</button>
     </div>
   </div>
 </div>
@@ -1848,6 +1975,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 const SUPA_URL = 'https://zrkadblxozddreiwruhv.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpya2FkYmx4b3pkZHJlaXdydWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NjA4MjEsImV4cCI6MjA5NjUzNjgyMX0.BQkXr831MlctUk-FhfEYkrgs6Amdpho5yDWcR3BtXok';
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const FORMA_LABEL = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito', cartao_debito:'Débito', convenio:'Convênio', transferencia:'Transferência' };
+function nomeCompetencia(comp) { const p = String(comp).split('-'); return `${MESES[parseInt(p[1],10)-1]} ${p[0]}`; }
 const CORES = ['av-1','av-2','av-3','av-4','av-5','av-6'];
 const TZ = 'America/Sao_Paulo';
 const { createClient } = supabase;
@@ -1857,6 +1986,8 @@ let clinicaId = null;
 let clinicaAtual = null;
 let salas = [];
 let salasDisponivel = false;
+let modalidades = [];
+let modalidadesDisponivel = false;
 let viewDiaSalao = false;
 let consultasHojeAll = [];
 const SALA_CORES = ['#0B6E4F','#3B6FD4','#E87040','#9B59B6','#E8A820','#17A076','#D4476F','#5B7C99'];
@@ -1976,6 +2107,7 @@ async function onbConcluir() {
   // Só libera a plataforma quem já tem acesso (pagamento confirmado ou cortesia).
   if (clinicaAtual && clinicaAtual.ativo === true) {
     await carregarSalas();
+    await carregarModalidades();
     await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
     atualizarBadgeLembretes();
     toast('Bem-vindo ao NastaDesk! 🎉');
@@ -2219,6 +2351,7 @@ async function carregarDados(user) {
   }
 
   await carregarSalas();
+  await carregarModalidades();
   await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
   renderCalendario();
   carregarRelatorio();
@@ -2234,7 +2367,7 @@ async function carregarDados(user) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas', filter: `clinica_id=eq.${clinicaId}` }, () => {
         carregarConsultas(); renderCalendario(); atualizarBadgeLembretes();
         if (secAtiva === 'relatorio') carregarRelatorio();
-        if (secAtiva === 'financeiro') carregarFinanceiro();
+        if (secAtiva === 'financeiro') refreshFinanceiro();
         if (secAtiva === 'lembretes') carregarLembretes();
         if (secAtiva === 'agendamentos') renderGradeSemanal();
       })
@@ -2368,11 +2501,113 @@ async function mudarSalaConsulta(id, valor) {
   recarregarSecaoAtual();
 }
 
+// ===== MODALIDADES (Fisioterapia / Pilates / ...) =====
+async function carregarModalidades() {
+  if (!clinicaId) return;
+  const { data, error } = await db.from('modalidades').select('*').eq('clinica_id', clinicaId).order('ordem').order('criado_em');
+  if (error) { modalidadesDisponivel = false; modalidades = []; }
+  else { modalidadesDisponivel = true; modalidades = data || []; }
+  renderModalidadesConfig();
+  refreshModalidadeSelectors();
+}
+function modalidadesAtivas() { return modalidades.filter(m => m.ativo); }
+function modalidadePorId(id) { return modalidades.find(m => m.id === id) || null; }
+
+// HTML da etiqueta colorida de uma modalidade ('' se não houver)
+function tagModalidade(id) {
+  const m = modalidadePorId(id);
+  if (!m) return '';
+  return `<span class="mod-tag" style="background:${m.cor}1a;color:${m.cor}"><span class="mod-dot" style="background:${m.cor}"></span>${esc(m.nome)}</span>`;
+}
+// <option>s para os selects de modalidade
+function optsModalidade(valor) {
+  let html = `<option value="">Sem modalidade</option>`;
+  modalidadesAtivas().forEach(m => { html += `<option value="${m.id}"${valor === m.id ? ' selected' : ''}>${esc(m.nome)}</option>`; });
+  if (valor && !modalidadesAtivas().some(m => m.id === valor)) {
+    const m = modalidadePorId(valor);
+    if (m) html += `<option value="${m.id}" selected>${esc(m.nome)} (inativa)</option>`;
+  }
+  return html;
+}
+// Reaplica as <option> nos selects abertos e nos filtros, preservando o valor atual
+function refreshModalidadeSelectors() {
+  ['np-modalidade','fi-modalidade','novo-modalidade'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) { const v = sel.value; sel.innerHTML = optsModalidade(v); sel.value = v; }
+  });
+  renderFiltroModalidades();
+}
+
+function renderModalidadesConfig() {
+  const el = document.getElementById('modalidades-lista');
+  if (!el) return;
+  if (!modalidadesDisponivel) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--cinza-medio);padding:6px 0">Recurso de modalidades ainda não ativado no banco de dados.</div>`;
+    return;
+  }
+  const ativas = modalidadesAtivas();
+  if (!ativas.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--cinza-medio);padding:6px 0">Nenhuma modalidade cadastrada ainda. Adicione a primeira acima.</div>`;
+    return;
+  }
+  el.innerHTML = ativas.map(m => `
+    <div class="mod-row">
+      <input type="color" value="${esc(m.cor)}" title="Cor da etiqueta" onchange="mudarCorModalidade('${m.id}', this.value)">
+      <input type="text" class="mod-nome-input" value="${esc(m.nome)}" onchange="renomearModalidade('${m.id}', this.value)">
+      <button class="btn-icone" title="Remover modalidade" onclick="removerModalidade('${m.id}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M3 6h18M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+async function adicionarModalidade() {
+  if (!clinicaId) return;
+  const inp = document.getElementById('nova-mod-nome');
+  const cor = document.getElementById('nova-mod-cor').value || '#0B6E4F';
+  const nome = inp.value.trim();
+  if (!nome) { toast('Digite o nome da modalidade'); return; }
+  const { error } = await db.from('modalidades').insert({ clinica_id: clinicaId, nome, cor, ordem: modalidadesAtivas().length });
+  if (error) { toast('Erro ao adicionar modalidade'); return; }
+  inp.value = '';
+  toast('Modalidade adicionada ✓');
+  await carregarModalidades();
+}
+async function renomearModalidade(id, nome) {
+  nome = (nome || '').trim();
+  if (!nome) { toast('O nome não pode ficar vazio'); await carregarModalidades(); return; }
+  const { error } = await db.from('modalidades').update({ nome }).eq('id', id);
+  if (error) { toast('Erro ao renomear'); return; }
+  const m = modalidadePorId(id); if (m) m.nome = nome;
+  refreshModalidadeSelectors();
+  toast('Modalidade atualizada ✓');
+}
+async function mudarCorModalidade(id, cor) {
+  const { error } = await db.from('modalidades').update({ cor }).eq('id', id);
+  if (error) { toast('Erro ao mudar a cor'); return; }
+  const m = modalidadePorId(id); if (m) m.cor = cor;
+  refreshModalidadeSelectors();
+}
+function removerModalidade(id) {
+  abrirModalConfirm('Remover modalidade?', 'Os pacientes e consultas dessa modalidade ficam sem modalidade. Você pode cadastrá-la de novo depois.', 'Remover', async () => {
+    const { error } = await db.from('modalidades').update({ ativo: false }).eq('id', id);
+    if (error) { toast('Erro ao remover'); return; }
+    toast('Modalidade removida');
+    await carregarModalidades();
+    recarregarSecaoAtual();
+  });
+}
+async function mudarModalidadeConsulta(id, valor) {
+  const { error } = await db.from('consultas').update({ modalidade_id: valor || null }).eq('id', id);
+  if (error) { toast('Erro ao mudar a modalidade'); return; }
+  toast('Modalidade atualizada ✓');
+  recarregarSecaoAtual();
+}
+
 // ===== CONSULTAS DO DIA =====
 async function carregarConsultas() {
   if (!clinicaId) return;
   const hojeStr = dataLocalISO(new Date());
-  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp)')
+  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp,modalidade_id)')
     .eq('clinica_id', clinicaId)
     .gte('data_hora', diaInicioISO(hojeStr)).lte('data_hora', diaFimISO(hojeStr))
     .order('data_hora');
@@ -2461,6 +2696,7 @@ function cardSalao(c, cor) {
       <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
     </div>
     <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
+    ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?`<div style="margin-top:4px">${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}</div>`:''}
     ${c.queixa?`<div class="salao-card-queixa">${esc(c.queixa)}</div>`:''}
     <div class="salao-card-acoes" onclick="event.stopPropagation()">
       <select class="sala-select" title="Mover de salão" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select>
@@ -2514,7 +2750,7 @@ function renderConsultas(lista) {
       <span class="consulta-hora">${hora}</span>
       <div class="avatar ${CORES[i%CORES.length]}${cancelada?' cancelado':''}">${esc(iniciais)}</div>
       <div class="consulta-info">
-        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
+        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
         <div class="consulta-queixa">${esc(c.queixa||'—')}</div>
         ${(salasDisponivel && salasAtivas().length)
           ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
@@ -2690,7 +2926,7 @@ function recarregarSecaoAtual() {
   renderCalendario();
   atualizarBadgeLembretes();
   if (secAtiva === 'agendamentos') renderGradeSemanal();
-  if (secAtiva === 'financeiro') carregarFinanceiro();
+  if (secAtiva === 'financeiro') refreshFinanceiro();
   if (secAtiva === 'lembretes') carregarLembretes();
   if (secAtiva === 'relatorio') carregarRelatorio();
 }
@@ -2737,42 +2973,80 @@ async function carregarAlertas() {
 }
 
 // ===== PACIENTES =====
+let pacFiltroStatus = 'todos';
+let pacFiltroMod = 'todos';
+let pacBusca = '';
+
 async function carregarPacientes() {
   if (!clinicaId) return;
   const { data } = await db.from('pacientes').select('*').eq('clinica_id',clinicaId).order('nome');
   todosOsPacientes = data || [];
   document.getElementById('total-pacientes').textContent = `${todosOsPacientes.length} paciente${todosOsPacientes.length!==1?'s':''} cadastrado${todosOsPacientes.length!==1?'s':''}`;
-  renderPacientes(todosOsPacientes);
+  renderFiltroModalidades();
+  aplicarFiltrosPacientes();
 }
 
-function buscarPaciente(termo) {
-  const t = termo.toLowerCase().trim();
+// Aplica busca + filtro de status + filtro de modalidade, tudo combinado
+function aplicarFiltrosPacientes() {
+  let lista = todosOsPacientes;
+  if (pacFiltroStatus !== 'todos') lista = lista.filter(p => p.status === pacFiltroStatus);
+  if (pacFiltroMod !== 'todos') lista = lista.filter(p => (p.modalidade_id || '') === pacFiltroMod);
+  const t = pacBusca.toLowerCase().trim();
   const tDig = t.replace(/\D/g,'');
-  const filtrados = todosOsPacientes.filter(p =>
+  if (t) lista = lista.filter(p =>
     (p.nome || '').toLowerCase().includes(t) ||
     (tDig && (p.whatsapp || '').replace(/\D/g,'').includes(tDig)) ||
     (tDig && (p.cpf || '').replace(/\D/g,'').includes(tDig))
   );
-  renderPacientes(filtrados);
+  renderPacientes(lista);
 }
+
+function buscarPaciente(termo) { pacBusca = termo; aplicarFiltrosPacientes(); }
 
 function renderPacientes(lista) {
   const el = document.getElementById('lista-pacientes');
   if (!lista.length) { el.innerHTML = emptyState('Nenhum paciente encontrado', 'pessoas'); return; }
   el.innerHTML = lista.map((p,i)=>{
     const ultima = p.ultima_consulta ? new Date(`${p.ultima_consulta}T12:00:00`).toLocaleDateString('pt-BR') : '—';
+    const tag = tagModalidade(p.modalidade_id);
+    const cobr = p.cobranca_tipo === 'mensalidade'
+      ? ` · mensal ${fmtBRL(p.cobranca_valor)}${p.cobranca_dia_vencimento ? ` (dia ${p.cobranca_dia_vencimento})` : ''}`
+      : (p.cobranca_tipo === 'sessao' ? ` · sessão ${fmtBRL(p.cobranca_valor)}` : '');
     return `<div class="paciente-row" onclick="abrirFicha('${p.id}')">
       <div class="avatar ${CORES[i%CORES.length]}">${esc(iniciaisDe(p.nome))}</div>
-      <div class="paciente-dados"><div class="paciente-nome">${esc(p.nome)}</div><div class="paciente-info">${p.cpf?`CPF ${formatarCPF(p.cpf)} · `:''}${esc(p.queixa_principal||'—')} · ${p.total_consultas||0} consulta${p.total_consultas!==1?'s':''}${p.convenio?` · ${esc(p.convenio)}`:''}</div></div>
+      <div class="paciente-dados"><div class="paciente-nome">${esc(p.nome)}${tag?` ${tag}`:''}</div><div class="paciente-info">${p.cpf?`CPF ${formatarCPF(p.cpf)} · `:''}${esc(p.queixa_principal||'—')} · ${p.total_consultas||0} consulta${p.total_consultas!==1?'s':''}${p.convenio?` · ${esc(p.convenio)}`:''}${cobr}</div></div>
       <div style="text-align:right;font-size:12px;color:var(--cinza-medio)">${ultima}<br><span style="color:${p.status==='ativo'?'var(--verde)':'var(--vermelho)'};font-size:11px">${p.status==='ativo'?'Ativo':'Inativo'}</span></div>
     </div>`;
   }).join('');
 }
 
 function filtrarPacientes(status, el) {
+  pacFiltroStatus = status;
   document.querySelectorAll('#sec-pacientes .tab').forEach(t=>t.classList.remove('ativa'));
   el.classList.add('ativa');
-  renderPacientes(status==='todos' ? todosOsPacientes : todosOsPacientes.filter(p=>p.status===status));
+  aplicarFiltrosPacientes();
+}
+
+function filtrarPacientesMod(id, el) {
+  pacFiltroMod = id;
+  document.querySelectorAll('#pac-mod-filtros .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  aplicarFiltrosPacientes();
+}
+
+// Chips de filtro por modalidade (só aparecem se a clínica tiver modalidades)
+function renderFiltroModalidades() {
+  const el = document.getElementById('pac-mod-filtros');
+  if (!el) return;
+  const ativas = modalidadesAtivas();
+  if (!ativas.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  if (!ativas.some(m => m.id === pacFiltroMod)) pacFiltroMod = 'todos';
+  el.style.display = 'flex';
+  let html = `<span class="chip${pacFiltroMod==='todos'?' on':''}" onclick="filtrarPacientesMod('todos',this)">Todas modalidades</span>`;
+  ativas.forEach(m => {
+    html += `<span class="chip${pacFiltroMod===m.id?' on':''}" onclick="filtrarPacientesMod('${m.id}',this)"><span class="mod-dot" style="background:${m.cor}"></span>${esc(m.nome)}</span>`;
+  });
+  el.innerHTML = html;
 }
 
 // ===== EXPORTAR / IMPORTAR PACIENTES =====
@@ -2989,9 +3263,19 @@ async function confirmarImportacao() {
 // Modal novo paciente
 let pacienteParaConsulta = false;
 function abrirModalPaciente(prefillNome) {
-  ['np-nome','np-cpf','np-wpp','np-nasc','np-email','np-convenio','np-profissao','np-queixa'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  ['np-nome','np-cpf','np-wpp','np-nasc','np-email','np-convenio','np-profissao','np-queixa','np-cobranca-valor','np-cobranca-dia'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
   if (prefillNome) document.getElementById('np-nome').value = prefillNome;
+  const npMod = document.getElementById('np-modalidade'); if (npMod) npMod.innerHTML = optsModalidade('');
+  document.getElementById('np-cobranca-tipo').value = 'nenhuma';
+  toggleCobrancaNp();
   document.getElementById('modal-paciente').classList.add('aberto');
+}
+// Mostra/esconde os campos de valor e vencimento conforme o tipo de cobrança (modal novo paciente)
+function toggleCobrancaNp() {
+  const tipo = document.getElementById('np-cobranca-tipo').value;
+  document.getElementById('np-cobranca-campos').style.display = tipo === 'nenhuma' ? 'none' : 'flex';
+  document.getElementById('np-venc-wrap').style.display = tipo === 'mensalidade' ? 'block' : 'none';
+  document.getElementById('np-valor-label').textContent = tipo === 'sessao' ? 'Valor por sessão (R$)' : 'Valor da mensalidade (R$)';
 }
 function fecharModalPaciente() {
   document.getElementById('modal-paciente').classList.remove('aberto');
@@ -3002,6 +3286,9 @@ async function salvarNovoPaciente() {
   const whatsapp = document.getElementById('np-wpp').value.trim();
   const cpf = normalizarCPF(document.getElementById('np-cpf').value);
   if (!nome) { toast('Informe o nome do paciente'); return; }
+  const cobrTipo = document.getElementById('np-cobranca-tipo').value;
+  const cobrValor = parseFloat(document.getElementById('np-cobranca-valor').value);
+  const cobrDia = parseInt(document.getElementById('np-cobranca-dia').value, 10);
   const payload = {
     clinica_id: clinicaId,
     nome,
@@ -3012,6 +3299,10 @@ async function salvarNovoPaciente() {
     convenio: document.getElementById('np-convenio').value.trim() || null,
     profissao: document.getElementById('np-profissao').value.trim() || null,
     queixa_principal: document.getElementById('np-queixa').value.trim() || null,
+    modalidade_id: document.getElementById('np-modalidade')?.value || null,
+    cobranca_tipo: cobrTipo,
+    cobranca_valor: (cobrTipo !== 'nenhuma' && !isNaN(cobrValor) && cobrValor >= 0) ? cobrValor : null,
+    cobranca_dia_vencimento: (cobrTipo === 'mensalidade' && !isNaN(cobrDia)) ? Math.min(31, Math.max(1, cobrDia)) : null,
   };
   const { data: novo, error } = await db.from('pacientes').insert(payload).select('id').single();
   if (error) {
@@ -3088,6 +3379,11 @@ async function abrirFicha(pacienteId) {
   document.getElementById('fi-medicamentos').value = p.medicamentos || '';
   document.getElementById('fi-alergias').value = p.alergias || '';
   document.getElementById('fi-obs').value = p.observacoes || '';
+  const fiMod = document.getElementById('fi-modalidade'); if (fiMod) fiMod.innerHTML = optsModalidade(p.modalidade_id);
+  document.getElementById('fi-cobranca-tipo').value = p.cobranca_tipo || 'nenhuma';
+  document.getElementById('fi-cobranca-valor').value = (p.cobranca_valor != null) ? p.cobranca_valor : '';
+  document.getElementById('fi-cobranca-dia').value = (p.cobranca_dia_vencimento != null) ? p.cobranca_dia_vencimento : '';
+  toggleCobrancaFi();
   document.getElementById('ficha-salvar-btn').classList.remove('visivel');
 
   fichaTab('dados', document.querySelector('.ficha-tab'));
@@ -3130,8 +3426,19 @@ function fichaEditado() {
   document.getElementById('ficha-salvar-btn').classList.add('visivel');
 }
 
+// Mostra/esconde valor e vencimento conforme o tipo de cobrança (ficha do paciente)
+function toggleCobrancaFi() {
+  const tipo = document.getElementById('fi-cobranca-tipo').value;
+  document.getElementById('fi-valor-wrap').style.display = tipo === 'nenhuma' ? 'none' : 'block';
+  document.getElementById('fi-venc-wrap').style.display = tipo === 'mensalidade' ? 'block' : 'none';
+  document.getElementById('fi-valor-label').textContent = tipo === 'sessao' ? 'Valor por sessão (R$)' : 'Valor da mensalidade (R$)';
+}
+
 async function salvarFicha() {
   if (!pacienteAtual) return;
+  const cobrTipo = document.getElementById('fi-cobranca-tipo').value;
+  const cobrValor = parseFloat(document.getElementById('fi-cobranca-valor').value);
+  const cobrDia = parseInt(document.getElementById('fi-cobranca-dia').value, 10);
   const payload = {
     nome: document.getElementById('fi-nome').value.trim(),
     cpf: normalizarCPF(document.getElementById('fi-cpf').value) || null,
@@ -3147,6 +3454,10 @@ async function salvarFicha() {
     medicamentos: document.getElementById('fi-medicamentos').value.trim(),
     alergias: document.getElementById('fi-alergias').value.trim(),
     observacoes: document.getElementById('fi-obs').value.trim(),
+    modalidade_id: document.getElementById('fi-modalidade')?.value || null,
+    cobranca_tipo: cobrTipo,
+    cobranca_valor: (cobrTipo !== 'nenhuma' && !isNaN(cobrValor) && cobrValor >= 0) ? cobrValor : null,
+    cobranca_dia_vencimento: (cobrTipo === 'mensalidade' && !isNaN(cobrDia)) ? Math.min(31, Math.max(1, cobrDia)) : null,
   };
   if (!payload.nome) { toast('O nome do paciente não pode ficar vazio'); return; }
   const { error } = await db.from('pacientes').update(payload).eq('id', pacienteAtual.id);
@@ -3255,9 +3566,125 @@ let finConsultas = [];
 let finPacotes = [];
 let finFiltro = 'todos';
 
+let finViewAtual = 'consultas';
+let finMensalidades = [];
+
 function navFin(dir) {
   finData.setMonth(finData.getMonth() + dir);
-  carregarFinanceiro();
+  document.getElementById('fin-mes-label').textContent = `${MESES[finData.getMonth()]} ${finData.getFullYear()}`;
+  if (finViewAtual === 'mensalidades') carregarMensalidades(); else carregarFinanceiro();
+}
+
+// Recarrega a seção Financeiro respeitando a view ativa (Consultas ou Mensalidades)
+function refreshFinanceiro() {
+  if (finViewAtual === 'mensalidades') carregarMensalidades(); else carregarFinanceiro();
+}
+
+function finView(v) {
+  finViewAtual = v;
+  document.getElementById('fin-seg-consultas').classList.toggle('ativa', v === 'consultas');
+  document.getElementById('fin-seg-mensalidades').classList.toggle('ativa', v === 'mensalidades');
+  document.getElementById('fin-view-consultas').style.display = v === 'consultas' ? 'block' : 'none';
+  document.getElementById('fin-view-mensalidades').style.display = v === 'mensalidades' ? 'block' : 'none';
+  if (v === 'mensalidades') carregarMensalidades(); else carregarFinanceiro();
+}
+
+// ===== MENSALIDADES =====
+async function carregarMensalidades() {
+  if (!clinicaId) return;
+  const ano = finData.getFullYear(), mes = finData.getMonth();
+  document.getElementById('fin-mes-label').textContent = `${MESES[mes]} ${ano}`;
+  const comp = `${ano}-${String(mes+1).padStart(2,'0')}-01`;
+  // Abre/gera as cobranças do mês (idempotente; o banco só gera p/ mês corrente ou futuro)
+  try { await db.rpc('gerar_mensalidades', { p_competencia: comp }); } catch (e) { /* tolerante a falha */ }
+  const { data } = await db.from('mensalidades')
+    .select('*, pacientes(nome,modalidade_id,whatsapp)')
+    .eq('clinica_id', clinicaId).eq('competencia', comp)
+    .order('vencimento', { ascending: true });
+  finMensalidades = data || [];
+  renderMensalidades();
+}
+
+function finMensPorId(id) { return finMensalidades.find(m => m.id === id) || null; }
+
+function renderMensalidades() {
+  const el = document.getElementById('mens-lista');
+  const hoje = dataLocalISO(new Date());
+  const pagas = finMensalidades.filter(m => m.status === 'pago');
+  const pendentes = finMensalidades.filter(m => m.status !== 'pago');
+  const recebido = pagas.reduce((s,m) => s + (Number(m.valor) || 0), 0);
+  const aReceber = pendentes.reduce((s,m) => s + (Number(m.valor) || 0), 0);
+  document.getElementById('mens-recebido').textContent = fmtBRL(recebido);
+  document.getElementById('mens-areceber').textContent = fmtBRL(aReceber);
+  document.getElementById('mens-count').textContent = finMensalidades.length;
+
+  if (!finMensalidades.length) {
+    el.innerHTML = emptyState('Nenhuma mensalidade neste mês.<br>Defina a cobrança como "Mensalidade" na ficha do paciente.', 'dinheiro');
+    return;
+  }
+  el.innerHTML = finMensalidades.map(m => {
+    const venc = m.vencimento ? new Date(`${m.vencimento}T12:00:00`).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', timeZone: TZ }) : '—';
+    const vencido = m.status !== 'pago' && m.vencimento && m.vencimento < hoje;
+    const pago = m.status === 'pago';
+    const cls = pago ? 'pag-pago' : (vencido ? 'pag-vencido' : 'pag-pendente');
+    const label = pago ? 'Pago' : (vencido ? 'Vencido' : 'Pendente');
+    const tag = tagModalidade(m.pacientes?.modalidade_id);
+    return `<div class="fin-row">
+      <div class="fin-data"><strong>${venc}</strong>vencimento</div>
+      <div class="fin-info">
+        <div class="fin-nome">${esc(m.pacientes?.nome || '—')}${tag?` ${tag}`:''}</div>
+        <div class="fin-sub">Mensalidade${m.forma_pagamento?` · ${FORMA_LABEL[m.forma_pagamento]||m.forma_pagamento}`:''}</div>
+      </div>
+      <div class="fin-valor">${fmtBRL(m.valor)}</div>
+      <button class="pag-pill ${cls}" onclick="abrirModalMensalidade(finMensPorId('${m.id}'))">${label}</button>
+    </div>`;
+  }).join('');
+}
+
+// ----- Modal de pagamento da mensalidade -----
+let mensAtual = null;
+let mensForma = null;
+
+function abrirModalMensalidade(m) {
+  if (!m) return;
+  mensAtual = m;
+  mensForma = m.forma_pagamento || null;
+  document.getElementById('mens-sub').textContent = `${m.pacientes?.nome || 'Paciente'} — ${nomeCompetencia(m.competencia)}`;
+  document.getElementById('mens-valor').value = (m.valor != null) ? m.valor : '';
+  document.querySelectorAll('#mens-formas .forma-pag-btn').forEach(b => b.classList.toggle('selecionado', b.dataset.forma === mensForma));
+  document.getElementById('mens-btn-pendente').textContent = (m.status === 'pago') ? 'Voltar a pendente' : 'Deixar pendente';
+  document.getElementById('modal-mensalidade').classList.add('aberto');
+}
+function fecharModalMensalidade() {
+  document.getElementById('modal-mensalidade').classList.remove('aberto');
+  mensAtual = null;
+}
+function selecionarFormaMens(btn) {
+  const jaSel = btn.classList.contains('selecionado');
+  document.querySelectorAll('#mens-formas .forma-pag-btn').forEach(b => b.classList.remove('selecionado'));
+  if (!jaSel) { btn.classList.add('selecionado'); mensForma = btn.dataset.forma; }
+  else mensForma = null;
+}
+async function mensRegistrarPago() {
+  if (!mensAtual) return;
+  const v = parseFloat(document.getElementById('mens-valor').value);
+  const upd = {
+    status: 'pago',
+    valor: isNaN(v) ? mensAtual.valor : v,
+    forma_pagamento: mensForma,
+    pago_em: new Date().toISOString(),
+  };
+  const { error } = await db.from('mensalidades').update(upd).eq('id', mensAtual.id);
+  if (error) { toast('Erro ao registrar pagamento'); return; }
+  fecharModalMensalidade();
+  toast('Mensalidade registrada como paga ✓');
+  carregarMensalidades();
+}
+async function mensDeixarPendente() {
+  if (!mensAtual) return;
+  const { error } = await db.from('mensalidades').update({ status: 'pendente', pago_em: null, forma_pagamento: null }).eq('id', mensAtual.id);
+  if (!error) { fecharModalMensalidade(); toast('Mensalidade marcada como pendente'); carregarMensalidades(); }
+  else toast('Erro ao atualizar');
 }
 
 function filtrarFin(filtro, el) {
@@ -3273,7 +3700,7 @@ async function carregarFinanceiro() {
   document.getElementById('fin-mes-label').textContent = `${MESES[mes]} ${ano}`;
   const inicio = new Date(ano, mes, 1);
   const fim = new Date(ano, mes+1, 0, 23, 59, 59);
-  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp)')
+  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp,modalidade_id)')
     .eq('clinica_id', clinicaId)
     .gte('data_hora', inicio.toISOString()).lte('data_hora', fim.toISOString())
     .order('data_hora', { ascending: false });
@@ -3342,7 +3769,7 @@ function renderFinLista() {
     return `<div class="fin-row${cancelada?' cancelada':''}">
       <div class="fin-data"><strong>${dia}</strong>${horaSP(c.data_hora)}</div>
       <div class="fin-info">
-        <div class="fin-nome">${esc(c.pacientes?.nome || '—')}</div>
+        <div class="fin-nome">${esc(c.pacientes?.nome || '—')}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}</div>
         <div class="fin-sub">${stLabel[c.status]||esc(c.status)}${viaPacote?' · via pacote':forma}${c.origem==='online'?' · agendado online':''}</div>
       </div>
       <div class="fin-valor">${viaPacote?'<span style="color:var(--cinza-medio);font-size:12px">incluído</span>':fmtBRL(c.valor)}</div>
@@ -3763,7 +4190,7 @@ async function enviarLembrete(consultaId, tipo) {
 
 // ===== CONFIGURAÇÕES =====
 function cfgTab(nome, el) {
-  ['mensagens','online','whatsapp','clinica','agenda','salas'].forEach(t => {
+  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades'].forEach(t => {
     const tab = document.getElementById(`cfg-tab-${t}`);
     if (tab) tab.style.display = t===nome ? 'block' : 'none';
   });
@@ -3774,6 +4201,7 @@ function cfgTab(nome, el) {
     if (tabEl) tabEl.classList.add('ativa');
   }
   if (nome === 'whatsapp') atualizarStatusWhatsapp();
+  if (nome === 'modalidades') renderModalidadesConfig();
 }
 
 function cfgTabIrPara(nome) {
@@ -4041,6 +4469,7 @@ async function salvarConsulta() {
     pacote_id: usandoPacote ? pacoteIdUsado : null
   };
   if (salasDisponivel) payloadConsulta.sala_id = document.getElementById('novo-sala')?.value || null;
+  if (modalidadesDisponivel) payloadConsulta.modalidade_id = document.getElementById('novo-modalidade')?.value || null;
   const { error } = await db.from('consultas').insert(payloadConsulta);
   if (!error) {
     fecharModal(); toast(usandoPacote ? 'Sessão do pacote agendada ✓' : 'Consulta agendada ✓');
@@ -4100,7 +4529,7 @@ function irPara(sec) {
   if (sec === 'agendamentos') renderGradeSemanal();
   if (sec === 'relatorio') carregarRelatorio();
   if (sec === 'perfil') carregarPerfil();
-  if (sec === 'financeiro') carregarFinanceiro();
+  if (sec === 'financeiro') refreshFinanceiro();
   if (sec === 'lembretes') carregarLembretes();
   if (sec === 'conversas') carregarConversas();
   if (sec === 'planos') carregarPlanos();
@@ -4281,6 +4710,9 @@ function abrirModal() {
   if (clinicaAtual?.valor_consulta_padrao && !valorEl.value) valorEl.placeholder = `Padrão: ${fmtBRL(clinicaAtual.valor_consulta_padrao)}`;
   popularSelectSalas(document.getElementById('novo-sala'), '');
   document.getElementById('novo-sala-wrap').style.display = (salasDisponivel && salasAtivas().length) ? 'block' : 'none';
+  const novoMod = document.getElementById('novo-modalidade');
+  if (novoMod) novoMod.innerHTML = optsModalidade('');
+  document.getElementById('novo-modalidade-wrap').style.display = (modalidadesDisponivel && modalidadesAtivas().length) ? 'block' : 'none';
   document.getElementById('modal').classList.add('aberto');
 }
 function fecharModal() {
@@ -4586,7 +5018,7 @@ async function salvarPacote() {
   fecharModalPacote();
   toast('Pacote criado ✓');
   carregarPacotesFicha(pacienteAtual.id);
-  if (secAtiva === 'financeiro') carregarFinanceiro();
+  if (secAtiva === 'financeiro') refreshFinanceiro();
 }
 
 async function marcarPacotePago(id) {
@@ -4598,7 +5030,7 @@ async function marcarPacotePago(id) {
     document.getElementById('confirm-btn').style.background = '';
     toast('Pacote marcado como pago ✓');
     if (pacienteAtual) carregarPacotesFicha(pacienteAtual.id);
-    if (secAtiva === 'financeiro') carregarFinanceiro();
+    if (secAtiva === 'financeiro') refreshFinanceiro();
   });
 }
 
@@ -4679,6 +5111,9 @@ function setPacienteConsulta(id, pacObj) {
   document.getElementById('novo-pac-sel-nome').textContent = p.nome;
   const sub = [p.cpf ? 'CPF ' + formatarCPF(p.cpf) : null, p.whatsapp || null].filter(Boolean).join(' · ');
   document.getElementById('novo-pac-sel-sub').textContent = sub || 'Sem CPF/WhatsApp cadastrado';
+  // Já preenche a modalidade da consulta com a do paciente (se ainda não escolhida)
+  const novoMod = document.getElementById('novo-modalidade');
+  if (novoMod && p.modalidade_id && !novoMod.value) novoMod.value = p.modalidade_id;
   document.getElementById('novo-pac-busca-wrap').style.display = 'none';
   document.getElementById('novo-pac-selecionado-wrap').style.display = 'block';
   document.getElementById('novo-pac-resultados').innerHTML = '';
