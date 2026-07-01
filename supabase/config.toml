@@ -15,3 +15,7 @@ verify_jwt = true
 # Envio pelo inbox — exige login do painel
 [functions.whatsapp-enviar]
 verify_jwt = true
+
+# Emissão de NFS-e via PlugNotas — exige login da clínica
+[functions.nfse]
+verify_jwt = true

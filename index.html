@@ -1512,13 +1512,18 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 
       <!-- ABA NOTA FISCAL (NFS-e) -->
       <div id="cfg-tab-fiscal" style="display:none;max-width:620px">
+        <!-- Status do emissor -->
+        <div class="card" id="fisc-status" style="padding:20px 24px;margin-bottom:16px">
+          <div class="card-sub">Verificando o emissor de NFS-e…</div>
+        </div>
+
         <div class="card" style="padding:28px;margin-bottom:16px">
           <div class="card-titulo" style="margin-bottom:6px">Dados fiscais da clínica</div>
-          <div class="card-sub" style="margin-bottom:20px">Preencha os dados que a nota fiscal de serviço (NFS-e) exige. Já deixe pronto aqui — assim, quando a emissão automática for ligada, é só apertar um botão.</div>
+          <div class="card-sub" style="margin-bottom:20px">Esses são os dados que a nota fiscal de serviço (NFS-e) exige. Preencha uma vez e a emissão usa isso em toda nota.</div>
           <div class="config-campo"><label>Razão social</label><input type="text" id="fisc-razao" placeholder="Ex: Clínica Mendes Fisioterapia LTDA"></div>
           <div class="modal-grid">
             <div class="config-campo"><label>CNPJ</label><input type="text" id="fisc-cnpj" placeholder="00.000.000/0000-00"></div>
-            <div class="config-campo"><label>Inscrição municipal</label><input type="text" id="fisc-im" placeholder="Opcional"></div>
+            <div class="config-campo"><label>Inscrição municipal</label><input type="text" id="fisc-im" placeholder="A que a prefeitura te deu"></div>
           </div>
           <div class="modal-grid">
             <div class="config-campo"><label>Regime tributário</label>
@@ -1531,23 +1536,37 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
                 <option value="outro">Outro</option>
               </select>
             </div>
-            <div class="config-campo"><label>Código do serviço (município)</label><input type="text" id="fisc-codigo" placeholder="Ex: 4.03 / 0401"></div>
+            <div class="config-campo"><label>Código do serviço (LC 116)</label><input type="text" id="fisc-codigo" placeholder="Ex: 040103"><div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">O código da fisioterapia na sua prefeitura. Na dúvida, a prefeitura ou o contador informam.</div></div>
           </div>
           <div class="modal-grid">
             <div class="config-campo"><label>Alíquota de ISS (%)</label><input type="number" id="fisc-iss" min="0" max="100" step="0.01" placeholder="Ex: 3"></div>
-            <div class="config-campo" style="display:flex;align-items:flex-end;padding-bottom:10px">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500"><input type="checkbox" id="fisc-iss-retido" style="width:auto"> ISS retido na fonte</label>
+            <div class="config-campo"><label>CNAE (opcional)</label><input type="text" id="fisc-cnae" placeholder="Ex: 8650004"></div>
+          </div>
+          <div class="modal-grid">
+            <div class="config-campo"><label>Cód. tributação no município (opcional)</label><input type="text" id="fisc-codtrib" placeholder="Se a prefeitura exigir"></div>
+            <div class="config-campo"><label>Ambiente de emissão</label>
+              <select id="fisc-ambiente">
+                <option value="homologacao">Homologação (teste — não vale como nota)</option>
+                <option value="producao">Produção (nota fiscal válida)</option>
+              </select>
+              <div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">Comece em <strong>Homologação</strong> pra testar sem valer. Só mude pra Produção quando estiver tudo certo.</div>
             </div>
           </div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;margin:6px 0 16px"><input type="checkbox" id="fisc-iss-retido" style="width:auto"> ISS retido na fonte</label>
           <button class="btn btn-primario" onclick="salvarDadosFiscais()">Salvar dados fiscais</button>
         </div>
-        <div class="card" style="padding:24px;background:var(--verde-suave);border:1px solid var(--verde-claro)">
-          <div class="card-titulo" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
-            <svg fill="none" viewBox="0 0 24 24" stroke="#0B6E4F" stroke-width="2" style="width:20px;height:20px"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Emissão automática de NFS-e — em preparação
-          </div>
-          <div class="card-sub" style="line-height:1.7">
-            Estamos preparando a <strong>emissão de nota fiscal direto do NastaDesk</strong>. Para ligar, cada clínica vai precisar de um <strong>certificado digital A1</strong> e da conta em um emissor homologado no seu município. Enquanto isso, você continua gerando o <strong>Recibo em PDF</strong> em Financeiro → Consultas (botão de recibo em cada consulta paga).
+
+        <!-- Como funciona / o que precisa -->
+        <div class="card" style="padding:24px">
+          <div class="card-titulo" style="margin-bottom:10px">Como emitir nota fiscal aqui — passo a passo</div>
+          <div class="card-sub" style="line-height:1.8">
+            A NFS-e é a <strong>nota fiscal de serviço</strong> que o município exige. O NastaDesk emite pra você por um parceiro (<strong>PlugNotas</strong>), mas <strong>três coisas dependem de você</strong> (a lei exige):
+            <ol style="margin:12px 0 0;padding-left:20px">
+              <li style="margin-bottom:8px"><strong>CNPJ com a NFS-e habilitada na prefeitura</strong> — sua clínica precisa de CNPJ e de inscrição municipal autorizada a emitir nota de serviço. (Contador resolve rápido.)</li>
+              <li style="margin-bottom:8px"><strong>Certificado digital A1</strong> — é a "identidade digital" da empresa (arquivo com senha), obrigatória pra assinar a nota. Compra-se numa certificadora (ex.: Serasa, Certisign).</li>
+              <li style="margin-bottom:8px"><strong>Conta no emissor (PlugNotas)</strong> — onde o certificado é guardado e as notas saem. Nós ligamos o NastaDesk a ela.</li>
+            </ol>
+            <div style="margin-top:12px">Assim que isso estiver pronto e configurado, aparece um botão <strong>“Emitir NFS-e”</strong> em cada consulta paga (Financeiro → Consultas). Enquanto não estiver, o comprovante segue sendo o <strong>Recibo em PDF</strong> — que não é nota fiscal, mas serve como comprovante de pagamento.</div>
           </div>
         </div>
       </div>
@@ -3898,6 +3917,7 @@ async function toggleStatusPaciente() {
 let finData = new Date();
 let finConsultas = [];
 let finPacotes = [];
+let finNotas = {};      // mapa consulta_id → nota fiscal (NFS-e)
 let finFiltro = 'todos';
 
 let finViewAtual = 'consultas';
@@ -4408,6 +4428,16 @@ async function carregarFinanceiro() {
     .order('pago_em', { ascending: false });
   finPacotes = pacs || [];
 
+  // Notas fiscais (NFS-e) já emitidas para as consultas do mês (mapa consulta_id → nota)
+  finNotas = {};
+  try {
+    const ids = finConsultas.map(c => c.id);
+    if (ids.length) {
+      const { data: notas } = await db.from('notas_fiscais').select('*').eq('clinica_id', clinicaId).in('consulta_id', ids);
+      (notas || []).forEach(n => { if (n.consulta_id) finNotas[n.consulta_id] = n; });
+    }
+  } catch (e) { /* tabela pode não existir ainda */ }
+
   const pagas = finConsultas.filter(c => c.pagamento_status === 'pago');
   const pendentes = finConsultas.filter(c => c.pagamento_status === 'pendente' && c.status !== 'cancelado');
   const recebidoConsultas = pagas.reduce((s,c) => s + (Number(c.valor) || 0), 0);
@@ -4474,6 +4504,7 @@ function renderFinLista() {
           ? '<span class="pag-pill" style="background:#EFE4FB;color:#7B5CF0">Pacote</span>'
           : `<button class="pag-pill pag-${pag}" onclick="abrirModalPagamento(finConsultaPorId('${c.id}'))">${pagLabel[pag]||pag}</button>`}
       ${pag === 'pago' ? `<button class="btn-icone" title="Gerar recibo" onclick="gerarRecibo('${c.id}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></button>` : ''}
+      ${notaFiscalUI(c)}
     </div>`;
   }).join('');
 
@@ -4482,6 +4513,59 @@ function renderFinLista() {
 
 function finConsultaPorId(id) {
   return finConsultas.find(c => c.id === id) || null;
+}
+
+// ===== NFS-e (nota fiscal de serviço) na linha da consulta =====
+function notaFiscalUI(c) {
+  if (c.pagamento_status !== 'pago') return '';
+  const n = finNotas[c.id];
+  if (!n) {
+    return `<button class="pag-pill" style="background:#EAF3FF;color:#2F6FBF;border:1px solid #D3E5FB" title="Emitir nota fiscal de serviço" onclick="emitirNFSe('${c.id}')">+ NF-e</button>`;
+  }
+  if (n.status === 'emitida') {
+    const pdf = n.link_pdf ? `<a class="btn-icone" href="${esc(n.link_pdf)}" target="_blank" rel="noopener" title="Baixar PDF da NFS-e"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></a>` : '';
+    return `<span class="pag-pill pag-pago" title="NFS-e emitida${n.numero ? ' nº ' + esc(n.numero) : ''}">NF-e ✓</span>${pdf}`;
+  }
+  if (n.status === 'processando') {
+    return `<span class="pag-pill" style="background:#FFF4D6;color:#8A6D1A;cursor:pointer" title="Emissão em processamento — clique para atualizar" onclick="atualizarNotaStatus('${n.id}')">NF-e ⏳</span>`;
+  }
+  if (n.status === 'erro' || n.status === 'negada') {
+    return `<span class="pag-pill pag-vencido" title="${esc(n.erro || 'Falha na emissão')} — clique para tentar de novo" onclick="emitirNFSe('${c.id}')">NF-e ✗</span>`;
+  }
+  if (n.status === 'cancelada') return `<span class="pag-pill pag-isento" title="NFS-e cancelada">NF-e —</span>`;
+  return '';
+}
+
+async function emitirNFSe(consultaId) {
+  if (!nfseConfig) { try { const { data } = await db.functions.invoke('nfse', { body: { acao: 'config' } }); nfseConfig = data; } catch (e) {} }
+  if (!nfseConfig || !nfseConfig.pronto) {
+    const msg = (nfseConfig && nfseConfig.tokenConfigurado)
+      ? 'Falta preencher seus dados fiscais (CNPJ, código do serviço e ISS). Quer abrir Configurações → Nota fiscal agora?'
+      : 'A emissão de NFS-e ainda não foi ligada. Abra Configurações → Nota fiscal para ver o passo a passo do que é preciso.';
+    abrirModalConfirm('Configurar nota fiscal', msg, 'Abrir configurações', () => cfgTabIrPara('fiscal'));
+    return;
+  }
+  const teste = nfseConfig.ambiente !== 'producao';
+  const aviso = teste ? ' Atenção: o emissor está em <strong>Homologação (teste)</strong> — esta nota NÃO tem valor fiscal.' : '';
+  abrirModalConfirm('Emitir NFS-e?', `Vou emitir a nota fiscal de serviço desta consulta.${aviso}`, 'Emitir', async () => {
+    toast('Emitindo NFS-e…');
+    const { data, error } = await db.functions.invoke('nfse', { body: { acao: 'emitir', consulta_id: consultaId } });
+    if (data && data.nota) finNotas[consultaId] = data.nota;
+    if (error || (data && data.ok === false)) { toast(`Não emitiu: ${(data && data.erro) || 'erro no emissor'}`); renderFinLista(); return; }
+    toast('NFS-e enviada ✓ (processando)');
+    renderFinLista();
+    if (data && data.nota) setTimeout(() => atualizarNotaStatus(data.nota.id, true), 4000);
+  });
+}
+
+async function atualizarNotaStatus(notaId, silencioso) {
+  const { data, error } = await db.functions.invoke('nfse', { body: { acao: 'consultar', nota_id: notaId } });
+  if (error) { if (!silencioso) toast('Erro ao consultar a nota'); return; }
+  if (data && data.nota) {
+    finNotas[data.nota.consulta_id] = data.nota;
+    renderFinLista();
+    if (!silencioso) toast(data.nota.status === 'emitida' ? 'NFS-e emitida ✓' : `Situação: ${data.nota.status}`);
+  }
 }
 
 // ===== MODAL PAGAMENTO =====
@@ -4906,8 +4990,10 @@ function cfgTabIrPara(nome) {
   cfgTab(nome, null);
 }
 
-// ===== DADOS FISCAIS (fundação da NFS-e) =====
+// ===== DADOS FISCAIS + STATUS DO EMISSOR (NFS-e via PlugNotas) =====
 let dadosFiscais = null;
+let nfseConfig = null;   // cache do status do emissor (nfse/config)
+
 async function carregarDadosFiscais() {
   if (!clinicaId) return;
   const { data, error } = await db.from('config_fiscal').select('*').eq('clinica_id', clinicaId).maybeSingle();
@@ -4920,8 +5006,45 @@ async function carregarDadosFiscais() {
   g('fisc-regime').value = data?.regime_tributario || '';
   g('fisc-codigo').value = data?.codigo_servico || '';
   g('fisc-iss').value = (data && data.aliquota_iss != null) ? data.aliquota_iss : '';
+  g('fisc-cnae').value = data?.cnae || '';
+  g('fisc-codtrib').value = data?.codigo_tributacao_municipio || '';
+  g('fisc-ambiente').value = data?.ambiente || 'homologacao';
   g('fisc-iss-retido').checked = !!data?.iss_retido;
+  renderStatusEmissor();
 }
+
+// Consulta a Edge Function nfse (ação config) e desenha o status do emissor.
+async function renderStatusEmissor() {
+  const el = document.getElementById('fisc-status');
+  if (!el) return;
+  let cfg = null;
+  try { const { data } = await db.functions.invoke('nfse', { body: { acao: 'config' } }); cfg = data; } catch (e) { cfg = null; }
+  nfseConfig = cfg;
+  if (!cfg) {
+    el.innerHTML = `<div class="card-sub">Não consegui falar com o emissor agora. Tente de novo em instantes.</div>`;
+    return;
+  }
+  const ok = !!cfg.pronto;
+  const cor = ok ? '#0B6E4F' : (cfg.tokenConfigurado ? '#E8A820' : '#66706A');
+  const bg = ok ? 'var(--verde-suave)' : '#FFF9EC';
+  const titulo = ok
+    ? 'Emissor de NFS-e ligado ✓'
+    : (cfg.tokenConfigurado ? 'Quase lá — falta preencher os dados fiscais' : 'Emissor ainda não ligado');
+  const detalhe = ok
+    ? `Ambiente: <strong>${cfg.ambiente === 'producao' ? 'Produção (nota válida)' : 'Homologação (teste)'}</strong>. Já dá pra emitir NFS-e nas consultas pagas (Financeiro → Consultas).`
+    : (cfg.tokenConfigurado
+        ? 'A conexão com o PlugNotas está ativa. Preencha CNPJ, código do serviço e ISS abaixo e salve para liberar a emissão.'
+        : 'A conexão com o emissor (PlugNotas) ainda não foi ativada no servidor. Isso é feito uma vez pela Nastaclin. Você já pode preencher seus dados fiscais abaixo.');
+  el.style.background = bg;
+  el.style.border = `1px solid ${ok ? 'var(--verde-claro)' : '#F0E2BE'}`;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="width:10px;height:10px;border-radius:50%;background:${cor};flex:0 0 auto"></span>
+      <div style="font-weight:700;color:${cor}">${titulo}</div>
+      <button class="btn btn-secundario" style="margin-left:auto;padding:6px 12px;font-size:12px" onclick="renderStatusEmissor()">Verificar</button>
+    </div>
+    <div class="card-sub" style="margin-top:8px;line-height:1.6">${detalhe}</div>`;
+}
+
 async function salvarDadosFiscais() {
   if (!clinicaId) return;
   const g = id => document.getElementById(id);
@@ -4934,6 +5057,9 @@ async function salvarDadosFiscais() {
     regime_tributario: g('fisc-regime').value || null,
     codigo_servico: g('fisc-codigo').value.trim() || null,
     aliquota_iss: isNaN(iss) ? null : iss,
+    cnae: g('fisc-cnae').value.trim() || null,
+    codigo_tributacao_municipio: g('fisc-codtrib').value.trim() || null,
+    ambiente: g('fisc-ambiente').value || 'homologacao',
     iss_retido: g('fisc-iss-retido').checked,
     atualizado_em: new Date().toISOString(),
   };
