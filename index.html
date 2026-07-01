@@ -4445,7 +4445,7 @@ async function enviarLembrete(consultaId, tipo) {
 
 // ===== CONFIGURAÇÕES =====
 function cfgTab(nome, el) {
-  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades'].forEach(t => {
+  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades','profissionais'].forEach(t => {
     const tab = document.getElementById(`cfg-tab-${t}`);
     if (tab) tab.style.display = t===nome ? 'block' : 'none';
   });
