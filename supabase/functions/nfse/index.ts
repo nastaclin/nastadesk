@@ -13,6 +13,11 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const PLUGNOTAS_KEY = Deno.env.get("PLUGNOTAS_API_KEY") || "";
+// URL da conta PlugNotas. Padrão = produção (a conta real). Para testar contra
+// o sandbox público, defina PLUGNOTAS_BASE_URL=https://api.sandbox.plugnotas.com.br
+// (com o token de sandbox). Homologação x produção de VERDADE é por-empresa
+// (flag no cadastro da empresa no PlugNotas), não troca a URL.
+const PLUGNOTAS_BASE = (Deno.env.get("PLUGNOTAS_BASE_URL") || "https://api.plugnotas.com.br").replace(/\/+$/, "");
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -26,12 +31,9 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: 
 
 const soDigitos = (s: unknown) => String(s ?? "").replace(/\D+/g, "");
 
-// Chamada à API do PlugNotas (homologação = sandbox; produção = api.plugnotas)
-async function plug(path: string, method = "GET", body?: unknown, ambiente = "homologacao") {
-  const base = ambiente === "producao"
-    ? "https://api.plugnotas.com.br"
-    : "https://api.sandbox.plugnotas.com.br";
-  const r = await fetch(`${base}${path}`, {
+// Chamada à API do PlugNotas (a URL da conta vem de PLUGNOTAS_BASE)
+async function plug(path: string, method = "GET", body?: unknown) {
+  const r = await fetch(`${PLUGNOTAS_BASE}${path}`, {
     method,
     headers: { "Content-Type": "application/json", "X-API-KEY": PLUGNOTAS_KEY },
     body: body ? JSON.stringify(body) : undefined,
@@ -149,7 +151,7 @@ Deno.serve(async (req) => {
       servico: [servico],
     }];
 
-    const r = await plug("/nfse", "POST", payload, ambiente);
+    const r = await plug("/nfse", "POST", payload);
     const base = {
       clinica_id: clinica.id, consulta_id: consultaId, paciente_id: consulta.paciente_id,
       id_integracao: idIntegracao, valor, descricao: discriminacao, ambiente,
@@ -175,7 +177,7 @@ Deno.serve(async (req) => {
     if (!nota) return json({ erro: "Nota não encontrada" }, 404);
 
     const cnpj = soDigitos(fiscal?.cnpj);
-    const r = await plug(`/nfse/consultar/${encodeURIComponent(nota.id_integracao)}/${cnpj}`, "GET", undefined, nota.ambiente);
+    const r = await plug(`/nfse/consultar/${encodeURIComponent(nota.id_integracao)}/${cnpj}`, "GET");
     const d = Array.isArray(r.data) ? r.data[0] : r.data;
     if (!r.ok || !d) return json({ nota, aviso: "Ainda sem retorno da prefeitura." });
 
