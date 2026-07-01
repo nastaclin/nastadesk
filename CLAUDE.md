@@ -35,6 +35,20 @@ Esta seção fixa (entre os marcadores 🔒) NÃO deve ser alterada.
 
 > Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-07-01**.
 
+> ⭐ **COMO O DONO GOSTA DE TRABALHAR (ler sempre, vale para qualquer chat):**
+> - **Pode deixar as melhorias APARENTES para os clientes.** A intenção é que eles
+>   percebam que tem gente de verdade trabalhando no produto por eles — que há
+>   "seres humanos por trás". **Não precisa esconder** as mudanças ("clínica não vê
+>   diferença" não é uma meta; é só uma garantia de segurança quando aplicável).
+> - **Liberdade total no visual/UI:** pode alterar layout, textos, telas, estilo,
+>   cores, adicionar telas/avisos. Ouse no visual.
+> - **NUNCA faça nada que prejudique os clientes.** Especialmente: **não** mexer na
+>   agenda a ponto de embaralhar/perder horários; **não** vazar/expor dados de um
+>   cliente para outro; **não** excluir/perder dados, pacientes, consultas ou
+>   qualquer coisa que já é deles. Mudança em dado só se for **aditiva e reversível**.
+> - **Regra de ouro:** _ouse no visual, seja conservador com os dados._ Se algo tem
+>   risco de vazar/apagar/embaralhar dado de cliente, **pare e pergunte antes.**
+
 ## 1. Visão geral
 
 **NastaDesk** é um SaaS (software por assinatura) de **gestão para clínicas**, com
