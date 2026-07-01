@@ -3675,11 +3675,13 @@ async function carregarConsultasFicha(pacienteId) {
     const data = new Date(c.data_hora).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric', timeZone: TZ });
     const hora = horaSP(c.data_hora);
     const pagInfo = c.valor != null ? ` · ${fmtBRL(c.valor)}${c.pagamento_status==='pago'?' ✓':c.pagamento_status==='isento'?' (isento)':' (pendente)'}` : '';
+    const tags = `${tagModalidade(c.modalidade_id)}${tagProfissional(c.profissional_id)}`;
     return `<div class="ficha-consulta">
       <div class="ficha-consulta-data">${data}</div>
       <div class="ficha-consulta-info">
         <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}</div>
         <div class="ficha-consulta-status">${hora} · <span style="color:${stColor[c.status]||'var(--cinza-medio)'}">${stLabel[c.status]||esc(c.status)}</span>${pagInfo}</div>
+        ${tags?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px">${tags}</div>`:''}
       </div>
     </div>`;
   }).join('');

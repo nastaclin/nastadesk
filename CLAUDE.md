@@ -226,6 +226,14 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-01** — **Ficha do paciente: profissional + modalidade nas Consultas (fix de UX) + fix da aba Profissionais.**
+  (1) A aba **Configurações → Profissionais** abria em branco — `cfgTab` tinha uma lista fixa de
+  abas sem `'profissionais'`, então o painel (que começa `display:none`) nunca era exibido.
+  Corrigido (adicionado à lista) + teste passou a **simular o clique** na aba (não só chamar o render).
+  (2) A aba **Consultas** da ficha lateral do paciente não mostrava o profissional em lugar nenhum;
+  agora cada consulta exibe **etiqueta de modalidade e de profissional**. Aditivo, sem tocar em dados.
+  Validado no navegador. (3) Registrada na seção 10.4 a ideia de **pagamento self-service do paciente
+  (Pix/checkout com baixa automática)** — com análise de viabilidade — para uma fase futura dedicada.
 - **2026-07-01** — **Fase 2 · Repasse/comissão por profissional (Financeiro → Repasse).**
   Aditivo. Migration `20260701130000_profissionais_comissao.sql` **aplicada em produção**:
   colunas `profissionais.comissao_tipo` (`nenhuma`|`percentual`|`valor`) + `comissao_valor`
@@ -370,6 +378,10 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 - [ ] **Trava por plano do multi-profissional** — hoje liberado a todos os planos (pedido do dono); quando quiser, virar argumento de upgrade (o ponto de gate no front está preparado num único lugar).
 - [ ] **Nota fiscal de serviço (NFS-e)** — integrar emissor (ex.: PlugNotas / eNotas / NFE.io). Hoje só há recibo em PDF.
 - [ ] **Financeiro completo** — contas a pagar/despesas, fluxo de caixa, DRE simples. (✅ **Repasse/comissão por profissional já feito** em 2026-07-01 — Financeiro → Repasse: % do valor ou R$/consulta, sobre as consultas atendidas do mês.)
+- [ ] **Pagamento self-service do paciente (Pix/checkout) com baixa automática** — IDEIA discutida em 2026-07-01. Hoje o dono marca pago/pendente na mão (consulta, pacote ou mensalidade). Objetivo: o **paciente paga sozinho** (inclusive adiantado) e o status **atualiza automaticamente** no NastaDesk pro dono ver.
+  - **Viável?** Sim. Caminho recomendado p/ Brasil: **Pix via um PSP com webhook** (ex.: Asaas, Efí/Gerencianet, Mercado Pago, Pagar.me) — sem taxa de cartão e confirmação na hora. Gera um Pix (copia-e-cola/QR) por cobrança; quando o paciente paga, o PSP chama uma **edge function** que dá **baixa automática** na cobrança (idempotente + HMAC), casando pelo id de referência.
+  - **Por que é fase dedicada (não agora):** (1) cada clínica conecta a **própria conta** do PSP → a clínica recebe direto e a **Nastaclin não fica no meio do dinheiro** (evita virar "facilitador de pagamento"/peso regulatório); (2) reconciliação segura/idempotente; (3) **aditivo** — a baixa manual continua como fallback, sem tocar no financeiro atual; (4) LGPD/dados financeiros exigem cuidado.
+  - **MVP sugerido:** começar por **mensalidades** (recorrente/previsível) OU por consulta, com **1 PSP via Pix**, link/QR por cobrança + webhook de baixa. **Boa ideia — recomendo fazer**, como entrega própria (concorrentes já oferecem link de pagamento ao paciente).
 - [ ] **PWA instalável** — hoje 0 manifest / 0 service worker. Adicionar `manifest.json` + service worker (instalar no celular, ícone, offline básico).
 
 ### 10.5 FASE 3 — Diferenciação (depois da paridade)
