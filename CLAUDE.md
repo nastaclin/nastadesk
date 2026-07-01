@@ -131,6 +131,8 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   **(b) Mensalidades** (novo): cobrança recorrente por paciente (valor + dia de
   vencimento), controle **pago / pendente / vencido** mês a mês com histórico. A aba
   "Mensalidades" abre as cobranças do mês automaticamente e marca pago em 1 clique.
+  **(c) Repasse** (novo): comissão por profissional (% do valor OU valor fixo por
+  consulta), calculada sobre as consultas *atendidas* do mês, em Financeiro → Repasse.
 - **Relatório mensal** — comparecimento, faturamento, origem dos agendamentos,
   formas de pagamento.
 - **Chatbot de WhatsApp** — ver seção 6.
@@ -224,6 +226,16 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-01** — **Fase 2 · Repasse/comissão por profissional (Financeiro → Repasse).**
+  Aditivo. Migration `20260701130000_profissionais_comissao.sql` **aplicada em produção**:
+  colunas `profissionais.comissao_tipo` (`nenhuma`|`percentual`|`valor`) + `comissao_valor`
+  (nullable) com CHECK. Front: **3ª aba no Financeiro** (Consultas | Mensalidades | **Repasse**)
+  que lista, por profissional, nº de consultas **atendidas** no mês, valor gerado e o repasse
+  (% do valor ou R$/consulta, configurável e salvo automático) + total do mês. **Não altera** o
+  financeiro por consulta/mensalidade. Validado (node --check + smoke no navegador: 50% de 300 = 150,
+  R$40×2 = 80, total 230). **Trava por plano:** decisão do dono = **liberado a todos** (gate ainda
+  preparado). **Login de profissionais + papéis: adiado de propósito** — mexe em auth/RLS (risco de
+  vazamento/lockout entre clínicas); será entrega dedicada, testada e com deploy à parte.
 - **2026-07-01** — **Fase 2 · item 1: Multi-profissional (cadastro + agenda por profissional).**
   Aditivo e seguro, **sem login novo** (profissional é "recurso" da agenda, não
   mexe em auth/RLS). (1) Migration `20260701120000_profissionais.sql` **aplicada no
@@ -357,7 +369,7 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 - [ ] **Login de profissionais + papéis de usuário** — cada profissional/recepção com login próprio e permissões (dono / recepção / profissional). Mexe em auth/RLS (mais delicado) — deixado para uma etapa 2, sob demanda.
 - [ ] **Trava por plano do multi-profissional** — hoje liberado a todos os planos (pedido do dono); quando quiser, virar argumento de upgrade (o ponto de gate no front está preparado num único lugar).
 - [ ] **Nota fiscal de serviço (NFS-e)** — integrar emissor (ex.: PlugNotas / eNotas / NFE.io). Hoje só há recibo em PDF.
-- [ ] **Financeiro completo** — contas a pagar/despesas, fluxo de caixa, DRE simples e comissão/repasse por profissional.
+- [ ] **Financeiro completo** — contas a pagar/despesas, fluxo de caixa, DRE simples. (✅ **Repasse/comissão por profissional já feito** em 2026-07-01 — Financeiro → Repasse: % do valor ou R$/consulta, sobre as consultas atendidas do mês.)
 - [ ] **PWA instalável** — hoje 0 manifest / 0 service worker. Adicionar `manifest.json` + service worker (instalar no celular, ícone, offline básico).
 
 ### 10.5 FASE 3 — Diferenciação (depois da paridade)
