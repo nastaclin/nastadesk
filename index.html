@@ -631,7 +631,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .mod-nome-input { flex: 1; padding: 8px 11px; border: 1px solid transparent; border-radius: 8px; font-size: 14px; color: var(--cinza-escuro); background: transparent; }
 .mod-nome-input:hover { background: var(--creme); }
 .mod-nome-input:focus { border-color: var(--verde-medio); background: white; outline: none; box-shadow: var(--anel); }
-.fin-segmented { display: flex; gap: 8px; margin-bottom: 18px; }
+.fin-segmented { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
 .fin-seg-btn { padding: 9px 18px; border-radius: 20px; border: 1px solid var(--cinza-claro); background: white; font-size: 13px; font-weight: 600; color: var(--cinza-medio); cursor: pointer; transition: all .15s; }
 .fin-seg-btn:hover { border-color: var(--verde-medio); }
 .fin-seg-btn.ativa { background: var(--verde); border-color: var(--verde); color: white; }
@@ -1160,7 +1160,9 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="fin-segmented">
         <button class="fin-seg-btn ativa" id="fin-seg-consultas" onclick="finView('consultas')">Consultas</button>
         <button class="fin-seg-btn" id="fin-seg-mensalidades" onclick="finView('mensalidades')">Mensalidades</button>
+        <button class="fin-seg-btn" id="fin-seg-despesas" onclick="finView('despesas')">Despesas</button>
         <button class="fin-seg-btn" id="fin-seg-repasse" onclick="finView('repasse')">Repasse</button>
+        <button class="fin-seg-btn" id="fin-seg-resumo" onclick="finView('resumo')">Resumo</button>
       </div>
       <div id="fin-view-consultas">
       <div class="metricas">
@@ -1233,6 +1235,57 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <div><div class="card-titulo">Repasse por profissional</div><div class="card-sub">Baseado nas consultas com status <strong>Atendido</strong> no mês. Defina % do valor ou valor fixo por consulta — salva automático.</div></div>
           </div>
           <div id="repasse-lista"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
+        </div>
+      </div>
+
+      <!-- DESPESAS / CONTAS A PAGAR -->
+      <div id="fin-view-despesas" style="display:none">
+        <div class="metricas">
+          <div class="metrica-card verde">
+            <div class="metrica-topo"><div class="metrica-label">Pago no mês</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div></div>
+            <div class="metrica-valor menor" id="desp-pago">—</div><span class="metrica-badge badge-verde">despesas quitadas</span>
+          </div>
+          <div class="metrica-card amarelo">
+            <div class="metrica-topo"><div class="metrica-label">A pagar</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div></div>
+            <div class="metrica-valor menor" id="desp-apagar">—</div><span class="metrica-badge badge-amarelo" id="desp-apagar-sub">—</span>
+          </div>
+          <div class="metrica-card laranja">
+            <div class="metrica-topo"><div class="metrica-label">Total do mês</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg></div></div>
+            <div class="metrica-valor menor" id="desp-total">—</div><span class="metrica-badge badge-neutro" id="desp-total-sub">—</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header" style="flex-wrap:wrap;gap:10px">
+            <div><div class="card-titulo">Contas a pagar do mês</div><div class="card-sub">Lance aluguel, materiais, salários, impostos… e marque como pago em 1 clique. Entra no Fluxo de caixa e no DRE.</div></div>
+            <button class="btn btn-primario" onclick="abrirModalDespesa()">+ Nova despesa</button>
+          </div>
+          <div id="desp-lista"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
+        </div>
+      </div>
+
+      <!-- RESUMO: FLUXO DE CAIXA + DRE SIMPLES -->
+      <div id="fin-view-resumo" style="display:none">
+        <div class="metricas">
+          <div class="metrica-card verde">
+            <div class="metrica-topo"><div class="metrica-label">Entradas</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 19V5m0 0l-7 7m7-7l7 7"/></svg></div></div>
+            <div class="metrica-valor menor" id="res-entradas">—</div><span class="metrica-badge badge-verde">recebido no mês</span>
+          </div>
+          <div class="metrica-card laranja">
+            <div class="metrica-topo"><div class="metrica-label">Saídas</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 5v14m0 0l7-7m-7 7l-7-7"/></svg></div></div>
+            <div class="metrica-valor menor" id="res-saidas">—</div><span class="metrica-badge badge-neutro">despesas pagas</span>
+          </div>
+          <div class="metrica-card azul">
+            <div class="metrica-topo"><div class="metrica-label">Saldo do mês</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 7h6m0 0v6m0-6l-8 8"/></svg></div></div>
+            <div class="metrica-valor menor" id="res-saldo">—</div><span class="metrica-badge badge-azul" id="res-saldo-sub">entradas − saídas</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div><div class="card-titulo">Fluxo de caixa</div><div class="card-sub">Tudo que entrou e saiu neste mês (regime de caixa simplificado).</div></div></div>
+          <div id="res-fluxo"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div><div class="card-titulo">DRE simples</div><div class="card-sub">Receitas por origem menos despesas por categoria = resultado do mês.</div></div></div>
+          <div id="res-dre"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
         </div>
       </div>
     </section>
@@ -1332,6 +1385,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="cfg-tab" data-cfg="salas" onclick="cfgTab('salas',this)">Salas</div>
         <div class="cfg-tab" data-cfg="modalidades" onclick="cfgTab('modalidades',this)">Modalidades</div>
         <div class="cfg-tab" data-cfg="profissionais" onclick="cfgTab('profissionais',this)">Profissionais</div>
+        <div class="cfg-tab" data-cfg="fiscal" onclick="cfgTab('fiscal',this)">Nota fiscal</div>
       </div>
 
       <!-- ABA MENSAGENS -->
@@ -1449,6 +1503,48 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <button class="btn btn-primario" onclick="adicionarProfissional()">Adicionar</button>
           </div>
           <div id="profissionais-lista"></div>
+        </div>
+      </div>
+
+      <!-- ABA NOTA FISCAL (NFS-e) -->
+      <div id="cfg-tab-fiscal" style="display:none;max-width:620px">
+        <div class="card" style="padding:28px;margin-bottom:16px">
+          <div class="card-titulo" style="margin-bottom:6px">Dados fiscais da clínica</div>
+          <div class="card-sub" style="margin-bottom:20px">Preencha os dados que a nota fiscal de serviço (NFS-e) exige. Já deixe pronto aqui — assim, quando a emissão automática for ligada, é só apertar um botão.</div>
+          <div class="config-campo"><label>Razão social</label><input type="text" id="fisc-razao" placeholder="Ex: Clínica Mendes Fisioterapia LTDA"></div>
+          <div class="modal-grid">
+            <div class="config-campo"><label>CNPJ</label><input type="text" id="fisc-cnpj" placeholder="00.000.000/0000-00"></div>
+            <div class="config-campo"><label>Inscrição municipal</label><input type="text" id="fisc-im" placeholder="Opcional"></div>
+          </div>
+          <div class="modal-grid">
+            <div class="config-campo"><label>Regime tributário</label>
+              <select id="fisc-regime">
+                <option value="">Selecione…</option>
+                <option value="mei">MEI</option>
+                <option value="simples_nacional">Simples Nacional</option>
+                <option value="lucro_presumido">Lucro Presumido</option>
+                <option value="lucro_real">Lucro Real</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div class="config-campo"><label>Código do serviço (município)</label><input type="text" id="fisc-codigo" placeholder="Ex: 4.03 / 0401"></div>
+          </div>
+          <div class="modal-grid">
+            <div class="config-campo"><label>Alíquota de ISS (%)</label><input type="number" id="fisc-iss" min="0" max="100" step="0.01" placeholder="Ex: 3"></div>
+            <div class="config-campo" style="display:flex;align-items:flex-end;padding-bottom:10px">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500"><input type="checkbox" id="fisc-iss-retido" style="width:auto"> ISS retido na fonte</label>
+            </div>
+          </div>
+          <button class="btn btn-primario" onclick="salvarDadosFiscais()">Salvar dados fiscais</button>
+        </div>
+        <div class="card" style="padding:24px;background:var(--verde-suave);border:1px solid var(--verde-claro)">
+          <div class="card-titulo" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+            <svg fill="none" viewBox="0 0 24 24" stroke="#0B6E4F" stroke-width="2" style="width:20px;height:20px"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Emissão automática de NFS-e — em preparação
+          </div>
+          <div class="card-sub" style="line-height:1.7">
+            Estamos preparando a <strong>emissão de nota fiscal direto do NastaDesk</strong>. Para ligar, cada clínica vai precisar de um <strong>certificado digital A1</strong> e da conta em um emissor homologado no seu município. Enquanto isso, você continua gerando o <strong>Recibo em PDF</strong> em Financeiro → Consultas (botão de recibo em cada consulta paga).
+          </div>
         </div>
       </div>
 
@@ -1863,6 +1959,56 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="modal-acoes">
       <button class="btn btn-secundario" id="mens-btn-pendente" onclick="mensDeixarPendente()">Deixar pendente</button>
       <button class="btn btn-primario" onclick="mensRegistrarPago()">Registrar pagamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESPESA / CONTA A PAGAR -->
+<div class="overlay" id="modal-despesa" onclick="if(event.target===this)fecharModalDespesa()">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-titulo" id="desp-modal-titulo">Nova despesa</div><div class="modal-sub">Conta a pagar da clínica</div></div><button class="modal-fechar" onclick="fecharModalDespesa()">×</button></div>
+    <div class="config-campo"><label>Descrição</label><input type="text" id="desp-descricao" placeholder="Ex: Aluguel da sala, materiais, energia..."></div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Categoria</label>
+        <select id="desp-categoria">
+          <option value="Aluguel">Aluguel</option>
+          <option value="Materiais/Insumos">Materiais/Insumos</option>
+          <option value="Salários/Pessoal">Salários/Pessoal</option>
+          <option value="Repasse profissional">Repasse profissional</option>
+          <option value="Impostos/Taxas">Impostos/Taxas</option>
+          <option value="Água/Luz/Internet">Água/Luz/Internet</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Equipamentos">Equipamentos</option>
+          <option value="Software/Assinaturas">Software/Assinaturas</option>
+          <option value="outros" selected>Outros</option>
+        </select>
+      </div>
+      <div class="config-campo"><label>Valor (R$)</label><input type="number" id="desp-valor" min="0" step="0.01" placeholder="Ex: 1200"></div>
+    </div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Vencimento</label><input type="date" id="desp-vencimento"></div>
+      <div class="config-campo"><label>Situação</label>
+        <select id="desp-status">
+          <option value="pendente">Pendente</option>
+          <option value="pago">Paga</option>
+        </select>
+      </div>
+    </div>
+    <div class="config-campo"><label>Forma de pagamento (opcional)</label>
+      <select id="desp-forma">
+        <option value="">—</option>
+        <option value="pix">Pix</option>
+        <option value="dinheiro">Dinheiro</option>
+        <option value="transferencia">Transferência</option>
+        <option value="boleto">Boleto</option>
+        <option value="cartao_credito">Cartão de crédito</option>
+        <option value="cartao_debito">Cartão de débito</option>
+      </select>
+    </div>
+    <div class="modal-acoes">
+      <button class="btn btn-perigo" id="desp-btn-excluir" onclick="excluirDespesa()" style="display:none;margin-right:auto">Excluir</button>
+      <button class="btn btn-secundario" onclick="fecharModalDespesa()">Cancelar</button>
+      <button class="btn btn-primario" onclick="salvarDespesa()">Salvar</button>
     </div>
   </div>
 </div>
@@ -3755,16 +3901,19 @@ function navFin(dir) {
   refreshFinanceiro();
 }
 
-// Recarrega a seção Financeiro respeitando a view ativa (Consultas | Mensalidades | Repasse)
+// Recarrega a seção Financeiro respeitando a view ativa
+// (Consultas | Mensalidades | Despesas | Repasse | Resumo)
 function refreshFinanceiro() {
   if (finViewAtual === 'mensalidades') carregarMensalidades();
+  else if (finViewAtual === 'despesas') carregarDespesas();
   else if (finViewAtual === 'repasse') carregarRepasse();
+  else if (finViewAtual === 'resumo') carregarResumo();
   else carregarFinanceiro();
 }
 
 function finView(v) {
   finViewAtual = v;
-  ['consultas','mensalidades','repasse'].forEach(x => {
+  ['consultas','mensalidades','despesas','repasse','resumo'].forEach(x => {
     const btn = document.getElementById('fin-seg-'+x);
     if (btn) btn.classList.toggle('ativa', v === x);
     const view = document.getElementById('fin-view-'+x);
@@ -3942,6 +4091,213 @@ async function mensDeixarPendente() {
   const { error } = await db.from('mensalidades').update({ status: 'pendente', pago_em: null, forma_pagamento: null }).eq('id', mensAtual.id);
   if (!error) { fecharModalMensalidade(); toast('Mensalidade marcada como pendente'); carregarMensalidades(); }
   else toast('Erro ao atualizar');
+}
+
+// ===== DESPESAS / CONTAS A PAGAR =====
+let finDespesas = [];
+let despesasDisponivel = true;   // vira false se a tabela ainda não existir (degrada com elegância)
+let despAtual = null;            // despesa em edição (null = nova)
+const FORMA_LABEL_DESP = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito', cartao_debito:'Débito', transferencia:'Transferência', boleto:'Boleto' };
+
+function despCompetencia() {
+  const ano = finData.getFullYear(), mes = finData.getMonth();
+  return `${ano}-${String(mes+1).padStart(2,'0')}-01`;
+}
+function despPorId(id) { return finDespesas.find(d => d.id === id) || null; }
+
+async function carregarDespesas() {
+  if (!clinicaId) return;
+  const ano = finData.getFullYear(), mes = finData.getMonth();
+  document.getElementById('fin-mes-label').textContent = `${MESES[mes]} ${ano}`;
+  const { data, error } = await db.from('despesas').select('*')
+    .eq('clinica_id', clinicaId).eq('competencia', despCompetencia())
+    .order('vencimento', { ascending: true }).order('criado_em', { ascending: true });
+  if (error) { despesasDisponivel = false; finDespesas = []; }
+  else { despesasDisponivel = true; finDespesas = data || []; }
+  renderDespesas();
+}
+
+function renderDespesas() {
+  const el = document.getElementById('desp-lista');
+  if (!el) return;
+  const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  if (!despesasDisponivel) {
+    el.innerHTML = emptyState('Recurso de despesas ainda não ativado no banco de dados.', 'dinheiro');
+    setTxt('desp-pago','—'); setTxt('desp-apagar','—'); setTxt('desp-total','—');
+    return;
+  }
+  const hoje = dataLocalISO(new Date());
+  const pagas = finDespesas.filter(d => d.status === 'pago');
+  const pend  = finDespesas.filter(d => d.status !== 'pago');
+  const pago = pagas.reduce((s,d) => s + (Number(d.valor) || 0), 0);
+  const aPagar = pend.reduce((s,d) => s + (Number(d.valor) || 0), 0);
+  const vencidas = pend.filter(d => d.vencimento && d.vencimento < hoje);
+  setTxt('desp-pago', fmtBRL(pago));
+  setTxt('desp-apagar', fmtBRL(aPagar));
+  setTxt('desp-apagar-sub', vencidas.length ? `${vencidas.length} vencida${vencidas.length!==1?'s':''}` : `${pend.length} pendente${pend.length!==1?'s':''}`);
+  setTxt('desp-total', fmtBRL(pago + aPagar));
+  setTxt('desp-total-sub', `${finDespesas.length} lançamento${finDespesas.length!==1?'s':''}`);
+
+  if (!finDespesas.length) {
+    el.innerHTML = emptyState('Nenhuma despesa neste mês.<br>Clique em "+ Nova despesa" para lançar contas a pagar.', 'dinheiro');
+    return;
+  }
+  el.innerHTML = finDespesas.map(d => {
+    const venc = d.vencimento ? new Date(`${d.vencimento}T12:00:00`).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', timeZone: TZ }) : '—';
+    const vencido = d.status !== 'pago' && d.vencimento && d.vencimento < hoje;
+    const pagoD = d.status === 'pago';
+    const cls = pagoD ? 'pag-pago' : (vencido ? 'pag-vencido' : 'pag-pendente');
+    const label = pagoD ? 'Paga' : (vencido ? 'Vencida' : 'Pendente');
+    const cat = d.categoria && d.categoria !== 'outros' ? esc(d.categoria) : 'Outros';
+    return `<div class="fin-row">
+      <div class="fin-data"><strong>${venc}</strong>vencimento</div>
+      <div class="fin-info">
+        <div class="fin-nome">${esc(d.descricao)}</div>
+        <div class="fin-sub">${cat}${d.forma_pagamento?` · ${FORMA_LABEL_DESP[d.forma_pagamento]||d.forma_pagamento}`:''}</div>
+      </div>
+      <div class="fin-valor">${fmtBRL(d.valor)}</div>
+      <button class="pag-pill ${cls}" onclick="toggleDespesaPaga('${d.id}')">${label}</button>
+      <button class="btn-icone" title="Editar despesa" onclick="abrirModalDespesa(despPorId('${d.id}'))"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+    </div>`;
+  }).join('');
+}
+
+async function toggleDespesaPaga(id) {
+  const d = despPorId(id); if (!d) return;
+  const paga = d.status === 'pago';
+  const upd = paga ? { status: 'pendente', pago_em: null } : { status: 'pago', pago_em: new Date().toISOString() };
+  const { error } = await db.from('despesas').update(upd).eq('id', id);
+  if (error) { toast('Erro ao atualizar a despesa'); return; }
+  toast(paga ? 'Despesa marcada como pendente' : 'Despesa marcada como paga ✓');
+  carregarDespesas();
+}
+
+function abrirModalDespesa(d) {
+  despAtual = d || null;
+  document.getElementById('desp-modal-titulo').textContent = d ? 'Editar despesa' : 'Nova despesa';
+  document.getElementById('desp-descricao').value = d?.descricao || '';
+  document.getElementById('desp-categoria').value = d?.categoria || 'outros';
+  document.getElementById('desp-valor').value = (d && d.valor != null) ? d.valor : '';
+  const ano = finData.getFullYear(), mes = finData.getMonth();
+  document.getElementById('desp-vencimento').value = d?.vencimento || `${ano}-${String(mes+1).padStart(2,'0')}-05`;
+  document.getElementById('desp-status').value = d?.status || 'pendente';
+  document.getElementById('desp-forma').value = d?.forma_pagamento || '';
+  document.getElementById('desp-btn-excluir').style.display = d ? 'inline-flex' : 'none';
+  document.getElementById('modal-despesa').classList.add('aberto');
+}
+function fecharModalDespesa() {
+  document.getElementById('modal-despesa').classList.remove('aberto');
+  despAtual = null;
+}
+async function salvarDespesa() {
+  const descricao = document.getElementById('desp-descricao').value.trim();
+  const categoria = document.getElementById('desp-categoria').value || 'outros';
+  const valor = parseFloat(document.getElementById('desp-valor').value);
+  const vencimento = document.getElementById('desp-vencimento').value || null;
+  const status = document.getElementById('desp-status').value || 'pendente';
+  const forma = document.getElementById('desp-forma').value || null;
+  if (!descricao) { toast('Descreva a despesa'); return; }
+  if (isNaN(valor) || valor < 0) { toast('Informe um valor válido'); return; }
+  const registro = {
+    clinica_id: clinicaId,
+    descricao, categoria, valor,
+    competencia: despAtual?.competencia || despCompetencia(),
+    vencimento, status,
+    forma_pagamento: forma,
+    pago_em: status === 'pago' ? (despAtual?.pago_em || new Date().toISOString()) : null,
+  };
+  let error;
+  if (despAtual) ({ error } = await db.from('despesas').update(registro).eq('id', despAtual.id));
+  else ({ error } = await db.from('despesas').insert(registro));
+  if (error) { toast('Erro ao salvar a despesa'); return; }
+  fecharModalDespesa();
+  toast(despAtual ? 'Despesa atualizada ✓' : 'Despesa lançada ✓');
+  carregarDespesas();
+}
+function excluirDespesa() {
+  if (!despAtual) return;
+  const id = despAtual.id;
+  fecharModalDespesa();
+  abrirModalConfirm('Excluir despesa?', 'Essa conta a pagar será removida. Não afeta consultas, pacientes nem o financeiro por consulta.', 'Excluir', async () => {
+    const { error } = await db.from('despesas').delete().eq('id', id);
+    if (error) { toast('Erro ao excluir'); return; }
+    toast('Despesa excluída');
+    carregarDespesas();
+  });
+}
+
+// ===== RESUMO: FLUXO DE CAIXA + DRE SIMPLES =====
+// Lê os dados frescos do mês (independe das outras abas terem sido abertas).
+// Regime de caixa simplificado: entradas = recebido; saídas = despesas pagas.
+function resLinha(label, valor, opts = {}) {
+  const strong = opts.strong ? 'font-weight:700' : '';
+  const cor = opts.cor || '';
+  return `<div class="fin-row"><div class="fin-info"><div class="fin-nome" style="${strong}">${label}</div></div><div class="fin-valor" style="${strong};${cor}">${valor}</div></div>`;
+}
+async function carregarResumo() {
+  if (!clinicaId) return;
+  const ano = finData.getFullYear(), mes = finData.getMonth();
+  document.getElementById('fin-mes-label').textContent = `${MESES[mes]} ${ano}`;
+  const inicio = new Date(ano, mes, 1);
+  const fim = new Date(ano, mes+1, 0, 23, 59, 59);
+  const comp = `${ano}-${String(mes+1).padStart(2,'0')}-01`;
+
+  // Entradas (recebido)
+  const { data: cons } = await db.from('consultas').select('valor,pagamento_status')
+    .eq('clinica_id', clinicaId)
+    .gte('data_hora', inicio.toISOString()).lte('data_hora', fim.toISOString());
+  const recConsultas = (cons || []).filter(c => c.pagamento_status === 'pago').reduce((s,c) => s + (Number(c.valor) || 0), 0);
+
+  const { data: pacs } = await db.from('pacotes').select('valor_pago')
+    .eq('clinica_id', clinicaId).eq('pagamento_status', 'pago')
+    .gte('pago_em', inicio.toISOString()).lte('pago_em', fim.toISOString());
+  const recPacotes = (pacs || []).reduce((s,p) => s + (Number(p.valor_pago) || 0), 0);
+
+  const { data: mens } = await db.from('mensalidades').select('valor')
+    .eq('clinica_id', clinicaId).eq('competencia', comp).eq('status', 'pago');
+  const recMensalidades = (mens || []).reduce((s,m) => s + (Number(m.valor) || 0), 0);
+
+  // Saídas (despesas pagas)
+  let despPagas = [];
+  const { data: desp, error: despErr } = await db.from('despesas').select('valor,categoria')
+    .eq('clinica_id', clinicaId).eq('competencia', comp).eq('status', 'pago');
+  if (!despErr) despPagas = desp || [];
+  const totalSaidas = despPagas.reduce((s,d) => s + (Number(d.valor) || 0), 0);
+
+  const totalEntradas = recConsultas + recPacotes + recMensalidades;
+  const saldo = totalEntradas - totalSaidas;
+  const verde = 'color:var(--verde)';
+  const vermelho = 'color:#C0392B';
+
+  document.getElementById('res-entradas').textContent = fmtBRL(totalEntradas);
+  document.getElementById('res-saidas').textContent = fmtBRL(totalSaidas);
+  document.getElementById('res-saldo').textContent = fmtBRL(saldo);
+  document.getElementById('res-saldo-sub').textContent = saldo >= 0 ? 'resultado positivo' : 'resultado negativo';
+
+  document.getElementById('res-fluxo').innerHTML =
+    resLinha('Consultas recebidas', fmtBRL(recConsultas)) +
+    resLinha('Mensalidades recebidas', fmtBRL(recMensalidades)) +
+    resLinha('Pacotes recebidos', fmtBRL(recPacotes)) +
+    resLinha('= Total de entradas', fmtBRL(totalEntradas), { strong:true, cor:verde }) +
+    resLinha('Despesas pagas', '− ' + fmtBRL(totalSaidas), { cor:vermelho }) +
+    resLinha('= Saldo do mês', fmtBRL(saldo), { strong:true, cor: saldo >= 0 ? verde : vermelho });
+
+  const catMap = {};
+  despPagas.forEach(d => { const k = (d.categoria && d.categoria !== 'outros') ? d.categoria : 'Outros'; catMap[k] = (catMap[k] || 0) + (Number(d.valor) || 0); });
+  const despRows = Object.keys(catMap).length
+    ? Object.entries(catMap).sort((a,b) => b[1]-a[1]).map(([k,v]) => resLinha(esc(k), '− ' + fmtBRL(v), { cor:vermelho })).join('')
+    : `<div class="fin-row"><div class="fin-info"><div class="fin-sub">Nenhuma despesa paga neste mês.</div></div></div>`;
+  const subhead = t => `<div style="padding:12px 22px 6px;font-size:11px;font-weight:700;color:var(--cinza-medio);text-transform:uppercase;letter-spacing:.05em">${t}</div>`;
+  document.getElementById('res-dre').innerHTML =
+    subhead('Receitas') +
+    resLinha('Consultas', fmtBRL(recConsultas)) +
+    resLinha('Mensalidades', fmtBRL(recMensalidades)) +
+    resLinha('Pacotes', fmtBRL(recPacotes)) +
+    resLinha('Total de receitas', fmtBRL(totalEntradas), { strong:true, cor:verde }) +
+    subhead('Despesas') +
+    despRows +
+    resLinha('Total de despesas', '− ' + fmtBRL(totalSaidas), { strong:true, cor:vermelho }) +
+    resLinha('= Resultado do mês', fmtBRL(saldo), { strong:true, cor: saldo >= 0 ? verde : vermelho });
 }
 
 function filtrarFin(filtro, el) {
@@ -4447,7 +4803,7 @@ async function enviarLembrete(consultaId, tipo) {
 
 // ===== CONFIGURAÇÕES =====
 function cfgTab(nome, el) {
-  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades','profissionais'].forEach(t => {
+  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades','profissionais','fiscal'].forEach(t => {
     const tab = document.getElementById(`cfg-tab-${t}`);
     if (tab) tab.style.display = t===nome ? 'block' : 'none';
   });
@@ -4460,11 +4816,49 @@ function cfgTab(nome, el) {
   if (nome === 'whatsapp') atualizarStatusWhatsapp();
   if (nome === 'modalidades') renderModalidadesConfig();
   if (nome === 'profissionais') renderProfissionaisConfig();
+  if (nome === 'fiscal') carregarDadosFiscais();
 }
 
 function cfgTabIrPara(nome) {
   irPara('configuracoes');
   cfgTab(nome, null);
+}
+
+// ===== DADOS FISCAIS (fundação da NFS-e) =====
+let dadosFiscais = null;
+async function carregarDadosFiscais() {
+  if (!clinicaId) return;
+  const { data, error } = await db.from('config_fiscal').select('*').eq('clinica_id', clinicaId).maybeSingle();
+  if (error) return; // tabela ainda não existe → deixa o form em branco
+  dadosFiscais = data || null;
+  const g = id => document.getElementById(id);
+  g('fisc-razao').value = data?.razao_social || '';
+  g('fisc-cnpj').value = data?.cnpj || '';
+  g('fisc-im').value = data?.inscricao_municipal || '';
+  g('fisc-regime').value = data?.regime_tributario || '';
+  g('fisc-codigo').value = data?.codigo_servico || '';
+  g('fisc-iss').value = (data && data.aliquota_iss != null) ? data.aliquota_iss : '';
+  g('fisc-iss-retido').checked = !!data?.iss_retido;
+}
+async function salvarDadosFiscais() {
+  if (!clinicaId) return;
+  const g = id => document.getElementById(id);
+  const iss = parseFloat(g('fisc-iss').value);
+  const registro = {
+    clinica_id: clinicaId,
+    razao_social: g('fisc-razao').value.trim() || null,
+    cnpj: g('fisc-cnpj').value.trim() || null,
+    inscricao_municipal: g('fisc-im').value.trim() || null,
+    regime_tributario: g('fisc-regime').value || null,
+    codigo_servico: g('fisc-codigo').value.trim() || null,
+    aliquota_iss: isNaN(iss) ? null : iss,
+    iss_retido: g('fisc-iss-retido').checked,
+    atualizado_em: new Date().toISOString(),
+  };
+  const { error } = await db.from('config_fiscal').upsert(registro, { onConflict: 'clinica_id' });
+  if (error) { toast('Erro ao salvar os dados fiscais'); return; }
+  toast('Dados fiscais salvos ✓');
+  carregarDadosFiscais();
 }
 
 async function carregarConfigs() {

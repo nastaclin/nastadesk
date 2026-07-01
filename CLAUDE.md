@@ -133,6 +133,16 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   "Mensalidades" abre as cobranças do mês automaticamente e marca pago em 1 clique.
   **(c) Repasse** (novo): comissão por profissional (% do valor OU valor fixo por
   consulta), calculada sobre as consultas *atendidas* do mês, em Financeiro → Repasse.
+  **(d) Despesas / Contas a pagar** (novo): lançar despesas (aluguel, materiais, salários,
+  impostos…) com categoria, vencimento e status pago/pendente, marcando pago em 1 clique,
+  em Financeiro → Despesas. **(e) Resumo** (novo): **fluxo de caixa** do mês (entradas −
+  saídas) + **DRE simples** (receitas por origem − despesas por categoria = resultado), em
+  Financeiro → Resumo.
+- **Nota fiscal (NFS-e)** — *(base)* em Configurações → Nota fiscal a clínica guarda seus
+  **dados fiscais** (razão social, CNPJ, inscrição municipal, regime, código de serviço,
+  alíquota de ISS). A **emissão automática ainda não está ligada** (depende de emissor
+  externo + certificado digital A1 + config municipal); por ora o comprovante é o **Recibo
+  em PDF** (Financeiro → Consultas).
 - **Relatório mensal** — comparecimento, faturamento, origem dos agendamentos,
   formas de pagamento.
 - **Chatbot de WhatsApp** — ver seção 6.
@@ -226,6 +236,21 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-01** — **Fase 2 · Financeiro completo (Despesas/Contas a pagar + Fluxo de caixa + DRE) + base da Nota fiscal (NFS-e).**
+  Aditivo e seguro — só **tabelas novas isoladas por clínica**; o financeiro por consulta/mensalidade/repasse continua **idêntico**.
+  Migration `20260701140000_despesas_fiscal.sql` **aplicada em produção**: tabela **`despesas`** (contas a pagar: descrição,
+  categoria, valor, competência, vencimento, status pendente/pago, forma) e tabela **`config_fiscal`** (dados fiscais por clínica:
+  razão social, CNPJ, IM, regime, código de serviço, alíquota ISS — **fundação da NFS-e**). Ambas com RLS performático
+  (`(select auth.uid())` + `TO authenticated`). Front só em `nastadesk/index.html`: Financeiro ganhou **2 abas novas** —
+  **Despesas** (lançar/editar/excluir contas, marcar pago em 1 clique, métricas pago/a pagar/vencidas) e **Resumo**
+  (Fluxo de caixa + **DRE simples**: receitas por origem − despesas por categoria = resultado). Configurações ganhou a aba
+  **Nota fiscal** (formulário de dados fiscais + aviso **honesto** de que a emissão automática está em preparação — por ora,
+  o Recibo em PDF segue como comprovante). **Emissão real da NFS-e adiada de propósito:** exige emissor externo
+  (PlugNotas/Focus NFe/eNotas/NFE.io) + certificado A1 + config municipal + segredos em Edge Function — será entrega dedicada
+  quando o emissor for definido. Validado: `node --check` + smoke no navegador (despesas 300 pagas / 1.200 a pagar / 1.500 total;
+  resumo entradas 1.360 − saídas 1.450 = saldo −90; DRE agrupa Aluguel 1.300 + Materiais 150; 0 erro de página).
+  **Liberado a todos os planos** (padrão do dono). *Falta:* deploy do front (merge na `main` → Vercel) — a migration já está em
+  produção e é aditiva (não afeta o front atual em `main`).
 - **2026-07-01** — **Ficha do paciente: profissional + modalidade nas Consultas (fix de UX) + fix da aba Profissionais.**
   (1) A aba **Configurações → Profissionais** abria em branco — `cfgTab` tinha uma lista fixa de
   abas sem `'profissionais'`, então o painel (que começa `display:none`) nunca era exibido.
@@ -376,8 +401,8 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 - [x] **Multi-profissional (cadastro + agenda por profissional)** — FEITO em 2026-07-01 (aditivo, **sem login novo**; profissional é "recurso" da agenda). Tabela `profissionais` (nome, registro/CREFITO, cor, ordem, ativo) + `consultas.profissional_id` (nullable, FK on delete set null). Config → Profissionais (CRUD); etiqueta colorida + filtro por profissional na Agenda do dia; profissional na grade semanal (dot/cor + tooltip) e na lista mobile; select opcional no modal de agendamento; **reatribuição inline** na agenda (`mudarProfissionalConsulta`). RLS já no formato performático (`(select auth.uid())` + `TO authenticated`). **NÃO semeia dados** → clínica sem profissional não vê diferença. Migration `20260701120000_profissionais.sql` **aplicada em produção**; front só em `nastadesk/index.html` (o `dashboard` não muda). *Falta:* deploy do front (merge na `main`).
 - [ ] **Login de profissionais + papéis de usuário** — cada profissional/recepção com login próprio e permissões (dono / recepção / profissional). Mexe em auth/RLS (mais delicado) — deixado para uma etapa 2, sob demanda.
 - [ ] **Trava por plano do multi-profissional** — hoje liberado a todos os planos (pedido do dono); quando quiser, virar argumento de upgrade (o ponto de gate no front está preparado num único lugar).
-- [ ] **Nota fiscal de serviço (NFS-e)** — integrar emissor (ex.: PlugNotas / eNotas / NFE.io). Hoje só há recibo em PDF.
-- [ ] **Financeiro completo** — contas a pagar/despesas, fluxo de caixa, DRE simples. (✅ **Repasse/comissão por profissional já feito** em 2026-07-01 — Financeiro → Repasse: % do valor ou R$/consulta, sobre as consultas atendidas do mês.)
+- [ ] **Nota fiscal de serviço (NFS-e)** — integrar emissor (ex.: PlugNotas / Focus NFe / eNotas / NFE.io). **Base já feita** em 2026-07-01: tabela `config_fiscal` + aba **Configurações → Nota fiscal** (dados fiscais da clínica: razão social, CNPJ, IM, regime, código de serviço, ISS). *Falta a emissão real:* emissor + **certificado digital A1** + config municipal + Edge Function (idempotente + HMAC) — etapa dedicada quando o emissor for definido. Hoje o comprovante é o **recibo em PDF**.
+- [x] **Financeiro completo** — contas a pagar/despesas, fluxo de caixa, DRE simples: **FEITO em 2026-07-01** (Financeiro → **Despesas** + **Resumo**; migration `20260701140000_despesas_fiscal.sql`, tabela `despesas`). Despesas com categoria/vencimento/status pago-pendente (marca pago em 1 clique); Resumo = fluxo de caixa (entradas − saídas) + DRE simples (receitas por origem − despesas por categoria). Não altera o financeiro por consulta/mensalidade/repasse. (✅ **Repasse/comissão por profissional** também já feito em 2026-07-01 — Financeiro → Repasse: % do valor ou R$/consulta, sobre as consultas atendidas do mês.) *Falta:* contas a pagar recorrentes automáticas (hoje cada mês é lançado à mão) — melhoria futura opcional.
 - [ ] **Pagamento self-service do paciente (Pix/checkout) com baixa automática** — IDEIA discutida em 2026-07-01. Hoje o dono marca pago/pendente na mão (consulta, pacote ou mensalidade). Objetivo: o **paciente paga sozinho** (inclusive adiantado) e o status **atualiza automaticamente** no NastaDesk pro dono ver.
   - **Viável?** Sim. Caminho recomendado p/ Brasil: **Pix via um PSP com webhook** (ex.: Asaas, Efí/Gerencianet, Mercado Pago, Pagar.me) — sem taxa de cartão e confirmação na hora. Gera um Pix (copia-e-cola/QR) por cobrança; quando o paciente paga, o PSP chama uma **edge function** que dá **baixa automática** na cobrança (idempotente + HMAC), casando pelo id de referência.
   - **Por que é fase dedicada (não agora):** (1) cada clínica conecta a **própria conta** do PSP → a clínica recebe direto e a **Nastaclin não fica no meio do dinheiro** (evita virar "facilitador de pagamento"/peso regulatório); (2) reconciliação segura/idempotente; (3) **aditivo** — a baixa manual continua como fallback, sem tocar no financeiro atual; (4) LGPD/dados financeiros exigem cuidado.
