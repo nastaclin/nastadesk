@@ -1280,7 +1280,11 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           </div>
         </div>
         <div class="card" style="margin-bottom:16px">
-          <div class="card-header"><div><div class="card-titulo">Fluxo de caixa</div><div class="card-sub">Tudo que entrou e saiu neste mês (regime de caixa simplificado).</div></div></div>
+          <div class="card-header" style="flex-wrap:wrap;gap:10px">
+            <div><div class="card-titulo">Fluxo de caixa</div><div class="card-sub">Tudo que entrou e saiu neste mês (regime de caixa simplificado).</div></div>
+            <button class="btn btn-secundario" onclick="exportarResumoCSV()" title="Baixar o resumo do mês em CSV (Excel)">↓ Exportar CSV</button>
+          </div>
+          <div id="res-chart" style="padding:14px 22px 4px"></div>
           <div id="res-fluxo"><div class="loading"><div class="loading-spinner"></div>Carregando...</div></div>
         </div>
         <div class="card">
@@ -2004,6 +2008,10 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <option value="cartao_credito">Cartão de crédito</option>
         <option value="cartao_debito">Cartão de débito</option>
       </select>
+    </div>
+    <div class="config-campo" id="desp-recorrente-wrap">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500"><input type="checkbox" id="desp-recorrente" style="width:auto"> Conta fixa — repetir todo mês</label>
+      <div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">Marque para aluguel, salários, internet… A conta abre sozinha todo mês (dá pra mudar o valor depois).</div>
     </div>
     <div class="modal-acoes">
       <button class="btn btn-perigo" id="desp-btn-excluir" onclick="excluirDespesa()" style="display:none;margin-right:auto">Excluir</button>
@@ -4098,6 +4106,7 @@ let finDespesas = [];
 let despesasDisponivel = true;   // vira false se a tabela ainda não existir (degrada com elegância)
 let despAtual = null;            // despesa em edição (null = nova)
 const FORMA_LABEL_DESP = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito', cartao_debito:'Débito', transferencia:'Transferência', boleto:'Boleto' };
+let resumoAtual = null;   // guarda os números do mês p/ exportar em CSV
 
 function despCompetencia() {
   const ano = finData.getFullYear(), mes = finData.getMonth();
@@ -4109,6 +4118,8 @@ async function carregarDespesas() {
   if (!clinicaId) return;
   const ano = finData.getFullYear(), mes = finData.getMonth();
   document.getElementById('fin-mes-label').textContent = `${MESES[mes]} ${ano}`;
+  // Abre as contas fixas do mês (idempotente; o banco só gera p/ mês corrente ou futuro)
+  try { await db.rpc('gerar_despesas_recorrentes', { p_competencia: despCompetencia() }); } catch (e) { /* tolerante a falha */ }
   const { data, error } = await db.from('despesas').select('*')
     .eq('clinica_id', clinicaId).eq('competencia', despCompetencia())
     .order('vencimento', { ascending: true }).order('criado_em', { ascending: true });
@@ -4149,10 +4160,11 @@ function renderDespesas() {
     const cls = pagoD ? 'pag-pago' : (vencido ? 'pag-vencido' : 'pag-pendente');
     const label = pagoD ? 'Paga' : (vencido ? 'Vencida' : 'Pendente');
     const cat = d.categoria && d.categoria !== 'outros' ? esc(d.categoria) : 'Outros';
+    const fixa = d.recorrencia_id ? ' <span class="mod-tag" style="background:#EEF1FF;color:#4B57C4"><span class="mod-dot" style="background:#4B57C4"></span>mensal</span>' : '';
     return `<div class="fin-row">
       <div class="fin-data"><strong>${venc}</strong>vencimento</div>
       <div class="fin-info">
-        <div class="fin-nome">${esc(d.descricao)}</div>
+        <div class="fin-nome">${esc(d.descricao)}${fixa}</div>
         <div class="fin-sub">${cat}${d.forma_pagamento?` · ${FORMA_LABEL_DESP[d.forma_pagamento]||d.forma_pagamento}`:''}</div>
       </div>
       <div class="fin-valor">${fmtBRL(d.valor)}</div>
@@ -4182,6 +4194,9 @@ function abrirModalDespesa(d) {
   document.getElementById('desp-vencimento').value = d?.vencimento || `${ano}-${String(mes+1).padStart(2,'0')}-05`;
   document.getElementById('desp-status').value = d?.status || 'pendente';
   document.getElementById('desp-forma').value = d?.forma_pagamento || '';
+  // "Conta fixa" só faz sentido ao criar. Na edição some (a despesa já existe/está vinculada).
+  document.getElementById('desp-recorrente').checked = false;
+  document.getElementById('desp-recorrente-wrap').style.display = d ? 'none' : 'block';
   document.getElementById('desp-btn-excluir').style.display = d ? 'inline-flex' : 'none';
   document.getElementById('modal-despesa').classList.add('aberto');
 }
@@ -4198,6 +4213,7 @@ async function salvarDespesa() {
   const forma = document.getElementById('desp-forma').value || null;
   if (!descricao) { toast('Descreva a despesa'); return; }
   if (isNaN(valor) || valor < 0) { toast('Informe um valor válido'); return; }
+  const recorrente = !despAtual && document.getElementById('desp-recorrente').checked;
   const registro = {
     clinica_id: clinicaId,
     descricao, categoria, valor,
@@ -4206,19 +4222,33 @@ async function salvarDespesa() {
     forma_pagamento: forma,
     pago_em: status === 'pago' ? (despAtual?.pago_em || new Date().toISOString()) : null,
   };
+  // Conta fixa: cria o template e vincula esta 1ª ocorrência (as próximas abrem sozinhas).
+  if (recorrente) {
+    const diaVenc = vencimento ? new Date(`${vencimento}T12:00:00`).getDate() : 5;
+    const { data: tpl, error: tErr } = await db.from('despesas_recorrentes')
+      .insert({ clinica_id: clinicaId, descricao, categoria, valor, dia_vencimento: diaVenc })
+      .select('id').single();
+    if (tErr) { toast('Erro ao criar a conta fixa'); return; }
+    registro.recorrencia_id = tpl.id;
+  }
   let error;
   if (despAtual) ({ error } = await db.from('despesas').update(registro).eq('id', despAtual.id));
   else ({ error } = await db.from('despesas').insert(registro));
   if (error) { toast('Erro ao salvar a despesa'); return; }
   fecharModalDespesa();
-  toast(despAtual ? 'Despesa atualizada ✓' : 'Despesa lançada ✓');
+  toast(despAtual ? 'Despesa atualizada ✓' : (recorrente ? 'Conta fixa criada ✓' : 'Despesa lançada ✓'));
   carregarDespesas();
 }
 function excluirDespesa() {
   if (!despAtual) return;
   const id = despAtual.id;
+  const recId = despAtual.recorrencia_id;
   fecharModalDespesa();
-  abrirModalConfirm('Excluir despesa?', 'Essa conta a pagar será removida. Não afeta consultas, pacientes nem o financeiro por consulta.', 'Excluir', async () => {
+  const txt = recId
+    ? 'Essa é uma conta fixa (mensal). Excluir remove esta ocorrência e para de abrir nos próximos meses.'
+    : 'Essa conta a pagar será removida. Não afeta consultas, pacientes nem o financeiro por consulta.';
+  abrirModalConfirm('Excluir despesa?', txt, 'Excluir', async () => {
+    if (recId) await db.from('despesas_recorrentes').update({ ativo: false }).eq('id', recId);
     const { error } = await db.from('despesas').delete().eq('id', id);
     if (error) { toast('Erro ao excluir'); return; }
     toast('Despesa excluída');
@@ -4282,8 +4312,11 @@ async function carregarResumo() {
     resLinha('Despesas pagas', '− ' + fmtBRL(totalSaidas), { cor:vermelho }) +
     resLinha('= Saldo do mês', fmtBRL(saldo), { strong:true, cor: saldo >= 0 ? verde : vermelho });
 
+  renderResChart(totalEntradas, totalSaidas);
+
   const catMap = {};
   despPagas.forEach(d => { const k = (d.categoria && d.categoria !== 'outros') ? d.categoria : 'Outros'; catMap[k] = (catMap[k] || 0) + (Number(d.valor) || 0); });
+  resumoAtual = { ano, mes, recConsultas, recMensalidades, recPacotes, totalEntradas, catMap, totalSaidas, saldo };
   const despRows = Object.keys(catMap).length
     ? Object.entries(catMap).sort((a,b) => b[1]-a[1]).map(([k,v]) => resLinha(esc(k), '− ' + fmtBRL(v), { cor:vermelho })).join('')
     : `<div class="fin-row"><div class="fin-info"><div class="fin-sub">Nenhuma despesa paga neste mês.</div></div></div>`;
@@ -4298,6 +4331,55 @@ async function carregarResumo() {
     despRows +
     resLinha('Total de despesas', '− ' + fmtBRL(totalSaidas), { strong:true, cor:vermelho }) +
     resLinha('= Resultado do mês', fmtBRL(saldo), { strong:true, cor: saldo >= 0 ? verde : vermelho });
+}
+
+// Gráfico simples de barras (entradas × saídas) no Resumo
+function renderResChart(entradas, saidas) {
+  const el = document.getElementById('res-chart');
+  if (!el) return;
+  const max = Math.max(entradas, saidas, 1);
+  const bar = (label, val, cor) => {
+    const pct = Math.round((val / max) * 100);
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--cinza-medio)">${label}</span><span style="font-weight:700">${fmtBRL(val)}</span></div>
+      <div style="height:16px;background:var(--cinza-claro);border-radius:8px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${cor};border-radius:8px;transition:width .3s"></div></div>
+    </div>`;
+  };
+  el.innerHTML = bar('Entradas', entradas, 'var(--verde)') + bar('Saídas', saidas, '#C0392B');
+}
+
+// Exporta o Resumo do mês (fluxo + DRE) em CSV (separador ';' e vírgula decimal p/ Excel BR)
+function exportarResumoCSV() {
+  if (!resumoAtual) { toast('Abra o Resumo primeiro'); return; }
+  const r = resumoAtual;
+  const num = v => (Number(v) || 0).toFixed(2).replace('.', ',');
+  const linhas = [
+    ['Resumo financeiro', `${MESES[r.mes]} ${r.ano}`],
+    [],
+    ['RECEITAS', 'Valor (R$)'],
+    ['Consultas', num(r.recConsultas)],
+    ['Mensalidades', num(r.recMensalidades)],
+    ['Pacotes', num(r.recPacotes)],
+    ['Total de receitas', num(r.totalEntradas)],
+    [],
+    ['DESPESAS', 'Valor (R$)'],
+    ...Object.entries(r.catMap).sort((a,b) => b[1]-a[1]).map(([k,v]) => [k, num(v)]),
+    ['Total de despesas', num(r.totalSaidas)],
+    [],
+    ['RESULTADO DO MÊS', num(r.saldo)],
+  ];
+  const csv = linhas.map(row => row.map(c => {
+    const s = String(c ?? '');
+    return /[";\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  }).join(';')).join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `resumo-${r.ano}-${String(r.mes+1).padStart(2,'0')}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado ✓');
 }
 
 function filtrarFin(filtro, el) {
