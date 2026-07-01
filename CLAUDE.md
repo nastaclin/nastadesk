@@ -104,6 +104,13 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   Pilates, RPG…), com cor por modalidade. Vira etiqueta no paciente, na agenda do
   dia e no financeiro, e dá pra filtrar pacientes por modalidade. Gerenciada em
   Configurações → Modalidades (cada clínica já nasce com Fisioterapia + Pilates).
+- **Profissionais** (multi-profissional) — lista configurável de quem atende
+  (nome, registro/CREFITO opcional, cor), em Configurações → Profissionais. Vira
+  etiqueta colorida na Agenda do dia (lista e "por salão") e na grade semanal,
+  filtro por profissional na Agenda do dia, e um select opcional no agendamento
+  (com reatribuição inline na agenda). **Aditivo:** clínica sem profissional
+  cadastrado não vê diferença. *Sem login por profissional ainda* (é só "recurso"
+  da agenda); login + papéis e repasse/comissão são etapas futuras.
 - **Pacotes de sessões** — venda/controle de pacotes de sessões.
 - **Financeiro** — **(a) por consulta** (inalterado): valor por consulta, registro
   de pagamento (Pix, cartão, dinheiro…), recibo em PDF, faturamento do mês;
@@ -203,6 +210,22 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-01** — **Fase 2 · item 1: Multi-profissional (cadastro + agenda por profissional).**
+  Aditivo e seguro, **sem login novo** (profissional é "recurso" da agenda, não
+  mexe em auth/RLS). (1) Migration `20260701120000_profissionais.sql` **aplicada no
+  Supabase (produção)**: tabela `profissionais` (nome, registro, cor, ordem, ativo)
+  com RLS `TO authenticated` + `(select auth.uid())` (formato performático da Fase 0),
+  índice, e coluna **`consultas.profissional_id`** nullable (FK `on delete set null`)
+  + índice; **nada semeado** → clínica sem profissional não vê diferença. (2) Front
+  só em `nastadesk/index.html`: aba **Configurações → Profissionais** (CRUD espelhando
+  Modalidades), **etiqueta colorida** na Agenda do dia (lista e "por salão"), **filtro
+  por profissional** (chips) na Agenda do dia, profissional na **grade semanal**
+  (dot/cor + tooltip) e na lista mobile, **select opcional** no modal de agendamento,
+  e **reatribuição inline** na agenda. Validado: `node --check` + smoke test no
+  navegador (funções OK; clínica sem profissional = zero mudança). **Repasse/comissão**
+  e **trava por plano** ficaram p/ etapas seguintes (gate preparado; liberado a todos
+  por ora, a pedido do dono). *Falta:* deploy do front (merge na `main` → Vercel) — a
+  migration já está em produção e é aditiva (não afeta o front atual em `main`).
 - **2026-07-01** — **Auditoria "100% profissional" + roadmap por fases (só docs).**
   Análise minuciosa dos 2 repos (código real, não só este arquivo), dos edge
   functions e dos **advisors de segurança/performance do Supabase** (banco de
@@ -316,7 +339,9 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 ### 10.4 FASE 2 — Paridade de mercado (o que toda concorrente tem)
 
-- [ ] **Multi-profissional + papéis de usuário** — MAIOR lacuna funcional. Hoje **não existe** (as menções a "profissional" no código são o nome do *plano*). Criar tabela `profissionais`, `consultas.profissional_id`, agenda por profissional e perfis de acesso (dono / recepção / profissional). Impacta agenda, financeiro (repasse) e permissões.
+- [x] **Multi-profissional (cadastro + agenda por profissional)** — FEITO em 2026-07-01 (aditivo, **sem login novo**; profissional é "recurso" da agenda). Tabela `profissionais` (nome, registro/CREFITO, cor, ordem, ativo) + `consultas.profissional_id` (nullable, FK on delete set null). Config → Profissionais (CRUD); etiqueta colorida + filtro por profissional na Agenda do dia; profissional na grade semanal (dot/cor + tooltip) e na lista mobile; select opcional no modal de agendamento; **reatribuição inline** na agenda (`mudarProfissionalConsulta`). RLS já no formato performático (`(select auth.uid())` + `TO authenticated`). **NÃO semeia dados** → clínica sem profissional não vê diferença. Migration `20260701120000_profissionais.sql` **aplicada em produção**; front só em `nastadesk/index.html` (o `dashboard` não muda). *Falta:* deploy do front (merge na `main`).
+- [ ] **Login de profissionais + papéis de usuário** — cada profissional/recepção com login próprio e permissões (dono / recepção / profissional). Mexe em auth/RLS (mais delicado) — deixado para uma etapa 2, sob demanda.
+- [ ] **Trava por plano do multi-profissional** — hoje liberado a todos os planos (pedido do dono); quando quiser, virar argumento de upgrade (o ponto de gate no front está preparado num único lugar).
 - [ ] **Nota fiscal de serviço (NFS-e)** — integrar emissor (ex.: PlugNotas / eNotas / NFE.io). Hoje só há recibo em PDF.
 - [ ] **Financeiro completo** — contas a pagar/despesas, fluxo de caixa, DRE simples e comissão/repasse por profissional.
 - [ ] **PWA instalável** — hoje 0 manifest / 0 service worker. Adicionar `manifest.json` + service worker (instalar no celular, ícone, offline básico).

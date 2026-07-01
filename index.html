@@ -1036,6 +1036,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
                 <div style="display:flex;align-items:center;gap:6px"><div class="dot-live"></div><span style="font-size:12px;color:var(--cinza-medio)">Ao vivo</span></div>
               </div>
             </div>
+            <div id="prof-filtros-dia" style="display:none;flex-wrap:wrap;gap:8px;margin:14px 0 2px"></div>
             <div id="lista-consultas"><div class="loading"><div class="loading-spinner"></div>Carregando consultas...</div></div>
           </div>
         </div>
@@ -1310,6 +1311,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="cfg-tab" data-cfg="agenda" onclick="cfgTab('agenda',this)">Agenda</div>
         <div class="cfg-tab" data-cfg="salas" onclick="cfgTab('salas',this)">Salas</div>
         <div class="cfg-tab" data-cfg="modalidades" onclick="cfgTab('modalidades',this)">Modalidades</div>
+        <div class="cfg-tab" data-cfg="profissionais" onclick="cfgTab('profissionais',this)">Profissionais</div>
       </div>
 
       <!-- ABA MENSAGENS -->
@@ -1412,6 +1414,21 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <button class="btn btn-primario" onclick="adicionarModalidade()">Adicionar</button>
           </div>
           <div id="modalidades-lista"></div>
+        </div>
+      </div>
+
+      <!-- ABA PROFISSIONAIS -->
+      <div id="cfg-tab-profissionais" style="display:none;max-width:640px">
+        <div class="card" style="padding:28px">
+          <div class="card-titulo" style="margin-bottom:6px">Profissionais</div>
+          <div class="card-sub" style="margin-bottom:20px">Cadastre quem atende na sua clínica. Depois é só escolher o profissional em cada agendamento — vira etiqueta colorida na agenda e permite filtrar o dia por profissional. Quem atende sozinho pode simplesmente não cadastrar ninguém: nada muda.</div>
+          <div class="salas-add-row">
+            <input type="text" id="novo-prof-nome" placeholder="Nome (ex: Dra. Marina Alves)" onkeydown="if(event.key==='Enter')adicionarProfissional()">
+            <input type="text" id="novo-prof-registro" placeholder="Registro (opcional)" style="flex:0 0 170px" onkeydown="if(event.key==='Enter')adicionarProfissional()">
+            <input type="color" id="novo-prof-cor" value="#0B6E4F" title="Cor na agenda" style="width:46px;height:42px;padding:4px;border:1px solid var(--cinza-claro);border-radius:9px;background:white;cursor:pointer;flex:0 0 auto">
+            <button class="btn btn-primario" onclick="adicionarProfissional()">Adicionar</button>
+          </div>
+          <div id="profissionais-lista"></div>
         </div>
       </div>
 
@@ -1713,6 +1730,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="config-campo"><label>Valor da consulta (R$)</label><input type="number" id="novo-valor" placeholder="Valor padrão da clínica" min="0" step="0.01"></div>
     <div class="config-campo" id="novo-sala-wrap" style="display:none"><label>Salão (opcional)</label><select id="novo-sala"></select></div>
     <div class="config-campo" id="novo-modalidade-wrap" style="display:none"><label>Modalidade (opcional)</label><select id="novo-modalidade"></select></div>
+    <div class="config-campo" id="novo-profissional-wrap" style="display:none"><label>Profissional (opcional)</label><select id="novo-profissional"></select></div>
     <div class="modal-acoes">
       <button class="btn btn-secundario" onclick="fecharModal()">Cancelar</button>
       <button class="btn btn-primario" onclick="salvarConsulta()">Agendar</button>
@@ -1988,6 +2006,9 @@ let salas = [];
 let salasDisponivel = false;
 let modalidades = [];
 let modalidadesDisponivel = false;
+let profissionais = [];
+let profissionaisDisponivel = false;
+let filtroProfDia = '__todos';
 let viewDiaSalao = false;
 let consultasHojeAll = [];
 const SALA_CORES = ['#0B6E4F','#3B6FD4','#E87040','#9B59B6','#E8A820','#17A076','#D4476F','#5B7C99'];
@@ -2108,6 +2129,7 @@ async function onbConcluir() {
   if (clinicaAtual && clinicaAtual.ativo === true) {
     await carregarSalas();
     await carregarModalidades();
+    await carregarProfissionais();
     await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
     atualizarBadgeLembretes();
     toast('Bem-vindo ao NastaDesk! 🎉');
@@ -2352,6 +2374,7 @@ async function carregarDados(user) {
 
   await carregarSalas();
   await carregarModalidades();
+  await carregarProfissionais();
   await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
   renderCalendario();
   carregarRelatorio();
@@ -2603,6 +2626,135 @@ async function mudarModalidadeConsulta(id, valor) {
   recarregarSecaoAtual();
 }
 
+// ===== PROFISSIONAIS (multi-profissional) =====
+async function carregarProfissionais() {
+  if (!clinicaId) return;
+  const { data, error } = await db.from('profissionais').select('*').eq('clinica_id', clinicaId).order('ordem').order('criado_em');
+  if (error) { profissionaisDisponivel = false; profissionais = []; }
+  else { profissionaisDisponivel = true; profissionais = data || []; }
+  renderProfissionaisConfig();
+  refreshProfissionalSelectors();
+}
+function profissionaisAtivos() { return profissionais.filter(p => p.ativo); }
+function profissionalPorId(id) { return profissionais.find(p => p.id === id) || null; }
+
+// HTML da etiqueta colorida de um profissional ('' se não houver)
+function tagProfissional(id) {
+  const p = profissionalPorId(id);
+  if (!p) return '';
+  return `<span class="mod-tag" style="background:${p.cor}1a;color:${p.cor}"><span class="mod-dot" style="background:${p.cor}"></span>${esc(p.nome)}</span>`;
+}
+// <option>s para os selects de profissional
+function optsProfissional(valor) {
+  let html = `<option value="">Sem profissional</option>`;
+  profissionaisAtivos().forEach(p => { html += `<option value="${p.id}"${valor === p.id ? ' selected' : ''}>${esc(p.nome)}</option>`; });
+  if (valor && !profissionaisAtivos().some(p => p.id === valor)) {
+    const p = profissionalPorId(valor);
+    if (p) html += `<option value="${p.id}" selected>${esc(p.nome)} (inativo)</option>`;
+  }
+  return html;
+}
+// Reaplica as <option> nos selects abertos, preservando o valor atual
+function refreshProfissionalSelectors() {
+  ['novo-profissional'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) { const v = sel.value; sel.innerHTML = optsProfissional(v); sel.value = v; }
+  });
+  renderFiltroProfDia();
+}
+// Chips de filtro por profissional na Agenda do dia (só aparecem se houver profissionais)
+function renderFiltroProfDia() {
+  const el = document.getElementById('prof-filtros-dia');
+  if (!el) return;
+  const ativos = profissionaisAtivos();
+  if (!ativos.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  if (filtroProfDia !== '__todos' && !ativos.some(p => p.id === filtroProfDia)) filtroProfDia = '__todos';
+  el.style.display = 'flex';
+  let html = `<span class="chip${filtroProfDia==='__todos'?' on':''}" onclick="filtrarConsultasProf('__todos',this)">Todos</span>`;
+  ativos.forEach(p => {
+    html += `<span class="chip${filtroProfDia===p.id?' on':''}" onclick="filtrarConsultasProf('${p.id}',this)"><span class="mod-dot" style="background:${p.cor}"></span>${esc(p.nome)}</span>`;
+  });
+  el.innerHTML = html;
+}
+function filtrarConsultasProf(id, el) {
+  filtroProfDia = id;
+  document.querySelectorAll('#prof-filtros-dia .chip').forEach(c=>c.classList.remove('on'));
+  if (el) el.classList.add('on');
+  renderDiaAtual();
+}
+
+function renderProfissionaisConfig() {
+  const el = document.getElementById('profissionais-lista');
+  if (!el) return;
+  if (!profissionaisDisponivel) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--cinza-medio);padding:6px 0">Recurso de profissionais ainda não ativado no banco de dados.</div>`;
+    return;
+  }
+  const ativos = profissionaisAtivos();
+  if (!ativos.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--cinza-medio);padding:6px 0">Nenhum profissional cadastrado ainda. Adicione o primeiro acima.</div>`;
+    return;
+  }
+  el.innerHTML = ativos.map(p => `
+    <div class="mod-row">
+      <input type="color" value="${esc(p.cor)}" title="Cor na agenda" onchange="mudarCorProfissional('${p.id}', this.value)">
+      <input type="text" class="mod-nome-input" value="${esc(p.nome)}" onchange="renomearProfissional('${p.id}', this.value)" placeholder="Nome do profissional">
+      <input type="text" class="mod-nome-input" style="flex:0 0 160px;font-size:13px;color:var(--cinza-medio)" value="${esc(p.registro||'')}" onchange="mudarRegistroProfissional('${p.id}', this.value)" placeholder="Registro (opcional)">
+      <button class="btn-icone" title="Remover profissional" onclick="removerProfissional('${p.id}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M3 6h18M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+async function adicionarProfissional() {
+  if (!clinicaId) return;
+  const inp = document.getElementById('novo-prof-nome');
+  const reg = document.getElementById('novo-prof-registro');
+  const cor = document.getElementById('novo-prof-cor').value || '#0B6E4F';
+  const nome = inp.value.trim();
+  if (!nome) { toast('Digite o nome do profissional'); return; }
+  const { error } = await db.from('profissionais').insert({ clinica_id: clinicaId, nome, registro: (reg.value.trim() || null), cor, ordem: profissionaisAtivos().length });
+  if (error) { toast('Erro ao adicionar profissional'); return; }
+  inp.value = ''; reg.value = '';
+  toast('Profissional adicionado ✓');
+  await carregarProfissionais();
+}
+async function renomearProfissional(id, nome) {
+  nome = (nome || '').trim();
+  if (!nome) { toast('O nome não pode ficar vazio'); await carregarProfissionais(); return; }
+  const { error } = await db.from('profissionais').update({ nome }).eq('id', id);
+  if (error) { toast('Erro ao renomear'); return; }
+  const p = profissionalPorId(id); if (p) p.nome = nome;
+  refreshProfissionalSelectors();
+  toast('Profissional atualizado ✓');
+}
+async function mudarRegistroProfissional(id, registro) {
+  const { error } = await db.from('profissionais').update({ registro: (registro||'').trim() || null }).eq('id', id);
+  if (error) { toast('Erro ao salvar o registro'); return; }
+  const p = profissionalPorId(id); if (p) p.registro = registro;
+}
+async function mudarCorProfissional(id, cor) {
+  const { error } = await db.from('profissionais').update({ cor }).eq('id', id);
+  if (error) { toast('Erro ao mudar a cor'); return; }
+  const p = profissionalPorId(id); if (p) p.cor = cor;
+  refreshProfissionalSelectors();
+  recarregarSecaoAtual();
+}
+function removerProfissional(id) {
+  abrirModalConfirm('Remover profissional?', 'As consultas atribuídas a ele ficam sem profissional. Você pode cadastrá-lo de novo depois.', 'Remover', async () => {
+    const { error } = await db.from('profissionais').update({ ativo: false }).eq('id', id);
+    if (error) { toast('Erro ao remover'); return; }
+    toast('Profissional removido');
+    await carregarProfissionais();
+    recarregarSecaoAtual();
+  });
+}
+async function mudarProfissionalConsulta(id, valor) {
+  const { error } = await db.from('consultas').update({ profissional_id: valor || null }).eq('id', id);
+  if (error) { toast('Erro ao mudar o profissional'); return; }
+  toast('Profissional atualizado ✓');
+  recarregarSecaoAtual();
+}
+
 // ===== CONSULTAS DO DIA =====
 async function carregarConsultas() {
   if (!clinicaId) return;
@@ -2618,13 +2770,16 @@ async function carregarConsultas() {
 
 // Renderiza o dia conforme o modo atual (lista por horário OU colunas por salão)
 function renderDiaAtual() {
+  renderFiltroProfDia();
+  let base = consultasHojeAll;
+  if (filtroProfDia !== '__todos') base = base.filter(c => c.profissional_id === filtroProfDia);
   if (viewDiaSalao && salasDisponivel && salasAtivas().length) {
-    renderConsultasSalao(consultasHojeAll);
-    atualizarMetricas(consultasHojeAll);
+    renderConsultasSalao(base);
+    atualizarMetricas(base);
     return;
   }
   const filtroSala = document.getElementById('filtro-sala-dia')?.value || '__todos';
-  let lista = consultasHojeAll;
+  let lista = base;
   if (filtroSala !== '__todos') lista = lista.filter(c => filtroSala === '' ? !c.sala_id : c.sala_id === filtroSala);
   renderConsultas(lista);
   atualizarMetricas(lista);
@@ -2696,7 +2851,7 @@ function cardSalao(c, cor) {
       <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
     </div>
     <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
-    ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?`<div style="margin-top:4px">${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}</div>`:''}
+    ${(tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id) || tagProfissional(c.profissional_id))?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}${tagProfissional(c.profissional_id)}</div>`:''}
     ${c.queixa?`<div class="salao-card-queixa">${esc(c.queixa)}</div>`:''}
     <div class="salao-card-acoes" onclick="event.stopPropagation()">
       <select class="sala-select" title="Mover de salão" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select>
@@ -2750,11 +2905,14 @@ function renderConsultas(lista) {
       <span class="consulta-hora">${hora}</span>
       <div class="avatar ${CORES[i%CORES.length]}${cancelada?' cancelado':''}">${esc(iniciais)}</div>
       <div class="consulta-info">
-        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
+        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
         <div class="consulta-queixa">${esc(c.queixa||'—')}</div>
         ${(salasDisponivel && salasAtivas().length)
           ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
           : (c.sala_id ? `<div class="sala-tag" style="margin-top:7px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : '')}
+        ${(profissionaisDisponivel && profissionaisAtivos().length)
+          ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" title="Profissional" onchange="mudarProfissionalConsulta('${c.id}', this.value)">${optsProfissional(c.profissional_id)}</select></div>`
+          : ''}
       </div>
       <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
       <div class="consulta-acoes" onclick="event.stopPropagation()">
@@ -4202,6 +4360,7 @@ function cfgTab(nome, el) {
   }
   if (nome === 'whatsapp') atualizarStatusWhatsapp();
   if (nome === 'modalidades') renderModalidadesConfig();
+  if (nome === 'profissionais') renderProfissionaisConfig();
 }
 
 function cfgTabIrPara(nome) {
@@ -4470,6 +4629,7 @@ async function salvarConsulta() {
   };
   if (salasDisponivel) payloadConsulta.sala_id = document.getElementById('novo-sala')?.value || null;
   if (modalidadesDisponivel) payloadConsulta.modalidade_id = document.getElementById('novo-modalidade')?.value || null;
+  if (profissionaisDisponivel) payloadConsulta.profissional_id = document.getElementById('novo-profissional')?.value || null;
   const { error } = await db.from('consultas').insert(payloadConsulta);
   if (!error) {
     fecharModal(); toast(usandoPacote ? 'Sessão do pacote agendada ✓' : 'Consulta agendada ✓');
@@ -4612,6 +4772,7 @@ async function renderGradeSemanal() {
               <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}</div>
               <div class="lista-agend-queixa">${esc(c.queixa||'—')}</div>
               ${c.sala_id ? `<div class="sala-tag" style="margin-top:5px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : ''}
+              ${tagProfissional(c.profissional_id)?`<div style="margin-top:5px">${tagProfissional(c.profissional_id)}</div>`:''}
             </div>
             <span class="status-pill ${stClass[c.status]||'status-agendado'}">${stLabel[c.status]||esc(c.status)}</span>
           </div>`).join('');
@@ -4679,9 +4840,12 @@ async function renderGradeSemanal() {
       html += `<div class="grade-slot ${foraClass}" ${onclick}>`;
       for (const c of consultasSlot) {
         const nome = c.pacientes?.nome?.split(' ')[0] || '—';
-        const estiloSala = c.sala_id ? `style="border-left:3px solid ${corSala(c.sala_id)}"` : '';
+        const prof = profissionalPorId(c.profissional_id);
+        const estiloBorda = c.sala_id ? `style="border-left:3px solid ${corSala(c.sala_id)}"` : (prof ? `style="border-left:3px solid ${prof.cor}"` : '');
         const tituloSala = c.sala_id ? ` — ${esc(nomeSala(c.sala_id))}` : '';
-        html += `<div class="agend-pill ${c.status}" ${estiloSala} title="${esc(c.pacientes?.nome||'')}${tituloSala} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${esc(nome)}</div>`;
+        const tituloProf = prof ? ` — ${esc(prof.nome)}` : '';
+        const dotProf = prof ? `<span class="mod-dot" style="background:${prof.cor};margin-right:3px"></span>` : '';
+        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${dotProf}${esc(nome)}</div>`;
       }
       html += '</div>';
     }
@@ -4713,6 +4877,9 @@ function abrirModal() {
   const novoMod = document.getElementById('novo-modalidade');
   if (novoMod) novoMod.innerHTML = optsModalidade('');
   document.getElementById('novo-modalidade-wrap').style.display = (modalidadesDisponivel && modalidadesAtivas().length) ? 'block' : 'none';
+  const novoProf = document.getElementById('novo-profissional');
+  if (novoProf) novoProf.innerHTML = optsProfissional('');
+  document.getElementById('novo-profissional-wrap').style.display = (profissionaisDisponivel && profissionaisAtivos().length) ? 'block' : 'none';
   document.getElementById('modal').classList.add('aberto');
 }
 function fecharModal() {
