@@ -33,7 +33,7 @@ Esta seção fixa (entre os marcadores 🔒) NÃO deve ser alterada.
 
 # NastaDesk — Contexto da ferramenta
 
-> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-06-30**.
+> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-07-01**.
 
 ## 1. Visão geral
 
@@ -203,6 +203,17 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-01** — **Auditoria "100% profissional" + roadmap por fases (só docs).**
+  Análise minuciosa dos 2 repos (código real, não só este arquivo), dos edge
+  functions e dos **advisors de segurança/performance do Supabase** (banco de
+  produção). Resultado e plano de ação registrados na **nova seção 10** (fases
+  0→3, cada uma tocável em um chat separado). **Nenhuma mudança de código/banco
+  nesta etapa** — só documentação. Achados-chave: LGPD ausente (dado sensível de
+  saúde coletado na `agendar.html` sem consentimento), sem 2FA, `cakto-webhook`
+  fail-open, RLS com `auth.uid()` sem `(select …)`, FKs sem índice, policies
+  permissivas duplicadas, sem multi-profissional, sem NF-e/contas a pagar/
+  prontuário estruturado. Base já forte: RLS em todas as tabelas, `admin-api`
+  correta, chatbot IA. **Próximo passo sugerido:** Fase 0 (quick wins).
 - **2026-06-30** — **Modalidades (Fisio/Pilates) + cobrança por paciente (mensalidades).**
   Pedido de uma clínica cliente (faz Fisio e Pilates e precisava diferenciar, além de
   controlar valor/dia de pagamento/pago por paciente). Feito, **tudo aditivo e opcional**:
@@ -241,6 +252,91 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
   tabela `ia_uso`; `whatsapp-webhook` passou a registrar consumo por clínica;
   `admin-api` agrega o uso do mês e busca **câmbio US$→R$ ao vivo**. Deploy feito
   (migração + Edge Functions + front). Criado este `CLAUDE.md` nos dois repos.
+
+## 10. Roadmap "100% profissional" — plano por fases (auditoria 2026-07-01)
+
+> **O que é isto:** plano mestre para levar a ferramenta a um nível 100%
+> profissional. Nasceu de uma auditoria minuciosa em 2026-07-01 — leitura do
+> código real dos dois repos, dos edge functions, e dos **advisors de segurança
+> e performance do Supabase** (banco de produção).
+>
+> **Como usar entre chats:** cada fase abaixo é independente e pode ser feita em
+> um chat separado. Ao começar uma fase, leia a fase inteira + a seção de
+> "Evidências" (10.6). Ao concluir um item, marque `[x]`, adicione linha no
+> Histórico (seção 9) e replique no `CLAUDE.md` do outro repo. **Não há dados
+> sensíveis aqui de propósito** (a seção fixa proíbe): IDs de projeto, e-mails,
+> tokens e segredos ficam no Supabase/Vercel, nunca neste arquivo.
+
+### 10.0 Scorecard inicial (2026-07-01)
+
+| Área | Nota | Resumo |
+|---|---|---|
+| Arquitetura backend (Supabase/RLS) | 8/10 | Sólida; RLS em todas as tabelas; `admin-api` exemplar |
+| Núcleo (agenda/pacientes/financeiro) | 7/10 | Cobre o dia a dia; falta profundidade |
+| Chatbot IA / WhatsApp | 8/10 | Diferencial real vs. concorrentes |
+| **Compliance / LGPD** | **2/10** | **Quase inexistente — maior risco legal** |
+| Segurança (hardening) | 6/10 | Boa base, brechas evitáveis |
+| Multi-usuário / multi-profissional | 2/10 | **Não existe — barra clínicas com +1 profissional** |
+| Fiscal (NF-e, contas a pagar, DRE) | 3/10 | Só faturamento; sem nota fiscal nem despesas |
+| UX / Acessibilidade | 5/10 | Bonito, mas 0 acessibilidade e validação fraca |
+| Qualidade de código / manutenção | 4/10 | Monólito ~5.400 linhas, sem testes/CI |
+
+### 10.1 O que já está bom (NÃO mexer sem motivo)
+
+- Isolamento multi-tenant com **RLS ativo em todas as tabelas de dados**.
+- **`admin-api`**: valida JWT → confirma admin → só então usa `service_role`.
+- Chatbot híbrido (menu determinístico + IA com *tool use* + RPCs que validam no banco).
+- Rastreio de **custo real de IA por cliente** com câmbio ao vivo.
+- Mensalidades idempotentes, sem dívida retroativa.
+
+### 10.2 FASE 0 — Quick wins de segurança/performance (dias, baixo risco)
+
+> Correções mecânicas e seguras. **Fazer primeiro.** Não mudam comportamento visível.
+
+- [ ] **Ativar "Leaked Password Protection"** no Supabase Auth (advisor confirmou OFF). ~1 clique no painel (Authentication → Policies).
+- [ ] **Corrigir `cakto-webhook` (fail-open)** — em `nastadesk/supabase/functions/cakto-webhook/index.ts` (~linha 89) hoje `secretOk = !esperado || recebido === esperado`: se o secret não estiver configurado, aceita **qualquer** requisição (dá pra ativar/derrubar clínica com evento falso). Tornar **fail-closed** (secret obrigatório), validar **assinatura HMAC** do corpo, comparação constante-tempo, e **registrar a função no `config.toml`**.
+- [ ] **Migration de performance RLS** — ~24 policies usam `auth.uid()` direto; trocar por `(select auth.uid())` (advisor `auth_rls_initplan`). Só reescreve as policies, sem mudar a lógica.
+- [ ] **Remover policies permissivas duplicadas** — `pacientes`, `consultas`, `evolucoes` têm 2 policies de DELETE cada; `clinicas` tem 2 de SELECT (advisor `multiple_permissive_policies`). Consolidar em 1 por ação e escopar `TO authenticated`.
+- [ ] **Criar índices nas FKs sem índice** (advisor `unindexed_foreign_keys`): `consultas.paciente_id`, `consultas.pacote_id`, `conversas.paciente_id`, `evolucoes.clinica_id`, `evolucoes.consulta_id`, `ia_uso.conversa_id`, `lembretes.clinica_id`.
+- [ ] **Anti-abuso no agendamento público** — `agendar_online` (SECURITY DEFINER, aberto ao anon) não tem captcha nem rate-limit. Adicionar honeypot + hCaptcha em `agendar.html` e rate-limit por IP/WhatsApp.
+- [ ] **(Opcional) Remover código morto do Mercado Pago** — só depois de confirmar 100% a migração p/ Cakto.
+
+### 10.3 FASE 1 — Compliance / LGPD (semanas; destrava vendas)
+
+> **Mais grave.** Dados de saúde = dado sensível (Art. 11 LGPD). A página pública
+> `agendar.html` coleta nome + WhatsApp + "motivo da consulta" (queixa clínica)
+> **sem aviso nem consentimento**.
+
+- [ ] **Aviso de privacidade + termos de uso** — criar as páginas e linkar no cadastro do app e no formulário público de agendamento.
+- [ ] **Consentimento com registro** — checkbox obrigatório no cadastro e no agendamento; gravar data/hora/versão do termo aceito (nova tabela `consentimentos`).
+- [ ] **Portal do titular** — exportar e excluir todos os dados de um paciente (direito de acesso/eliminação).
+- [ ] **Trilha de auditoria** — logar quem acessou/alterou ficha de paciente (tabela `auditoria` + gravação nos pontos de leitura/edição de prontuário).
+- [ ] **2FA (TOTP)** para as clínicas — o Supabase Auth já suporta nativo; ativar + UI de setup.
+- [ ] **DPA / contrato de operador** — modelo p/ os clientes (clínica = controladora; Nastaclin = operador).
+
+### 10.4 FASE 2 — Paridade de mercado (o que toda concorrente tem)
+
+- [ ] **Multi-profissional + papéis de usuário** — MAIOR lacuna funcional. Hoje **não existe** (as menções a "profissional" no código são o nome do *plano*). Criar tabela `profissionais`, `consultas.profissional_id`, agenda por profissional e perfis de acesso (dono / recepção / profissional). Impacta agenda, financeiro (repasse) e permissões.
+- [ ] **Nota fiscal de serviço (NFS-e)** — integrar emissor (ex.: PlugNotas / eNotas / NFE.io). Hoje só há recibo em PDF.
+- [ ] **Financeiro completo** — contas a pagar/despesas, fluxo de caixa, DRE simples e comissão/repasse por profissional.
+- [ ] **PWA instalável** — hoje 0 manifest / 0 service worker. Adicionar `manifest.json` + service worker (instalar no celular, ícone, offline básico).
+
+### 10.5 FASE 3 — Diferenciação (depois da paridade)
+
+- [ ] **Prontuário estruturado de fisio** — templates clínicos (EVA de dor, goniometria, avaliação postural, testes funcionais) + anexos de exames.
+- [ ] **Assinatura digital (ICP-Brasil)** das evoluções/prontuário.
+- [ ] **Teleconsulta** — sala de vídeo integrada.
+- [ ] **Convênios / TISS** — faturamento de guias/XML (hoje só há o campo "convênio").
+- [ ] **Extras** — lista/fila de espera, integração Google Agenda/Outlook, NPS/satisfação, estoque, relatórios/BI exportáveis, trial self-service no cadastro.
+
+### 10.6 Evidências técnicas da auditoria (para não reinvestigar)
+
+- **Advisor de segurança:** `auth_leaked_password_protection` **OFF**; `admin_config` com RLS sem policy (ok — fica só p/ service_role); `agendar_online` / `clinica_publica` / `horarios_ocupados` são SECURITY DEFINER expostos ao anon (**intencional** — booking público).
+- **Advisor de performance:** `auth_rls_initplan` em ~24 policies; `multiple_permissive_policies` em `clinicas` / `consultas` / `pacientes` / `evolucoes`; `unindexed_foreign_keys` (lista na Fase 0); vários `unused_index` (base pequena ainda — ignorar por ora).
+- **Nenhum RLS crítico desabilitado** — todas as tabelas de dados têm RLS + policy.
+- **Front:** `nastadesk/index.html` ≈ 5.413 linhas / ~334 KB, arquivo único, **sem testes, sem CI, sem lint, sem monitor de erros**; 0 `aria-*`/`role=`; inputs sem `required`/`maxlength`; 0 PWA.
+- **`cakto-webhook`:** fail-open no secret; sem HMAC; ausente do `config.toml`.
+- **Pagamento mapeado por e-mail** é frágil (cliente paga com outro e-mail → não ativa) — prever tela admin de reconciliação.
 
 ---
 
