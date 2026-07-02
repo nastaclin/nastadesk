@@ -15,3 +15,7 @@ verify_jwt = true
 # Envio pelo inbox — exige login do painel
 [functions.whatsapp-enviar]
 verify_jwt = true
+
+# Webhook de assinaturas da Cakto (sem JWT) — validado pelo secret no corpo (fail-closed)
+[functions.cakto-webhook]
+verify_jwt = false
