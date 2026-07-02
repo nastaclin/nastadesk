@@ -70,6 +70,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .rodape { text-align: center; font-size: 12px; color: var(--cinza-medio); padding-bottom: 30px; }
 .rodape a { color: var(--verde); text-decoration: none; font-weight: 500; }
 .oculto { display: none !important; }
+/* Honeypot anti-bot: fora da tela para humanos, mas presente no DOM para robôs */
+.hp-oculto { position: absolute !important; left: -9999px !important; top: auto; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -118,6 +120,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
       <div class="campo"><label>Nome completo</label><input type="text" id="ag-nome" placeholder="Ex: Maria da Silva" autocomplete="name"></div>
       <div class="campo"><label>WhatsApp (com DDD)</label><input type="tel" id="ag-wpp" placeholder="Ex: 11 99999-0000" autocomplete="tel" inputmode="tel"></div>
       <div class="campo"><label>Motivo da consulta (opcional)</label><textarea id="ag-queixa" placeholder="Ex: Dor no joelho direito ao caminhar" maxlength="300"></textarea></div>
+      <!-- Honeypot anti-bot: humanos não veem nem preenchem; se vier valor, é robô -->
+      <div class="hp-oculto" aria-hidden="true"><label for="ag-site">Deixe este campo em branco</label><input type="text" id="ag-site" name="site" tabindex="-1" autocomplete="off"></div>
       <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarAgendamento()">Confirmar agendamento</button>
     </div>
   </div>
@@ -312,6 +316,13 @@ function selecionarHora(hora, el) {
 async function confirmarAgendamento() {
   const erro = document.getElementById('erro-agendar');
   erro.classList.remove('visivel');
+  // Honeypot: campo invisível preenchido = robô. Bloqueia sem tocar no banco.
+  const hp = document.getElementById('ag-site');
+  if (hp && hp.value.trim()) {
+    console.warn('Agendamento bloqueado (honeypot).');
+    mostrarErro('Não foi possível concluir o agendamento. Recarregue a página e tente novamente.');
+    return;
+  }
   const nome = document.getElementById('ag-nome').value.trim();
   const wpp = document.getElementById('ag-wpp').value.trim();
   const queixa = document.getElementById('ag-queixa').value.trim();
