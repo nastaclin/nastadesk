@@ -1,6 +1,5 @@
 -- ===== Fase 0 · Índices em FKs sem índice (performance) =====
--- STATUS: ⚠️ PREPARADA, **AINDA NÃO APLICADA** em produção (o Supabase estava
--- offline nesta sessão). Aplicar via Supabase e só então marcar a Fase 0 como feita.
+-- STATUS: ✅ APLICADA em produção (2026-07-02).
 --
 -- Origem: advisor de performance do Supabase (unindexed_foreign_keys). São FKs
 -- sem índice de apoio — o índice acelera joins/filtros e as remoções em cascata.
@@ -14,3 +13,4 @@ CREATE INDEX IF NOT EXISTS idx_evolucoes_clinica  ON public.evolucoes (clinica_i
 CREATE INDEX IF NOT EXISTS idx_evolucoes_consulta ON public.evolucoes (consulta_id);
 CREATE INDEX IF NOT EXISTS idx_ia_uso_conversa    ON public.ia_uso (conversa_id);
 CREATE INDEX IF NOT EXISTS idx_lembretes_clinica  ON public.lembretes (clinica_id);
+CREATE INDEX IF NOT EXISTS idx_notas_fiscais_paciente ON public.notas_fiscais (paciente_id);
