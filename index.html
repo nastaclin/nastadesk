@@ -254,6 +254,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .consulta-nome { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 7px; }
 .consulta-queixa { font-size: 12px; color: var(--cinza-medio); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .origem-badge { font-size: 9px; font-weight: 700; letter-spacing: .04em; background: #E4EBFB; color: var(--azul); padding: 2px 6px; border-radius: 5px; text-transform: uppercase; flex-shrink: 0; }
+.novo-badge { font-size: 9px; font-weight: 700; letter-spacing: .04em; background: #DCF5E6; color: #0B6E4F; padding: 2px 6px; border-radius: 5px; text-transform: uppercase; flex-shrink: 0; margin-left: 4px; }
+.rec-badge { font-size: 9px; font-weight: 700; letter-spacing: .04em; background: #FFF2D9; color: #8A6100; padding: 2px 6px; border-radius: 5px; text-transform: uppercase; flex-shrink: 0; margin-left: 4px; }
 .status-pill { font-size: 11px; font-weight: 500; padding: 3px 10px 3px 8px; border-radius: 20px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
 .status-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .status-confirmado { background: var(--verde-claro); color: var(--verde); }
@@ -2776,10 +2778,19 @@ async function mudarProfissionalConsulta(id, valor) {
 }
 
 // ===== CONSULTAS DO DIA =====
+// Etiqueta "1ª vez" (paciente novo) ou "recorrente" para agendamentos online,
+// pelo total de consultas do paciente (mantido pelo trigger on_consulta_stats).
+function tagNovoRec(c) {
+  if (c.origem !== 'online') return '';
+  const t = c.pacientes?.total_consultas;
+  if (t == null) return '';
+  return t <= 1 ? '<span class="novo-badge">1ª vez</span>' : '<span class="rec-badge">recorrente</span>';
+}
+
 async function carregarConsultas() {
   if (!clinicaId) return;
   const hojeStr = dataLocalISO(new Date());
-  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp,modalidade_id)')
+  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp,modalidade_id,total_consultas)')
     .eq('clinica_id', clinicaId)
     .gte('data_hora', diaInicioISO(hojeStr)).lte('data_hora', diaFimISO(hojeStr))
     .order('data_hora');
@@ -2870,7 +2881,7 @@ function cardSalao(c, cor) {
       <span class="salao-card-hora">${hora}</span>
       <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
     </div>
-    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
+    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${tagNovoRec(c)}</div>
     ${(tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id) || tagProfissional(c.profissional_id))?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}${tagProfissional(c.profissional_id)}</div>`:''}
     ${c.queixa?`<div class="salao-card-queixa">${esc(c.queixa)}</div>`:''}
     <div class="salao-card-acoes" onclick="event.stopPropagation()">
@@ -2925,7 +2936,7 @@ function renderConsultas(lista) {
       <span class="consulta-hora">${hora}</span>
       <div class="avatar ${CORES[i%CORES.length]}${cancelada?' cancelado':''}">${esc(iniciais)}</div>
       <div class="consulta-info">
-        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}</div>
+        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${tagNovoRec(c)}</div>
         <div class="consulta-queixa">${esc(c.queixa||'—')}</div>
         ${(salasDisponivel && salasAtivas().length)
           ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
