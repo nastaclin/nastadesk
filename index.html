@@ -1543,14 +1543,15 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <div class="config-campo"><label>CNAE (opcional)</label><input type="text" id="fisc-cnae" placeholder="Ex: 8650004"></div>
           </div>
           <div class="modal-grid">
+            <div class="config-campo"><label>Código IBGE do município</label><input type="text" id="fisc-codmun" placeholder="Ex: 3550308"><div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">O código de 7 dígitos da sua cidade no IBGE (ex.: São Paulo = 3550308). Uma busca por "código IBGE + sua cidade" resolve.</div></div>
             <div class="config-campo"><label>Cód. tributação no município (opcional)</label><input type="text" id="fisc-codtrib" placeholder="Se a prefeitura exigir"></div>
-            <div class="config-campo"><label>Ambiente de emissão</label>
-              <select id="fisc-ambiente">
-                <option value="homologacao">Homologação (teste — não vale como nota)</option>
-                <option value="producao">Produção (nota fiscal válida)</option>
-              </select>
-              <div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">Comece em <strong>Homologação</strong> pra testar sem valer. Só mude pra Produção quando estiver tudo certo.</div>
-            </div>
+          </div>
+          <div class="config-campo"><label>Ambiente de emissão</label>
+            <select id="fisc-ambiente">
+              <option value="homologacao">Homologação (teste — não vale como nota)</option>
+              <option value="producao">Produção (nota fiscal válida)</option>
+            </select>
+            <div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">Comece em <strong>Homologação</strong> pra testar sem valer. Só mude pra Produção quando estiver tudo certo.</div>
           </div>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;margin:6px 0 16px"><input type="checkbox" id="fisc-iss-retido" style="width:auto"> ISS retido na fonte</label>
           <button class="btn btn-primario" onclick="salvarDadosFiscais()">Salvar dados fiscais</button>
@@ -1560,11 +1561,11 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="card" style="padding:24px">
           <div class="card-titulo" style="margin-bottom:10px">Como emitir nota fiscal aqui — passo a passo</div>
           <div class="card-sub" style="line-height:1.8">
-            A NFS-e é a <strong>nota fiscal de serviço</strong> que o município exige. O NastaDesk emite pra você por um parceiro (<strong>PlugNotas</strong>), mas <strong>três coisas dependem de você</strong> (a lei exige):
+            A NFS-e é a <strong>nota fiscal de serviço</strong> que o município exige. O NastaDesk emite pra você por um parceiro (<strong>Focus NFe</strong>), mas <strong>três coisas dependem de você</strong> (a lei exige):
             <ol style="margin:12px 0 0;padding-left:20px">
               <li style="margin-bottom:8px"><strong>CNPJ com a NFS-e habilitada na prefeitura</strong> — sua clínica precisa de CNPJ e de inscrição municipal autorizada a emitir nota de serviço. (Contador resolve rápido.)</li>
               <li style="margin-bottom:8px"><strong>Certificado digital A1</strong> — é a "identidade digital" da empresa (arquivo com senha), obrigatória pra assinar a nota. Compra-se numa certificadora (ex.: Serasa, Certisign).</li>
-              <li style="margin-bottom:8px"><strong>Conta no emissor (PlugNotas)</strong> — onde o certificado é guardado e as notas saem. Nós ligamos o NastaDesk a ela.</li>
+              <li style="margin-bottom:8px"><strong>Empresa cadastrada no emissor (Focus NFe)</strong> — onde o certificado é guardado e as notas saem. Nós ligamos o NastaDesk a ela.</li>
             </ol>
             <div style="margin-top:12px">Assim que isso estiver pronto e configurado, aparece um botão <strong>“Emitir NFS-e”</strong> em cada consulta paga (Financeiro → Consultas). Enquanto não estiver, o comprovante segue sendo o <strong>Recibo em PDF</strong> — que não é nota fiscal, mas serve como comprovante de pagamento.</div>
           </div>
@@ -4540,7 +4541,7 @@ async function emitirNFSe(consultaId) {
   if (!nfseConfig) { try { const { data } = await db.functions.invoke('nfse', { body: { acao: 'config' } }); nfseConfig = data; } catch (e) {} }
   if (!nfseConfig || !nfseConfig.pronto) {
     const msg = (nfseConfig && nfseConfig.tokenConfigurado)
-      ? 'Falta preencher seus dados fiscais (CNPJ, código do serviço e ISS). Quer abrir Configurações → Nota fiscal agora?'
+      ? 'Falta preencher seus dados fiscais (CNPJ, código do serviço, ISS e código IBGE do município). Quer abrir Configurações → Nota fiscal agora?'
       : 'A emissão de NFS-e ainda não foi ligada. Abra Configurações → Nota fiscal para ver o passo a passo do que é preciso.';
     abrirModalConfirm('Configurar nota fiscal', msg, 'Abrir configurações', () => cfgTabIrPara('fiscal'));
     return;
@@ -4990,7 +4991,7 @@ function cfgTabIrPara(nome) {
   cfgTab(nome, null);
 }
 
-// ===== DADOS FISCAIS + STATUS DO EMISSOR (NFS-e via PlugNotas) =====
+// ===== DADOS FISCAIS + STATUS DO EMISSOR (NFS-e via Focus NFe) =====
 let dadosFiscais = null;
 let nfseConfig = null;   // cache do status do emissor (nfse/config)
 
@@ -5007,6 +5008,7 @@ async function carregarDadosFiscais() {
   g('fisc-codigo').value = data?.codigo_servico || '';
   g('fisc-iss').value = (data && data.aliquota_iss != null) ? data.aliquota_iss : '';
   g('fisc-cnae').value = data?.cnae || '';
+  g('fisc-codmun').value = data?.codigo_municipio || '';
   g('fisc-codtrib').value = data?.codigo_tributacao_municipio || '';
   g('fisc-ambiente').value = data?.ambiente || 'homologacao';
   g('fisc-iss-retido').checked = !!data?.iss_retido;
@@ -5033,8 +5035,8 @@ async function renderStatusEmissor() {
   const detalhe = ok
     ? `Ambiente: <strong>${cfg.ambiente === 'producao' ? 'Produção (nota válida)' : 'Homologação (teste)'}</strong>. Já dá pra emitir NFS-e nas consultas pagas (Financeiro → Consultas).`
     : (cfg.tokenConfigurado
-        ? 'A conexão com o PlugNotas está ativa. Preencha CNPJ, código do serviço e ISS abaixo e salve para liberar a emissão.'
-        : 'A conexão com o emissor (PlugNotas) ainda não foi ativada no servidor. Isso é feito uma vez pela Nastaclin. Você já pode preencher seus dados fiscais abaixo.');
+        ? 'A conexão com o Focus NFe está ativa. Preencha CNPJ, código do serviço, ISS e o código IBGE do município abaixo e salve para liberar a emissão.'
+        : 'A conexão com o emissor (Focus NFe) ainda não foi ativada no servidor. Isso é feito uma vez pela Nastaclin. Você já pode preencher seus dados fiscais abaixo.');
   el.style.background = bg;
   el.style.border = `1px solid ${ok ? 'var(--verde-claro)' : '#F0E2BE'}`;
   el.innerHTML = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -5058,6 +5060,7 @@ async function salvarDadosFiscais() {
     codigo_servico: g('fisc-codigo').value.trim() || null,
     aliquota_iss: isNaN(iss) ? null : iss,
     cnae: g('fisc-cnae').value.trim() || null,
+    codigo_municipio: g('fisc-codmun').value.trim() || null,
     codigo_tributacao_municipio: g('fisc-codtrib').value.trim() || null,
     ambiente: g('fisc-ambiente').value || 'homologacao',
     iss_retido: g('fisc-iss-retido').checked,

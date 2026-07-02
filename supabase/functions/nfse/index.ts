@@ -1,23 +1,22 @@
-// NastaDesk — Emissão de NFS-e (Nota Fiscal de Serviço) via PlugNotas (TecnoSpeed).
+// NastaDesk — Emissão de NFS-e (Nota Fiscal de Serviço) via Focus NFe.
 // Chamado pelo painel com o JWT da clínica. Cada clínica emite as suas notas.
-// A emissão é ASSÍNCRONA: enviamos e depois consultamos a situação.
+// A emissão é ASSÍNCRONA: enviamos (POST /v2/nfse?ref=...) e depois
+// consultamos a situação (GET /v2/nfse/{ref}).
 //
 // Pré-requisitos p/ emitir de verdade (fora do código):
-//  1. Secret PLUGNOTAS_API_KEY definido no projeto Supabase.
-//  2. A empresa da clínica cadastrada no PlugNotas com o certificado A1
-//     (feito 1x no painel do PlugNotas) e a NFS-e habilitada no município.
-//  3. Em Configurações → Nota fiscal: CNPJ, código do serviço (LC116) e ISS.
+//  1. Secrets FOCUS_NFE_TOKEN_HOMOLOGACAO e/ou FOCUS_NFE_TOKEN_PRODUCAO
+//     no projeto Supabase (a conta Focus NFe dá um token por ambiente).
+//  2. A empresa da clínica cadastrada no painel do Focus NFe com o
+//     certificado A1 e a NFS-e habilitada no município.
+//  3. Em Configurações → Nota fiscal: CNPJ, código do serviço (LC116),
+//     ISS, código IBGE do município e regime tributário.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const PLUGNOTAS_KEY = Deno.env.get("PLUGNOTAS_API_KEY") || "";
-// URL da conta PlugNotas. Padrão = produção (a conta real). Para testar contra
-// o sandbox público, defina PLUGNOTAS_BASE_URL=https://api.sandbox.plugnotas.com.br
-// (com o token de sandbox). Homologação x produção de VERDADE é por-empresa
-// (flag no cadastro da empresa no PlugNotas), não troca a URL.
-const PLUGNOTAS_BASE = (Deno.env.get("PLUGNOTAS_BASE_URL") || "https://api.plugnotas.com.br").replace(/\/+$/, "");
+const TOKEN_HOMOLOG = Deno.env.get("FOCUS_NFE_TOKEN_HOMOLOGACAO") || "";
+const TOKEN_PROD = Deno.env.get("FOCUS_NFE_TOKEN_PRODUCAO") || "";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -31,11 +30,19 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: 
 
 const soDigitos = (s: unknown) => String(s ?? "").replace(/\D+/g, "");
 
-// Chamada à API do PlugNotas (a URL da conta vem de PLUGNOTAS_BASE)
-async function plug(path: string, method = "GET", body?: unknown) {
-  const r = await fetch(`${PLUGNOTAS_BASE}${path}`, {
+// Token e URL por ambiente (o Focus NFe usa um token e uma URL para cada)
+const tokenPara = (ambiente: string) => (ambiente === "producao" ? TOKEN_PROD : TOKEN_HOMOLOG);
+const basePara = (ambiente: string) =>
+  ambiente === "producao" ? "https://api.focusnfe.com.br" : "https://homologacao.focusnfe.com.br";
+
+// Chamada à API do Focus NFe (HTTP Basic: token como usuário, senha vazia)
+async function focus(ambiente: string, path: string, method = "GET", body?: unknown) {
+  const r = await fetch(`${basePara(ambiente)}${path}`, {
     method,
-    headers: { "Content-Type": "application/json", "X-API-KEY": PLUGNOTAS_KEY },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Basic " + btoa(`${tokenPara(ambiente)}:`),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const txt = await r.text();
@@ -48,20 +55,23 @@ function extrairErro(d: any): string {
   try {
     if (!d) return "Erro desconhecido no emissor.";
     if (typeof d === "string") return d.slice(0, 400);
-    if (d.error?.message) return String(d.error.message);
-    if (Array.isArray(d.error)) return d.error.map((e: any) => e?.message || e).join("; ").slice(0, 400);
-    if (d.message) return String(d.message);
+    if (Array.isArray(d.erros)) {
+      return d.erros.map((e: any) => [e?.mensagem || e, e?.correcao].filter(Boolean).join(" — ")).join("; ").slice(0, 400);
+    }
+    if (d.mensagem) return String(d.mensagem);
+    if (d.mensagem_sefaz) return String(d.mensagem_sefaz);
     return JSON.stringify(d).slice(0, 400);
   } catch { return "Erro ao processar a resposta do emissor."; }
 }
 
-// Mapeia a "situacao" do PlugNotas para o nosso status simplificado.
-function mapSituacao(sit: string, atual: string): string {
-  const s = (sit || "").toString().toUpperCase();
-  if (s.includes("CANCEL")) return "cancelada";
-  if (s.includes("REJEIT") || s.includes("ERRO") || s.includes("NEGAD")) return "erro";
-  if (s.includes("CONCLU") || s.includes("AUTORIZ") || s.includes("EMITID")) return "emitida";
-  if (s.includes("PROCESS") || s.includes("ENVIO") || s.includes("LOTE")) return "processando";
+// Mapeia o "status" do Focus NFe para o nosso status simplificado.
+// Valores do Focus: processando_autorizacao | autorizado | erro_autorizacao | cancelado
+function mapStatus(st: string, atual: string): string {
+  const s = (st || "").toString().toLowerCase();
+  if (s.includes("cancel")) return "cancelada";
+  if (s.includes("erro") || s.includes("denegad") || s.includes("rejeit")) return "erro";
+  if (s.includes("autorizado") || s.includes("emitid") || s.includes("conclu")) return "emitida";
+  if (s.includes("process")) return "processando";
   return atual;
 }
 
@@ -91,19 +101,23 @@ Deno.serve(async (req) => {
 
   const { data: fiscal } = await admin.from("config_fiscal").select("*").eq("clinica_id", clinica.id).maybeSingle();
   const ambiente = fiscal?.ambiente || "homologacao";
+  const temToken = !!tokenPara(ambiente);
 
   // ---- status do emissor (o front usa p/ decidir se mostra o botão emitir) ----
   if (acao === "config") {
     return json({
-      tokenConfigurado: !!PLUGNOTAS_KEY,
+      tokenConfigurado: temToken,
       ambiente,
       cnpj: fiscal?.cnpj || null,
-      pronto: !!(PLUGNOTAS_KEY && fiscal?.cnpj && fiscal?.codigo_servico && fiscal?.aliquota_iss != null),
+      pronto: !!(temToken && fiscal?.cnpj && fiscal?.codigo_servico && fiscal?.aliquota_iss != null && fiscal?.codigo_municipio),
     });
   }
 
-  if (!PLUGNOTAS_KEY) {
-    return json({ erro: "Emissor de NFS-e ainda não está ligado (falta a chave do PlugNotas no servidor).", code: "sem_token" }, 400);
+  if (!temToken) {
+    return json({
+      erro: `Emissor de NFS-e ainda não está ligado (falta o token do Focus NFe para o ambiente de ${ambiente === "producao" ? "produção" : "homologação"}).`,
+      code: "sem_token",
+    }, 400);
   }
 
   // ---- emitir a NFS-e de uma consulta ----
@@ -112,6 +126,7 @@ Deno.serve(async (req) => {
     if (!consultaId) return json({ erro: "consulta_id é obrigatório" }, 400);
     if (!fiscal?.cnpj) return json({ erro: "Preencha o CNPJ em Configurações → Nota fiscal antes de emitir.", code: "sem_fiscal" }, 400);
     if (!fiscal?.codigo_servico) return json({ erro: "Informe o código do serviço (LC116) em Configurações → Nota fiscal.", code: "sem_fiscal" }, 400);
+    if (!fiscal?.codigo_municipio) return json({ erro: "Informe o código IBGE do município em Configurações → Nota fiscal.", code: "sem_fiscal" }, 400);
 
     const { data: consulta } = await admin
       .from("consultas").select("*, pacientes(nome, cpf)")
@@ -132,26 +147,30 @@ Deno.serve(async (req) => {
     const discriminacao = `Sessão de fisioterapia realizada em ${dataConsulta}.`;
     const cpfTomador = soDigitos(consulta.pacientes?.cpf);
 
-    const servico: any = {
-      codigo: fiscal.codigo_servico,
-      discriminacao,
-      iss: { aliquota: Number(fiscal.aliquota_iss) || 0, tipoTributacao: 6 },
-      valor: { servico: valor },
-    };
-    if (fiscal.codigo_tributacao_municipio) servico.codigoTributacao = fiscal.codigo_tributacao_municipio;
-    if (fiscal.cnae) servico.cnae = fiscal.cnae;
+    const tomador: any = { razao_social: consulta.pacientes?.nome || "Consumidor" };
+    if (cpfTomador) tomador.cpf = cpfTomador;
 
-    const tomador: any = { razaoSocial: consulta.pacientes?.nome || "Consumidor" };
-    if (cpfTomador) tomador.cpfCnpj = cpfTomador;
-
-    const payload = [{
-      idIntegracao,
-      prestador: { cpfCnpj: soDigitos(fiscal.cnpj) },
+    const payload: any = {
+      data_emissao: new Date().toISOString(),
+      natureza_operacao: "1",
+      optante_simples_nacional: ["mei", "simples_nacional"].includes(fiscal.regime_tributario || ""),
+      prestador: {
+        cnpj: soDigitos(fiscal.cnpj),
+        codigo_municipio: soDigitos(fiscal.codigo_municipio),
+      },
       tomador,
-      servico: [servico],
-    }];
+      servico: {
+        aliquota: Number(fiscal.aliquota_iss) || 0,
+        discriminacao,
+        iss_retido: !!fiscal.iss_retido,
+        item_lista_servico: fiscal.codigo_servico,
+        valor_servicos: valor,
+      },
+    };
+    if (fiscal.inscricao_municipal) payload.prestador.inscricao_municipal = fiscal.inscricao_municipal;
+    if (fiscal.codigo_tributacao_municipio) payload.servico.codigo_tributario_municipio = fiscal.codigo_tributacao_municipio;
 
-    const r = await plug("/nfse", "POST", payload);
+    const r = await focus(ambiente, `/v2/nfse?ref=${encodeURIComponent(idIntegracao)}`, "POST", payload);
     const base = {
       clinica_id: clinica.id, consulta_id: consultaId, paciente_id: consulta.paciente_id,
       id_integracao: idIntegracao, valor, descricao: discriminacao, ambiente,
@@ -164,9 +183,7 @@ Deno.serve(async (req) => {
       return json({ ok: false, erro: msg, nota }, 200);
     }
 
-    const protocolo = r.data?.protocol || null;
-    const plugId = Array.isArray(r.data?.documents) ? r.data.documents[0]?.id : (r.data?.documents?.id || null);
-    const nota = await upsertNota(existente, { ...base, status: "processando", protocolo, plugnotas_id: plugId, erro: null });
+    const nota = await upsertNota(existente, { ...base, status: "processando", erro: null });
     return json({ ok: true, nota });
   }
 
@@ -176,19 +193,20 @@ Deno.serve(async (req) => {
       .select("*").eq("id", body.nota_id).eq("clinica_id", clinica.id).maybeSingle();
     if (!nota) return json({ erro: "Nota não encontrada" }, 404);
 
-    const cnpj = soDigitos(fiscal?.cnpj);
-    const r = await plug(`/nfse/consultar/${encodeURIComponent(nota.id_integracao)}/${cnpj}`, "GET");
-    const d = Array.isArray(r.data) ? r.data[0] : r.data;
+    const amb = nota.ambiente || ambiente;
+    const r = await focus(amb, `/v2/nfse/${encodeURIComponent(nota.id_integracao)}`, "GET");
+    const d = r.data;
     if (!r.ok || !d) return json({ nota, aviso: "Ainda sem retorno da prefeitura." });
 
-    const status = mapSituacao(d?.situacao, nota.status);
+    const status = mapStatus(d?.status, nota.status);
+    const xml = d?.caminho_xml_nota_fiscal ? `${basePara(amb)}${d.caminho_xml_nota_fiscal}` : nota.link_xml;
     const upd: any = {
       status,
-      plugnotas_id: d?.id || nota.plugnotas_id,
-      numero: d?.numeroNfse || nota.numero,
-      link_pdf: d?.pdf || nota.link_pdf,
-      link_xml: d?.xml || nota.link_xml,
-      erro: status === "erro" ? (d?.mensagem || extrairErro(d)) : nota.erro,
+      emissor_id: d?.codigo_verificacao || nota.emissor_id,
+      numero: d?.numero || nota.numero,
+      link_pdf: d?.url_danfse || d?.url || nota.link_pdf,
+      link_xml: xml,
+      erro: status === "erro" ? extrairErro(d) : nota.erro,
       atualizado_em: new Date().toISOString(),
     };
     await admin.from("notas_fiscais").update(upd).eq("id", nota.id);

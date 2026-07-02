@@ -16,6 +16,6 @@ verify_jwt = true
 [functions.whatsapp-enviar]
 verify_jwt = true
 
-# Emissão de NFS-e via PlugNotas — exige login da clínica
+# Emissão de NFS-e via Focus NFe — exige login da clínica
 [functions.nfse]
 verify_jwt = true
