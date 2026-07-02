@@ -30,18 +30,25 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: 
 
 const soDigitos = (s: unknown) => String(s ?? "").replace(/\D+/g, "");
 
-// Token e URL por ambiente (o Focus NFe usa um token e uma URL para cada)
-const tokenPara = (ambiente: string) => (ambiente === "producao" ? TOKEN_PROD : TOKEN_HOMOLOG);
+// URL por ambiente (o Focus NFe usa uma URL para cada)
 const basePara = (ambiente: string) =>
   ambiente === "producao" ? "https://api.focusnfe.com.br" : "https://homologacao.focusnfe.com.br";
 
+// Token do ambiente: prioriza o token DA CLÍNICA (config_fiscal, cada clínica
+// conecta a própria conta Focus) e cai no token global do projeto se não houver.
+function tokenDaClinica(fiscal: any, ambiente: string): string {
+  const daClinica = ambiente === "producao" ? fiscal?.emissor_token_producao : fiscal?.emissor_token_homologacao;
+  const global = ambiente === "producao" ? TOKEN_PROD : TOKEN_HOMOLOG;
+  return (daClinica || global || "").trim();
+}
+
 // Chamada à API do Focus NFe (HTTP Basic: token como usuário, senha vazia)
-async function focus(ambiente: string, path: string, method = "GET", body?: unknown) {
+async function focus(ambiente: string, token: string, path: string, method = "GET", body?: unknown) {
   const r = await fetch(`${basePara(ambiente)}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Basic " + btoa(`${tokenPara(ambiente)}:`),
+      "Authorization": "Basic " + btoa(`${token}:`),
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -101,7 +108,8 @@ Deno.serve(async (req) => {
 
   const { data: fiscal } = await admin.from("config_fiscal").select("*").eq("clinica_id", clinica.id).maybeSingle();
   const ambiente = fiscal?.ambiente || "homologacao";
-  const temToken = !!tokenPara(ambiente);
+  const token = tokenDaClinica(fiscal, ambiente);
+  const temToken = !!token;
 
   // ---- status do emissor (o front usa p/ decidir se mostra o botão emitir) ----
   if (acao === "config") {
@@ -170,7 +178,7 @@ Deno.serve(async (req) => {
     if (fiscal.inscricao_municipal) payload.prestador.inscricao_municipal = fiscal.inscricao_municipal;
     if (fiscal.codigo_tributacao_municipio) payload.servico.codigo_tributario_municipio = fiscal.codigo_tributacao_municipio;
 
-    const r = await focus(ambiente, `/v2/nfse?ref=${encodeURIComponent(idIntegracao)}`, "POST", payload);
+    const r = await focus(ambiente, token, `/v2/nfse?ref=${encodeURIComponent(idIntegracao)}`, "POST", payload);
     const base = {
       clinica_id: clinica.id, consulta_id: consultaId, paciente_id: consulta.paciente_id,
       id_integracao: idIntegracao, valor, descricao: discriminacao, ambiente,
@@ -194,7 +202,8 @@ Deno.serve(async (req) => {
     if (!nota) return json({ erro: "Nota não encontrada" }, 404);
 
     const amb = nota.ambiente || ambiente;
-    const r = await focus(amb, `/v2/nfse/${encodeURIComponent(nota.id_integracao)}`, "GET");
+    const tk = tokenDaClinica(fiscal, amb);
+    const r = await focus(amb, tk, `/v2/nfse/${encodeURIComponent(nota.id_integracao)}`, "GET");
     const d = r.data;
     if (!r.ok || !d) return json({ nota, aviso: "Ainda sem retorno da prefeitura." });
 

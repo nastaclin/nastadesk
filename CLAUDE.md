@@ -98,7 +98,7 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | `mercadopago-checkout` | Cria checkout de assinatura no Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
 | `mercadopago-webhook` | Recebe eventos de cobrança do Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
 | `cakto-webhook` | Recebe eventos da Cakto (compra aprovada, assinatura criada/renovada/cancelada, reembolso, chargeback) e libera/suspende o acesso da clínica. Mapeia o comprador pelo **e-mail**, identifica o plano pelo **valor** (97/197/347) e **nunca derruba clínica em cortesia**. |
-| `nfse` | Emissão de **NFS-e via Focus NFe**. Chamada pelo painel com o JWT da clínica; valida a clínica, monta o payload a partir de `config_fiscal` + consulta + paciente, envia (`POST /v2/nfse?ref=consulta-<id>`, HTTP Basic com o token), consulta a situação (`GET /v2/nfse/{ref}`) e grava em `notas_fiscais` (idempotente por consulta — o `ref` é o `id_integracao`). Lê `FOCUS_NFE_TOKEN_HOMOLOGACAO` / `FOCUS_NFE_TOKEN_PRODUCAO` do ambiente (um token por ambiente, URL por ambiente) e é **fail-safe** (sem token → responde "não ligado", sem emitir nada). |
+| `nfse` | Emissão de **NFS-e via Focus NFe**. Chamada pelo painel com o JWT da clínica; valida a clínica, monta o payload a partir de `config_fiscal` + consulta + paciente, envia (`POST /v2/nfse?ref=consulta-<id>`, HTTP Basic com o token), consulta a situação (`GET /v2/nfse/{ref}`) e grava em `notas_fiscais` (idempotente por consulta — o `ref` é o `id_integracao`). **Token por clínica:** usa `config_fiscal.emissor_token_{homologacao,producao}` (cada clínica conecta a própria conta Focus, com o CNPJ dela) e cai nos secrets globais `FOCUS_NFE_TOKEN_*` como fallback. URL por ambiente. **Fail-safe** (sem token → responde "não ligado", sem emitir nada). |
 | `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. |
 
 ## 4. Funcionalidades do app (nastadesk)
@@ -148,9 +148,10 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   cada consulta paga (Financeiro → Consultas) ganha o botão **“+ NF-e”**: emite (assíncrono),
   acompanha a situação (⏳ processando → ✓ emitida) e abre o **PDF/XML**. **Fail-safe:** sem o
   token do Focus NFe ou sem dados fiscais, o botão não emite — mostra o que falta. **Vai ao ar
-  quando** a Nastaclin configurar `FOCUS_NFE_TOKEN_HOMOLOGACAO`/`FOCUS_NFE_TOKEN_PRODUCAO` e cada
-  clínica tiver **CNPJ com NFS-e habilitada + certificado digital A1 + empresa cadastrada no painel
-  do Focus NFe**. Enquanto não, o comprovante segue sendo o **Recibo em PDF**.
+  quando** cada clínica **conectar a própria conta Focus** (cola o token na tela) e tiver **CNPJ com
+  NFS-e habilitada + certificado digital A1 + empresa cadastrada no painel do Focus NFe**. (O CNPJ é da
+  **clínica**, não da Nastaclin — o dono não precisa de CNPJ.) Enquanto não, o comprovante segue sendo o
+  **Recibo em PDF**.
 - **Relatório mensal** — comparecimento, faturamento, origem dos agendamentos,
   formas de pagamento.
 - **Chatbot de WhatsApp** — ver seção 6.
@@ -244,6 +245,18 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-02** — **NFS-e: token do emissor POR CLÍNICA (o dono não precisa de CNPJ).**
+  Insight: quem emite a nota é a **clínica** (prestadora do serviço), não a Nastaclin — então o CNPJ
+  é o **da clínica**, e o dono da Nastaclin **não precisa de CNPJ**. (O dono tentou criar conta no Focus
+  e travou por pedir CNPJ.) Mudança: cada clínica **conecta a própria conta do Focus NFe** colando o token
+  na tela (Configurações → Nota fiscal). Migration `20260702110000_nfse_token_por_clinica.sql` **aplicada**:
+  `config_fiscal.emissor_token_homologacao` + `emissor_token_producao` (protegidos por RLS — só a clínica
+  e o service_role leem). Edge Function `nfse` (v4): `tokenDaClinica()` prioriza o token da clínica e cai
+  no secret global `FOCUS_NFE_TOKEN_*` como fallback (modelo de conta única ainda funciona se um dia o dono
+  quiser). Front: 2 campos `password` de token na aba Nota fiscal — **o segredo nunca é ecoado de volta ao
+  navegador** (só um "✓ token salvo"); grava só se a clínica digitar um novo. `node --check` + smoke OK.
+  **Aditivo e seguro.** Front dos clientes ainda **não deployado**. *Falta p/ emitir de verdade (da clínica):*
+  conta no Focus + token + CNPJ com NFS-e habilitada + certificado A1 + empresa cadastrada no painel do Focus.
 - **2026-07-02** — **NFS-e: troca de emissor PlugNotas → Focus NFe.**
   Motivo: o onboarding do PlugNotas travou na prática — o dono criou a TecnoAccount e o login barrou
   em "Software House não tem licença ativa" (licença depende de ativação/comercial), e o preço não é
@@ -453,7 +466,7 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 - [x] **Multi-profissional (cadastro + agenda por profissional)** — FEITO em 2026-07-01 (aditivo, **sem login novo**; profissional é "recurso" da agenda). Tabela `profissionais` (nome, registro/CREFITO, cor, ordem, ativo) + `consultas.profissional_id` (nullable, FK on delete set null). Config → Profissionais (CRUD); etiqueta colorida + filtro por profissional na Agenda do dia; profissional na grade semanal (dot/cor + tooltip) e na lista mobile; select opcional no modal de agendamento; **reatribuição inline** na agenda (`mudarProfissionalConsulta`). RLS já no formato performático (`(select auth.uid())` + `TO authenticated`). **NÃO semeia dados** → clínica sem profissional não vê diferença. Migration `20260701120000_profissionais.sql` **aplicada em produção**; front só em `nastadesk/index.html` (o `dashboard` não muda). *Falta:* deploy do front (merge na `main`).
 - [ ] **Login de profissionais + papéis de usuário** — cada profissional/recepção com login próprio e permissões (dono / recepção / profissional). Mexe em auth/RLS (mais delicado) — deixado para uma etapa 2, sob demanda.
 - [ ] **Trava por plano do multi-profissional** — hoje liberado a todos os planos (pedido do dono); quando quiser, virar argumento de upgrade (o ponto de gate no front está preparado num único lugar).
-- [x] **Nota fiscal de serviço (NFS-e)** — **FEITO** (emissor **Focus NFe**, trocado do PlugNotas em 2026-07-02 — ver Histórico). Edge Function `nfse` (deploy v3 + `config.toml`) + tabela `notas_fiscais` + tela de dados fiscais/status + botão "+ NF-e" nas consultas pagas. **Para ligar (não é código — é da clínica/dono):** conta no Focus NFe (auto-serviço, homologação grátis) → secrets `FOCUS_NFE_TOKEN_HOMOLOGACAO`/`FOCUS_NFE_TOKEN_PRODUCAO` no Supabase + CNPJ com NFS-e habilitada + **certificado A1** + empresa cadastrada no painel do Focus NFe. *Melhorias futuras:* cadastro da empresa/certificado via API pelo próprio app, webhook de status, cancelamento pela tela.
+- [x] **Nota fiscal de serviço (NFS-e)** — **FEITO** (emissor **Focus NFe**, trocado do PlugNotas em 2026-07-02 — ver Histórico). Edge Function `nfse` (deploy v3 + `config.toml`) + tabela `notas_fiscais` + tela de dados fiscais/status + botão "+ NF-e" nas consultas pagas. **Modelo: token por clínica** (cada clínica conecta a própria conta Focus, com o CNPJ dela — a Nastaclin não precisa de CNPJ; fallback p/ secret global existe). **Para ligar (não é código — é da clínica):** conta no Focus NFe (auto-serviço, homologação grátis) → cola o token na tela + CNPJ com NFS-e habilitada + **certificado A1** + empresa cadastrada no painel do Focus NFe. *Melhorias futuras:* cadastro da empresa/certificado via API pelo próprio app, webhook de status, cancelamento pela tela.
 - [x] **Financeiro completo** — contas a pagar/despesas, fluxo de caixa, DRE simples: **FEITO em 2026-07-01** (Financeiro → **Despesas** + **Resumo**; migration `20260701140000_despesas_fiscal.sql`, tabela `despesas`). Despesas com categoria/vencimento/status pago-pendente (marca pago em 1 clique); Resumo = fluxo de caixa (entradas − saídas) + DRE simples (receitas por origem − despesas por categoria). Não altera o financeiro por consulta/mensalidade/repasse. (✅ **Repasse/comissão por profissional** também já feito em 2026-07-01 — Financeiro → Repasse: % do valor ou R$/consulta, sobre as consultas atendidas do mês.) *Falta:* contas a pagar recorrentes automáticas (hoje cada mês é lançado à mão) — melhoria futura opcional.
 - [ ] **Pagamento self-service do paciente (Pix/checkout) com baixa automática** — IDEIA discutida em 2026-07-01. Hoje o dono marca pago/pendente na mão (consulta, pacote ou mensalidade). Objetivo: o **paciente paga sozinho** (inclusive adiantado) e o status **atualiza automaticamente** no NastaDesk pro dono ver.
   - **Viável?** Sim. Caminho recomendado p/ Brasil: **Pix via um PSP com webhook** (ex.: Asaas, Efí/Gerencianet, Mercado Pago, Pagar.me) — sem taxa de cartão e confirmação na hora. Gera um Pix (copia-e-cola/QR) por cobrança; quando o paciente paga, o PSP chama uma **edge function** que dá **baixa automática** na cobrança (idempotente + HMAC), casando pelo id de referência.

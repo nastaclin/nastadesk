@@ -1554,6 +1554,22 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">Comece em <strong>Homologação</strong> pra testar sem valer. Só mude pra Produção quando estiver tudo certo.</div>
           </div>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;margin:6px 0 16px"><input type="checkbox" id="fisc-iss-retido" style="width:auto"> ISS retido na fonte</label>
+
+          <div style="border-top:1px solid var(--cinza-claro);margin:8px 0 16px;padding-top:16px">
+            <div class="card-titulo" style="font-size:14px;margin-bottom:4px">Conexão com o Focus NFe (token da sua conta)</div>
+            <div class="card-sub" style="margin-bottom:14px">Crie sua conta grátis no <a href="https://focusnfe.com.br" target="_blank" rel="noopener">Focus NFe</a> e cole aqui o token. Ele fica guardado só na sua clínica (protegido). Comece pelo de <strong>homologação</strong> (teste, grátis).</div>
+            <div class="config-campo">
+              <label>Token de Homologação (teste)</label>
+              <input type="password" id="fisc-token-h" autocomplete="off" placeholder="cole o token de homologação">
+              <div id="fisc-token-h-hint" style="font-size:12px;color:var(--cinza-medio);margin-top:2px"></div>
+            </div>
+            <div class="config-campo">
+              <label>Token de Produção (nota válida)</label>
+              <input type="password" id="fisc-token-p" autocomplete="off" placeholder="cole o token de produção (quando for emitir de verdade)">
+              <div id="fisc-token-p-hint" style="font-size:12px;color:var(--cinza-medio);margin-top:2px"></div>
+            </div>
+          </div>
+
           <button class="btn btn-primario" onclick="salvarDadosFiscais()">Salvar dados fiscais</button>
         </div>
 
@@ -5012,6 +5028,11 @@ async function carregarDadosFiscais() {
   g('fisc-codtrib').value = data?.codigo_tributacao_municipio || '';
   g('fisc-ambiente').value = data?.ambiente || 'homologacao';
   g('fisc-iss-retido').checked = !!data?.iss_retido;
+  // Nunca ecoamos o token de volta ao navegador — só indicamos se já está salvo.
+  g('fisc-token-h').value = '';
+  g('fisc-token-p').value = '';
+  g('fisc-token-h-hint').innerHTML = data?.emissor_token_homologacao ? '✓ token salvo (deixe em branco para manter)' : 'ainda não configurado';
+  g('fisc-token-p-hint').innerHTML = data?.emissor_token_producao ? '✓ token salvo (deixe em branco para manter)' : 'ainda não configurado';
   renderStatusEmissor();
 }
 
@@ -5066,6 +5087,11 @@ async function salvarDadosFiscais() {
     iss_retido: g('fisc-iss-retido').checked,
     atualizado_em: new Date().toISOString(),
   };
+  // Só grava o token se a clínica digitou um novo (em branco = mantém o atual).
+  const tokH = g('fisc-token-h').value.trim();
+  const tokP = g('fisc-token-p').value.trim();
+  if (tokH) registro.emissor_token_homologacao = tokH;
+  if (tokP) registro.emissor_token_producao = tokP;
   const { error } = await db.from('config_fiscal').upsert(registro, { onConflict: 'clinica_id' });
   if (error) { toast('Erro ao salvar os dados fiscais'); return; }
   toast('Dados fiscais salvos ✓');
