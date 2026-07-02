@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
       p_data: String(body.p_data || body.data || ""),
       p_hora: String(body.p_hora || body.hora || ""),
       p_queixa: body.p_queixa ?? body.queixa ?? null,
+      p_cpf: body.p_cpf ?? body.cpf ?? null,
     });
     if (error) {
       console.error("AGENDAR: erro na RPC agendar_online:", error.message);

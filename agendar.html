@@ -121,6 +121,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
       <div class="erro-box" id="erro-agendar"></div>
       <div class="campo"><label>Nome completo</label><input type="text" id="ag-nome" placeholder="Ex: Maria da Silva" autocomplete="name"></div>
       <div class="campo"><label>WhatsApp (com DDD)</label><input type="tel" id="ag-wpp" placeholder="Ex: 11 99999-0000" autocomplete="tel" inputmode="tel"></div>
+      <div class="campo"><label>CPF (de quem vai ser atendido)</label><input type="text" id="ag-cpf" placeholder="000.000.000-00" inputmode="numeric" autocomplete="off" maxlength="14" oninput="mascararCPF(this)"></div>
       <div class="campo"><label>Motivo da consulta (opcional)</label><textarea id="ag-queixa" placeholder="Ex: Dor no joelho direito ao caminhar" maxlength="300"></textarea></div>
       <!-- Honeypot anti-bot: humanos não veem nem preenchem; se vier valor, é robô -->
       <div class="hp-oculto" aria-hidden="true"><label for="ag-site">Deixe este campo em branco</label><input type="text" id="ag-site" name="site" tabindex="-1" autocomplete="off"></div>
@@ -162,6 +163,28 @@ let horaSelecionada = null;
 function esc(s) {
   if (s === null || s === undefined) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Máscara e validação de CPF (dígitos verificadores) — evita cadastro com CPF errado
+function mascararCPF(input) {
+  const d = input.value.replace(/\D/g, '').slice(0, 11);
+  let out = d;
+  if (d.length > 9) out = `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+  else if (d.length > 6) out = `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  else if (d.length > 3) out = `${d.slice(0,3)}.${d.slice(3)}`;
+  input.value = out;
+}
+function cpfValido(cpf) {
+  const d = (cpf || '').replace(/\D/g, '');
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  let s = 0;
+  for (let i = 0; i < 9; i++) s += parseInt(d[i], 10) * (10 - i);
+  let r = 11 - (s % 11); if (r >= 10) r = 0;
+  if (r !== parseInt(d[9], 10)) return false;
+  s = 0;
+  for (let i = 0; i < 10; i++) s += parseInt(d[i], 10) * (11 - i);
+  r = 11 - (s % 11); if (r >= 10) r = 0;
+  return r === parseInt(d[10], 10);
 }
 
 async function rpc(fn, params) {
@@ -346,6 +369,8 @@ async function confirmarAgendamento() {
   if (nome.length < 3) { mostrarErro('Informe seu nome completo.'); return; }
   const digits = wpp.replace(/\D/g, '');
   if (digits.length < 10 || digits.length > 13) { mostrarErro('Informe um WhatsApp válido com DDD. Ex: 11 99999-0000'); return; }
+  const cpfDigits = document.getElementById('ag-cpf').value.replace(/\D/g, '');
+  if (!cpfValido(cpfDigits)) { mostrarErro('Informe um CPF válido — o da pessoa que vai ser atendida.'); return; }
 
   // hCaptcha: exige o token anti-robô antes de enviar
   const hToken = (window.hcaptcha && typeof hcaptcha.getResponse === 'function') ? hcaptcha.getResponse() : '';
@@ -359,7 +384,7 @@ async function confirmarAgendamento() {
   let resultado;
   try {
     resultado = await agendarPublico({
-      p_slug: slug, p_nome: nome, p_whatsapp: digits,
+      p_slug: slug, p_nome: nome, p_whatsapp: digits, p_cpf: cpfDigits,
       p_data: dataSelecionada, p_hora: horaSelecionada, p_queixa: queixa || null
     }, hToken);
   } catch(e) {

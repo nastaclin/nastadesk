@@ -106,8 +106,12 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 - **Agenda do dia** — consultas em tempo real, status, métricas, mini-calendário.
 - **Agendamentos** — grade semanal (desktop) e lista (mobile); remarcar/excluir.
 - **Agendamento online** — link público `/agendar/<slug>` para o paciente marcar
-  sozinho, com QR Code. Usa RPCs públicas (`clinica_publica`, `horarios_ocupados`,
-  `agendar_online`) que validam tudo no servidor.
+  sozinho, com QR Code. Coleta nome, WhatsApp e **CPF** (obrigatório, validado com
+  dígitos verificadores); passa pelo **hCaptcha** (edge function `agendar-publico`)
+  e usa RPCs públicas (`clinica_publica`, `horarios_ocupados`, `agendar_online`) que
+  validam tudo no servidor. O paciente é **casado por CPF** (evita duplicados) e a
+  clínica vê se é **novo ou recorrente** (etiqueta na agenda + alerta), com aviso de
+  **possível cadastro duplicado**.
 - **Salas / salões de atendimento** — organizar consultas por sala, além de
   data/horário.
 - **Lembretes WhatsApp** — mensagens prontas (confirmação, véspera, dia) com
@@ -227,6 +231,8 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-02** — **Agendamento online: CPF obrigatório + identifica paciente NOVO × recorrente + aviso de possível duplicado.**
+  A pedido do dono ("como saber se o cliente já é cadastrado ou novo?"). (1) **Campo CPF** (obrigatório, com máscara e **validação dos dígitos verificadores** no front E no banco) na `agendar.html`. (2) A RPC **`agendar_online`** passou a receber `p_cpf` e **casa o paciente por CPF** (identidade forte); se não achar por CPF, casa por WhatsApp **só se o cadastro não tiver CPF** (mesma pessoa antiga → **enriquece** o CPF, sem duplicar). Migration `20260702160000_agendar_cpf_novo_recorrente.sql` **aplicada em produção** (índice `pacientes(clinica_id,cpf)` + função `cpf_valido()` + nova versão da RPC). O **bot usa `bot_agendar`** — não afetado. (3) O **alerta de novo agendamento** agora diz **paciente NOVO** ou **já cadastrado (N consultas)** e marca **⚠️ possível cadastro duplicado** (mesmo nome, CPF/telefone diferente). (4) **Agenda do dia:** etiqueta **"1ª vez" / "recorrente"** ao lado do `online` (usa `pacientes.total_consultas`, mantido pelo trigger `on_consulta_stats`). (5) Edge function `agendar-publico` repassa o CPF (v2). **Validado:** teste da RPC em produção **com ROLLBACK** (CPF inválido rejeitado; novo/recorrente/duplicado corretos; **zero dado deixado**) + teste de navegador (máscara, honeypot, CPF inválido, gate do captcha e sucesso enviando CPF+token). *Obs.:* CPF é **obrigatório** no online — dá pra deixar opcional num único ponto se o dono quiser.
 - **2026-07-02** — **hCaptcha no agendamento público + deploy do front na `main` (Fase 0 concluída).**
   Fechou o último item aberto do anti-abuso. (1) Novo edge function **`agendar-publico`** (deployado, v1, `verify_jwt=false`): recebe o booking + o token do hCaptcha, **verifica o token no servidor** (secret em `admin_config.hcaptcha_secret`, **nunca no front**) e só então delega à RPC **`agendar_online`** (intocada — toda a validação de agenda/rate-limit continua nela). (2) `agendar.html` ganhou o **widget hCaptcha visível** (site key público) e passou a chamar a edge function em vez da RPC direto; **fail-closed** (sem token válido, não agenda). Registrado no `config.toml`. (3) **Validação:** curl no endpoint (token inválido/ausente → bloqueado sem agendar; GET → 405) + **teste de navegador** (Playwright) cobrindo honeypot, gate do captcha e caminho de sucesso, com a edge function **mockada** → zero agendamento real; zero erro de JS. (4) **Deploy:** front das features de 30/06–01/07 (Modalidades, Mensalidades, Multi-profissional, Repasse) + honeypot + hCaptcha **mergeado na `main`** (Vercel publica) a pedido do dono. *Opcional futuro:* rate-limit por IP (a edge function já enxerga o IP).
 - **2026-07-02** — **Fase 0 · Segurança: `cakto-webhook` fail-closed + honeypot no agendamento + PR de deploy do front.**
