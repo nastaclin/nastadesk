@@ -19,3 +19,7 @@ verify_jwt = true
 # Webhook de assinaturas da Cakto (sem JWT) — validado pelo secret no corpo (fail-closed)
 [functions.cakto-webhook]
 verify_jwt = false
+
+# Agendamento público com hCaptcha (sem JWT) — verifica o token anti-robô e delega à RPC
+[functions.agendar-publico]
+verify_jwt = false
