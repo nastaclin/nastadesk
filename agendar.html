@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -70,6 +71,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
 .rodape { text-align: center; font-size: 12px; color: var(--cinza-medio); padding-bottom: 30px; }
 .rodape a { color: var(--verde); text-decoration: none; font-weight: 500; }
 .oculto { display: none !important; }
+/* Honeypot anti-bot: fora da tela para humanos, mas presente no DOM para robôs */
+.hp-oculto { position: absolute !important; left: -9999px !important; top: auto; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.hcap-wrap { margin: 4px 0 14px; display: flex; justify-content: center; min-height: 78px; }
 </style>
 </head>
 <body>
@@ -118,6 +122,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(
       <div class="campo"><label>Nome completo</label><input type="text" id="ag-nome" placeholder="Ex: Maria da Silva" autocomplete="name"></div>
       <div class="campo"><label>WhatsApp (com DDD)</label><input type="tel" id="ag-wpp" placeholder="Ex: 11 99999-0000" autocomplete="tel" inputmode="tel"></div>
       <div class="campo"><label>Motivo da consulta (opcional)</label><textarea id="ag-queixa" placeholder="Ex: Dor no joelho direito ao caminhar" maxlength="300"></textarea></div>
+      <!-- Honeypot anti-bot: humanos não veem nem preenchem; se vier valor, é robô -->
+      <div class="hp-oculto" aria-hidden="true"><label for="ag-site">Deixe este campo em branco</label><input type="text" id="ag-site" name="site" tabindex="-1" autocomplete="off"></div>
+      <!-- Verificação anti-robô (hCaptcha) -->
+      <div class="hcap-wrap"><div class="h-captcha" data-sitekey="cde6c12e-9672-4db4-a0e2-02b4ef060b5a"></div></div>
       <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarAgendamento()">Confirmar agendamento</button>
     </div>
   </div>
@@ -163,6 +171,18 @@ async function rpc(fn, params) {
     body: JSON.stringify(params)
   });
   if (!res.ok) throw new Error(`RPC ${fn} falhou (${res.status})`);
+  return res.json();
+}
+
+// Agendamento passa por uma edge function que verifica o hCaptcha no servidor
+// antes de gravar (a validação de agenda continua toda na RPC agendar_online).
+async function agendarPublico(params, hcaptchaToken) {
+  const res = await fetch(`${SUPA_URL}/functions/v1/agendar-publico`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` },
+    body: JSON.stringify({ ...params, hcaptcha_token: hcaptchaToken })
+  });
+  if (!res.ok) throw new Error(`agendar-publico falhou (${res.status})`);
   return res.json();
 }
 
@@ -312,6 +332,13 @@ function selecionarHora(hora, el) {
 async function confirmarAgendamento() {
   const erro = document.getElementById('erro-agendar');
   erro.classList.remove('visivel');
+  // Honeypot: campo invisível preenchido = robô. Bloqueia sem tocar no banco.
+  const hp = document.getElementById('ag-site');
+  if (hp && hp.value.trim()) {
+    console.warn('Agendamento bloqueado (honeypot).');
+    mostrarErro('Não foi possível concluir o agendamento. Recarregue a página e tente novamente.');
+    return;
+  }
   const nome = document.getElementById('ag-nome').value.trim();
   const wpp = document.getElementById('ag-wpp').value.trim();
   const queixa = document.getElementById('ag-queixa').value.trim();
@@ -320,21 +347,30 @@ async function confirmarAgendamento() {
   const digits = wpp.replace(/\D/g, '');
   if (digits.length < 10 || digits.length > 13) { mostrarErro('Informe um WhatsApp válido com DDD. Ex: 11 99999-0000'); return; }
 
+  // hCaptcha: exige o token anti-robô antes de enviar
+  const hToken = (window.hcaptcha && typeof hcaptcha.getResponse === 'function') ? hcaptcha.getResponse() : '';
+  if (!hToken) {
+    mostrarErro('Confirme que você não é um robô marcando a caixa acima.');
+    return;
+  }
+
   const btn = document.getElementById('btn-confirmar');
   btn.disabled = true; btn.textContent = 'Agendando...';
   let resultado;
   try {
-    resultado = await rpc('agendar_online', {
+    resultado = await agendarPublico({
       p_slug: slug, p_nome: nome, p_whatsapp: digits,
       p_data: dataSelecionada, p_hora: horaSelecionada, p_queixa: queixa || null
-    });
+    }, hToken);
   } catch(e) {
     console.error(e);
     btn.disabled = false; btn.textContent = 'Confirmar agendamento';
+    if (window.hcaptcha) hcaptcha.reset();
     mostrarErro('Não foi possível concluir o agendamento. Verifique sua conexão e tente novamente.');
     return;
   }
   btn.disabled = false; btn.textContent = 'Confirmar agendamento';
+  if (window.hcaptcha) hcaptcha.reset();
   if (!resultado?.ok) {
     mostrarErro(resultado?.erro || 'Não foi possível agendar. Tente outro horário.');
     if ((resultado?.erro || '').includes('preenchido')) {

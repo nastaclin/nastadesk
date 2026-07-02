@@ -19,6 +19,24 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 const agora = () => new Date().toISOString();
 
+// Comparação de segredos em tempo constante (evita timing attack).
+// Usa "double HMAC" com chave aleatória: também não vaza o comprimento do segredo.
+async function segredoConfere(recebido: string, esperado: string): Promise<boolean> {
+  if (!esperado) return false; // fail-closed: sem segredo configurado, nada passa
+  try {
+    const chave = crypto.getRandomValues(new Uint8Array(32));
+    const k = await crypto.subtle.importKey("raw", chave, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const enc = new TextEncoder();
+    const a = new Uint8Array(await crypto.subtle.sign("HMAC", k, enc.encode(recebido)));
+    const b = new Uint8Array(await crypto.subtle.sign("HMAC", k, enc.encode(esperado)));
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+    return diff === 0;
+  } catch {
+    return false;
+  }
+}
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "*",
@@ -86,7 +104,9 @@ Deno.serve(async (req) => {
 
   const esperado = await segredoEsperado();
   const recebidoSecret = String(pick(body, ["secret", "data.secret"]) || req.headers.get("x-cakto-signature") || req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  const secretOk = !esperado || recebidoSecret === esperado;
+  // fail-closed: exige segredo configurado E idêntico (comparação em tempo constante)
+  const secretConfigurado = !!esperado;
+  const secretOk = await segredoConfere(recebidoSecret, esperado);
 
   const corta = /cancel|refund|reembols|charge|estorn/.test(evento) || /cancel|refund|charge/.test(subStatus);
   const atraso = !corta && /refus|recus|atras/.test(evento);
@@ -94,6 +114,10 @@ Deno.serve(async (req) => {
 
   await auditar({ ts: agora(), event: evento, email, valor, sub_id: subId ? String(subId) : null, secret_ok: secretOk, classe: corta ? "corta" : atraso ? "atraso" : libera ? "libera" : "nenhuma" });
 
+  if (!secretConfigurado) {
+    console.error("CAKTO: segredo do webhook NÃO configurado — recusando por segurança (fail-closed). Defina admin_config.cakto_webhook_secret ou a env CAKTO_WEBHOOK_SECRET.");
+    return new Response("webhook secret not configured", { status: 503, headers: cors });
+  }
   if (!secretOk) { console.warn("CAKTO: secret inválido"); return new Response("invalid secret", { status: 401, headers: cors }); }
   if (!body || !email) return new Response("ok", { headers: cors });
 
