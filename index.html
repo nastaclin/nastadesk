@@ -256,6 +256,9 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .origem-badge { font-size: 9px; font-weight: 700; letter-spacing: .04em; background: #E4EBFB; color: var(--azul); padding: 2px 6px; border-radius: 5px; text-transform: uppercase; flex-shrink: 0; }
 .novo-badge { font-size: 9px; font-weight: 700; letter-spacing: .04em; background: #DCF5E6; color: #0B6E4F; padding: 2px 6px; border-radius: 5px; text-transform: uppercase; flex-shrink: 0; margin-left: 4px; }
 .rec-badge { font-size: 9px; font-weight: 700; letter-spacing: .04em; background: #FFF2D9; color: #8A6100; padding: 2px 6px; border-radius: 5px; text-transform: uppercase; flex-shrink: 0; margin-left: 4px; }
+.senha-req { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 5px 12px; font-size: 12px; color: var(--cinza-medio); }
+.senha-req .req-item { white-space: nowrap; }
+.senha-req .req-item.ok { color: var(--verde-medio); font-weight: 600; }
 .status-pill { font-size: 11px; font-weight: 500; padding: 3px 10px 3px 8px; border-radius: 20px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
 .status-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .status-confirmado { background: var(--verde-claro); color: var(--verde); }
@@ -790,7 +793,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="auth-campo"><label>Seu nome (responsável)</label><input type="text" id="cad-nome" placeholder="Ex: Dr. Carlos Mendes"></div>
       <div class="auth-campo"><label>WhatsApp da clínica</label><input type="text" id="cad-wpp" placeholder="Ex: 11999990001"></div>
       <div class="auth-campo"><label>E-mail</label><input type="email" id="cad-email" placeholder="seu@email.com" autocomplete="email"></div>
-      <div class="auth-campo"><label>Senha</label><input type="password" id="cad-senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+      <div class="auth-campo"><label>Senha</label><input type="password" id="cad-senha" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="atualizarReqSenha()"><div class="senha-req" id="cad-senha-req"></div></div>
       <button class="auth-btn" id="cadastro-btn" onclick="fazerCadastro()">Criar minha conta</button>
       <div class="auth-troca">Já tem conta? <a onclick="alternarForm('login')">Entrar</a></div>
     </div>
@@ -1520,7 +1523,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       </div>
       <div class="card" style="padding:28px;max-width:580px">
         <div class="card-titulo" style="margin-bottom:20px">Alterar senha</div>
-        <div class="config-campo"><label>Nova senha</label><input type="password" id="perf-senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+        <div class="config-campo"><label>Nova senha</label><input type="password" id="perf-senha" placeholder="Mínimo 8 caracteres" autocomplete="new-password"></div>
         <div class="config-campo"><label>Confirmar nova senha</label><input type="password" id="perf-senha2" placeholder="Repita a senha" autocomplete="new-password"></div>
         <button class="btn btn-secundario" onclick="alterarSenha()">Alterar senha</button>
       </div>
@@ -1916,7 +1919,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 <div class="overlay" id="modal-recovery">
   <div class="modal" style="max-width:400px">
     <div class="modal-header"><div><div class="modal-titulo">Definir nova senha</div><div class="modal-sub">Você chegou aqui pelo link de recuperação</div></div></div>
-    <div class="config-campo"><label>Nova senha</label><input type="password" id="rec-senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+    <div class="config-campo"><label>Nova senha</label><input type="password" id="rec-senha" placeholder="Mínimo 8 caracteres" autocomplete="new-password"></div>
     <div class="config-campo"><label>Confirmar nova senha</label><input type="password" id="rec-senha2" placeholder="Repita a senha" autocomplete="new-password"></div>
     <div class="modal-acoes">
       <button class="btn btn-primario" onclick="salvarNovaSenhaRecovery()">Salvar nova senha</button>
@@ -2281,12 +2284,32 @@ async function esqueciSenha() {
 async function salvarNovaSenhaRecovery() {
   const s1 = document.getElementById('rec-senha').value;
   const s2 = document.getElementById('rec-senha2').value;
-  if (!s1 || s1.length < 6) { toast('A senha deve ter pelo menos 6 caracteres'); return; }
+  const errSenha = erroSenha(s1);
+  if (errSenha) { toast(errSenha); return; }
   if (s1 !== s2) { toast('As senhas não coincidem'); return; }
   const { error } = await db.auth.updateUser({ password: s1 });
   if (error) { toast('Erro ao salvar a senha. Tente novamente.'); return; }
   document.getElementById('modal-recovery').classList.remove('aberto');
   toast('Senha alterada com sucesso ✓');
+}
+
+// ===== Validação de senha forte (alinhada ao requisito do Supabase Auth:
+// minúscula + maiúscula + número + símbolo, mínimo 8) =====
+const SENHA_SIMBOLOS = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/;
+function senhaChecks(s) {
+  s = s || '';
+  return { tam: s.length >= 8, minu: /[a-z]/.test(s), maiu: /[A-Z]/.test(s), num: /[0-9]/.test(s), simb: SENHA_SIMBOLOS.test(s) };
+}
+function senhaForte(s) { const c = senhaChecks(s); return c.tam && c.minu && c.maiu && c.num && c.simb; }
+function erroSenha(s) {
+  return senhaForte(s) ? null : 'A senha precisa ter no mínimo 8 caracteres, com letra minúscula, MAIÚSCULA, número e símbolo (ex.: !@#$).';
+}
+function atualizarReqSenha() {
+  const el = document.getElementById('cad-senha-req');
+  if (!el) return;
+  const c = senhaChecks(document.getElementById('cad-senha').value);
+  const item = (ok, txt) => `<span class="req-item ${ok ? 'ok' : ''}">${ok ? '✓' : '○'} ${txt}</span>`;
+  el.innerHTML = item(c.tam, '8+ caracteres') + item(c.minu, 'minúscula') + item(c.maiu, 'maiúscula') + item(c.num, 'número') + item(c.simb, 'símbolo');
 }
 
 async function fazerCadastro() {
@@ -2300,6 +2323,8 @@ async function fazerCadastro() {
   const btn = document.getElementById('cadastro-btn');
   erro.classList.remove('visivel'); sucesso.classList.remove('visivel');
   if (!clinica || !nome || !email || !senha) { erro.textContent = 'Preencha todos os campos obrigatórios.'; erro.classList.add('visivel'); return; }
+  const errSenha = erroSenha(senha);
+  if (errSenha) { erro.textContent = errSenha; erro.classList.add('visivel'); document.getElementById('cad-senha').focus(); return; }
   btn.disabled = true; btn.textContent = 'Criando conta...';
   const { error } = await db.auth.signUp({
     email, password: senha,
@@ -4704,7 +4729,8 @@ async function salvarPerfil() {
 async function alterarSenha() {
   const s1 = document.getElementById('perf-senha').value;
   const s2 = document.getElementById('perf-senha2').value;
-  if (!s1 || s1.length < 6) { toast('A senha deve ter pelo menos 6 caracteres'); return; }
+  const errSenha = erroSenha(s1);
+  if (errSenha) { toast(errSenha); return; }
   if (s1 !== s2) { toast('As senhas não coincidem'); return; }
   const { error } = await db.auth.updateUser({ password: s1 });
   if (!error) {
