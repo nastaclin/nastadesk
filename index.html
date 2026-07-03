@@ -7,6 +7,14 @@
 <!-- build: import-export-deploy -->
 <meta name="description" content="Painel de gestão para clínicas de fisioterapia: agenda, pacientes, financeiro, lembretes de WhatsApp e agendamento online.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif' fill='white'>N</text></svg>">
+<!-- PWA: instalável no celular (Fase 2 — paridade de mercado) -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0B6E4F">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="NastaDesk">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -661,6 +669,12 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .toast { position: fixed; bottom: 28px; right: 28px; background: var(--cinza-escuro); color: white; padding: 13px 18px; border-radius: var(--raio-m); font-size: 13px; z-index: 700; transform: translateY(20px); opacity: 0; transition: all .3s; display: flex; align-items: center; gap: 10px; box-shadow: var(--sombra-alta); max-width: min(420px, calc(100vw - 32px)); }
 .toast.visivel { transform: translateY(0); opacity: 1; }
 .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: #7DEFC0; flex-shrink: 0; }
+
+/* PWA: botão flutuante "Instalar app" */
+.pwa-install-btn { position: fixed; bottom: 24px; left: 24px; z-index: 650; display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border: none; border-radius: 999px; background: var(--verde); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--sombra-alta); transition: transform .15s, background .15s; }
+.pwa-install-btn:hover { background: var(--verde-escuro); transform: translateY(-1px); }
+.pwa-install-btn svg { width: 17px; height: 17px; }
+@media (max-width: 720px) { .pwa-install-btn { bottom: 84px; left: 16px; padding: 10px 14px; font-size: 12px; } }
 
 /* ===== SEÇÕES / ESTADOS ===== */
 .sec { display: none; animation: fadeIn .22s ease; }
@@ -2046,6 +2060,12 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 </div>
 
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
+
+<!-- PWA: botão "Instalar app" (aparece só quando o navegador diz que é instalável) -->
+<button id="btn-instalar-pwa" class="pwa-install-btn" onclick="instalarPWA()" style="display:none">
+  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+  Instalar app
+</button>
 
 <!-- NAVBAR MOBILE -->
 <div class="mobile-nav" id="mobile-nav">
@@ -6079,6 +6099,35 @@ function tratarRetornoPagamento() {
     if (tentativas >= 6) clearInterval(timer);
   }, 5000);
 }
+
+// ===== PWA: instalar no celular / desktop =====
+let pwaDeferredPrompt = null;
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => { /* SW é opcional; nunca trava o app */ });
+  });
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Impede o mini-infobar padrão e guarda o evento para disparar no nosso botão
+  e.preventDefault();
+  pwaDeferredPrompt = e;
+  const btn = document.getElementById('btn-instalar-pwa');
+  if (btn) btn.style.display = 'inline-flex';
+});
+async function instalarPWA() {
+  const btn = document.getElementById('btn-instalar-pwa');
+  if (!pwaDeferredPrompt) { if (btn) btn.style.display = 'none'; return; }
+  pwaDeferredPrompt.prompt();
+  try { await pwaDeferredPrompt.userChoice; } catch (_) {}
+  pwaDeferredPrompt = null;
+  if (btn) btn.style.display = 'none';
+}
+window.addEventListener('appinstalled', () => {
+  pwaDeferredPrompt = null;
+  const btn = document.getElementById('btn-instalar-pwa');
+  if (btn) btn.style.display = 'none';
+  try { toast('App instalado ✓'); } catch (_) {}
+});
 
 init();
 </script>
