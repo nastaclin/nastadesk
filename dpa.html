@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acordo de Tratamento de Dados (DPA) — NastaDesk</title>
+<meta name="description" content="Acordo de Tratamento de Dados (DPA) — cláusulas de operador entre a Nastaclin e a clínica cliente do NastaDesk.">
+<meta name="robots" content="index, follow">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif' fill='white'>N</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --verde: #0B6E4F; --verde-escuro: #07523A; --verde-medio: #17A076; --verde-claro: #D6F2E6;
+  --verde-suave: #F1FAF6; --creme: #F8F7F3; --cinza-escuro: #1B221E;
+  --cinza-medio: #66706A; --cinza-claro: #E6E8E3;
+  --sombra: 0 1px 2px rgba(16,40,32,0.05), 0 8px 24px -14px rgba(16,40,32,0.14);
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cinza-escuro); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.6; }
+.topo { background: linear-gradient(165deg, var(--verde) 0%, var(--verde-escuro) 100%); padding: 34px 20px 70px; text-align: center; color: white; position: relative; overflow: hidden; }
+.topo::before { content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,255,255,0.06); top: -130px; right: -90px; }
+.topo-logo { font-family: 'DM Serif Display', serif; font-size: 16px; opacity: .75; margin-bottom: 12px; position: relative; }
+.topo-nome { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: -0.4px; position: relative; }
+.wrap { max-width: 760px; margin: -46px auto 0; padding: 0 16px 56px; position: relative; }
+.card { background: white; border-radius: 20px; border: 1px solid var(--cinza-claro); box-shadow: var(--sombra); padding: 30px 26px; }
+.doc h2 { font-family: 'DM Serif Display', serif; font-size: 25px; line-height: 1.25; margin: 0 0 6px; color: var(--cinza-escuro); }
+.doc h3 { font-size: 17px; font-weight: 700; margin: 26px 0 8px; color: var(--verde-escuro); }
+.doc p { margin: 0 0 12px; font-size: 15px; color: #303733; }
+.doc ul, .doc ol { margin: 0 0 12px; padding-left: 22px; }
+.doc li { font-size: 15px; margin-bottom: 6px; color: #303733; }
+.doc li > ul, .doc li > ol { margin-top: 6px; }
+.doc strong { color: var(--cinza-escuro); font-weight: 700; }
+.doc a { color: var(--verde); font-weight: 600; text-decoration: none; }
+.doc a:hover { text-decoration: underline; }
+.doc table { width: 100%; border-collapse: collapse; margin: 4px 0 16px; font-size: 14px; display: block; overflow-x: auto; }
+.doc th, .doc td { border: 1px solid var(--cinza-claro); padding: 9px 11px; text-align: left; vertical-align: top; }
+.doc th { background: var(--verde-suave); font-weight: 700; color: var(--verde-escuro); }
+.doc-topo-versao { font-size: 13px; color: var(--cinza-medio); margin-bottom: 4px; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--cinza-claro); }
+.doc-nav a, .doc-nav button { display: inline-block; padding: 10px 16px; border-radius: 11px; border: 1.5px solid var(--cinza-claro); background: white; color: var(--cinza-escuro); font-size: 14px; font-weight: 600; text-decoration: none; transition: all .15s; cursor: pointer; font-family: inherit; }
+.doc-nav a:hover, .doc-nav button:hover { background: var(--verde-suave); border-color: var(--verde-claro); }
+.doc-nav a.primaria { background: var(--verde); border-color: var(--verde); color: white; }
+.doc-nav a.primaria:hover { background: var(--verde-escuro); }
+.callout { background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 12px; padding: 14px 16px; margin: 4px 0 16px; font-size: 14px; color: #2C3531; }
+.rodape { text-align: center; font-size: 12px; color: var(--cinza-medio); padding: 26px 16px 34px; }
+.rodape a { color: var(--verde); text-decoration: none; font-weight: 500; }
+@media print {
+  .topo { background: none; color: #07523A; padding: 10px 0 14px; }
+  .topo::before { display: none; }
+  .wrap { margin: 0 auto; padding: 0; max-width: 100%; }
+  .card { box-shadow: none; border: none; border-radius: 0; padding: 0; }
+  .doc-nav, .no-print { display: none !important; }
+  .rodape { color: #66706A; }
+}
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <div class="topo-logo">NastaDesk · por Nastaclin</div>
+  <div class="topo-nome">Acordo de Tratamento de Dados (DPA)</div>
+</div>
+
+<div class="wrap">
+  <div class="card doc">
+<h2>Acordo de Tratamento de Dados Pessoais — DPA</h2>
+<p class="doc-topo-versao"><strong>Versão 1.0 — vigente a partir de 3 de julho de 2026.</strong></p>
+
+<p>Este <strong>Acordo de Tratamento de Dados Pessoais</strong> ("DPA", <em>Data Processing Agreement</em>) formaliza as <strong>cláusulas de operador</strong> aplicáveis ao uso do <strong>NastaDesk</strong> e integra os <a href="termos.html">Termos de Uso</a> e a <a href="privacidade.html">Política de Privacidade</a>. Nada aqui substitui esses documentos — eles se complementam, e em caso de conflito prevalece a redação mais protetiva ao titular dos dados.</p>
+
+<div class="callout">Este DPA já está <strong>incorporado aos Termos de Uso (seção 6)</strong> que a clínica aceita ao contratar o NastaDesk. Este documento reúne essas cláusulas em <strong>um instrumento separado</strong>, para leitura, impressão e registro de aceite específico pela clínica.</div>
+
+<h3>1. Partes</h3>
+<ul>
+  <li><strong>CONTROLADORA</strong> — a clínica cliente (pessoa jurídica ou profissional) que contrata e utiliza o NastaDesk. É quem decide sobre os dados dos seus pacientes e responde por eles perante os titulares e a ANPD ("<strong>CLÍNICA</strong>").</li>
+  <li><strong>OPERADORA</strong> — <strong>Eduardo Moraes do Nascimento</strong>, pessoa física, atuando sob a marca <strong>Nastaclin</strong>, estabelecido em Rio de Janeiro/RJ, que trata os dados dos pacientes <strong>em nome e por conta da CLÍNICA</strong>, seguindo suas instruções ("<strong>Nastaclin</strong>").</li>
+</ul>
+<p>Quanto aos <strong>dados da conta da CLÍNICA</strong> (cadastro, cobrança, login), a Nastaclin atua como <strong>controladora</strong> — esse tratamento é regido pela Política de Privacidade, não por este DPA.</p>
+
+<h3>2. Definições</h3>
+<p>Os termos "dado pessoal", "dado pessoal sensível", "titular", "controlador", "operador", "tratamento", "eliminação" e "ANPD" têm o significado da <strong>Lei nº 13.709/2018 (LGPD)</strong>. "Dados dos pacientes" são os dados pessoais tratados pela Nastaclin em nome da CLÍNICA por meio do NastaDesk.</p>
+
+<h3>3. Objeto, natureza e finalidade do tratamento</h3>
+<table>
+  <tr><th>Item</th><th>Descrição</th></tr>
+  <tr><td>Objeto</td><td>Tratamento de dados dos pacientes da CLÍNICA para a prestação do serviço de gestão de clínicas (SaaS).</td></tr>
+  <tr><td>Finalidade</td><td>Agenda, cadastro/ficha de pacientes, agendamento online, financeiro, lembretes e atendimento por WhatsApp (chatbot com IA), conforme o plano contratado.</td></tr>
+  <tr><td>Natureza das operações</td><td>Coleta, registro, armazenamento, organização, consulta, uso, comunicação a suboperadores, atualização, anonimização e eliminação.</td></tr>
+  <tr><td>Duração</td><td>Enquanto vigente a relação contratual, mais os prazos de retenção legais (seção 9).</td></tr>
+  <tr><td>Categorias de titulares</td><td>Pacientes da CLÍNICA (e eventuais responsáveis/contatos informados).</td></tr>
+  <tr><td>Categorias de dados</td><td>Identificação e contato (nome, CPF, WhatsApp, e-mail, endereço), dados de agenda e financeiros, e <strong>dados de saúde</strong> (queixa, anamnese, evoluções) — <strong>dado sensível, Art. 11 da LGPD</strong>.</td></tr>
+</table>
+
+<h3>4. Obrigações da Nastaclin (operadora)</h3>
+<p>A Nastaclin compromete-se a:</p>
+<ul>
+  <li>Tratar os dados dos pacientes <strong>somente conforme as instruções da CLÍNICA</strong> e para as finalidades acima — nunca para finalidades próprias. Se entender que uma instrução viola a LGPD, comunicará a CLÍNICA;</li>
+  <li>Não vender, compartilhar ou usar os dados dos pacientes para publicidade, treinamento de modelos de IA próprios ou qualquer finalidade estranha ao serviço;</li>
+  <li>Manter <strong>medidas de segurança</strong> técnicas e administrativas adequadas (seção 6);</li>
+  <li>Garantir que pessoas autorizadas a tratar os dados estejam sujeitas a <strong>dever de confidencialidade</strong>;</li>
+  <li>Apoiar a CLÍNICA no atendimento aos <strong>direitos dos titulares</strong> (Art. 18) e no cumprimento de suas obrigações (seção 7);</li>
+  <li>Utilizar suboperadores apenas conforme a seção 5;</li>
+  <li>Comunicar <strong>incidentes de segurança</strong> nos termos da seção 8;</li>
+  <li>Ao fim do contrato, <strong>devolver ou eliminar</strong> os dados conforme a seção 9;</li>
+  <li>Manter registros do tratamento e disponibilizar à CLÍNICA as informações necessárias para demonstrar conformidade (seção 10).</li>
+</ul>
+
+<h3>5. Suboperadores</h3>
+<p>A CLÍNICA <strong>autoriza</strong> a Nastaclin a utilizar suboperadores para viabilizar o serviço, cada um recebendo apenas o mínimo necessário e submetido a obrigações de proteção compatíveis com este DPA:</p>
+<table>
+  <tr><th>Suboperador</th><th>Finalidade</th></tr>
+  <tr><td>Supabase</td><td>Banco de dados, autenticação e funções de backend.</td></tr>
+  <tr><td>Vercel</td><td>Hospedagem da aplicação web.</td></tr>
+  <tr><td>Anthropic (Claude)</td><td>IA do chatbot de WhatsApp (interpretação das mensagens), restrita à finalidade de atendimento.</td></tr>
+  <tr><td>Evolution API</td><td>Integração de envio/recebimento de mensagens de WhatsApp.</td></tr>
+  <tr><td>Cakto</td><td>Processamento de assinaturas/pagamentos da CLÍNICA (dados da conta, não dos pacientes).</td></tr>
+  <tr><td>hCaptcha</td><td>Proteção antifraude/antirrobô do agendamento público.</td></tr>
+  <tr><td>Google</td><td>Serviços de apoio (ex.: e-mail de contato/suporte).</td></tr>
+</table>
+<p>A lista vigente de suboperadores é a publicada na <a href="privacidade.html">Política de Privacidade</a>. Havendo <strong>inclusão ou substituição</strong> relevante de suboperador, a Nastaclin atualizará a Política e, quando a mudança for significativa, avisará a CLÍNICA pelos canais cadastrados, que poderá se opor por motivo legítimo — hipótese em que as partes buscarão uma solução e, não sendo possível, a CLÍNICA poderá rescindir. A Nastaclin responde perante a CLÍNICA pelos atos dos suboperadores no que se refere a este DPA.</p>
+
+<h3>6. Segurança da informação</h3>
+<ul>
+  <li><strong>Isolamento por clínica (multi-tenant):</strong> cada clínica só enxerga os próprios dados, com <em>Row Level Security</em> ativo em todas as tabelas de dados;</li>
+  <li><strong>Criptografia em trânsito</strong> (HTTPS/TLS) e em repouso, conforme provido pela infraestrutura;</li>
+  <li><strong>Controle de acesso:</strong> autenticação por conta, requisitos de senha forte e <strong>verificação em duas etapas (2FA/TOTP)</strong> disponível para a CLÍNICA;</li>
+  <li><strong>Segredos</strong> (chaves de API) mantidos apenas no servidor, nunca expostos ao navegador;</li>
+  <li><strong>Registro de acessos (trilha de auditoria)</strong> das operações sobre fichas de pacientes;</li>
+  <li>Verificação de token no servidor e proteção antiabuso no agendamento público.</li>
+</ul>
+
+<h3>7. Direitos dos titulares e apoio à CLÍNICA</h3>
+<p>A CLÍNICA é a responsável primária por atender os titulares. Para isso, o NastaDesk oferece o <strong>Portal do titular</strong> na ficha do paciente: <strong>exportar</strong> os dados (acesso/portabilidade) e <strong>eliminar/anonimizar</strong> os dados pessoais mantendo apenas o esqueleto financeiro de-identificado. Se um titular procurar a Nastaclin diretamente, esta <strong>encaminhará</strong> a solicitação à CLÍNICA responsável, sem atendê-la por conta própria.</p>
+
+<h3>8. Incidentes de segurança</h3>
+<p>Ao tomar conhecimento de um incidente que possa acarretar risco relevante aos titulares, a Nastaclin comunicará a CLÍNICA <strong>sem demora injustificada</strong>, prestando as informações disponíveis (natureza, dados e titulares afetados, medidas adotadas). A comunicação à ANPD e aos titulares, quando cabível, é responsabilidade da CLÍNICA como controladora, com o apoio da Nastaclin.</p>
+
+<h3>9. Retenção, devolução e eliminação</h3>
+<ul>
+  <li>Durante o contrato, os dados são conservados para a prestação do serviço;</li>
+  <li><strong>Na rescisão</strong>, a Nastaclin manterá os dados disponíveis para <strong>exportação</strong> por, no mínimo, <strong>30 (trinta) dias</strong> mediante solicitação ao suporte; após esse período, poderá eliminá-los;</li>
+  <li>Determinados dados podem ser <strong>conservados</strong> quando houver obrigação legal/regulatória de guarda ou exercício regular de direitos (ex.: documentos fiscais). A CLÍNICA é responsável por exportar e guardar os prontuários pelos prazos das normas profissionais aplicáveis.</li>
+</ul>
+
+<h3>10. Auditoria e demonstração de conformidade</h3>
+<p>A Nastaclin disponibilizará à CLÍNICA, mediante solicitação razoável, as informações necessárias para demonstrar o cumprimento deste DPA. Por se tratar de serviço padronizado multi-tenant, auditorias serão atendidas preferencialmente por meio de <strong>documentação e respostas a questionários</strong>, preservando a segurança e a confidencialidade das demais clínicas.</p>
+
+<h3>11. Transferência internacional</h3>
+<p>Alguns suboperadores podem estar localizados no exterior. Nesses casos, a transferência observa as <strong>salvaguardas do Art. 33 da LGPD</strong>, restrita ao necessário para a prestação do serviço.</p>
+
+<h3>12. Responsabilidade, vigência e disposições gerais</h3>
+<ul>
+  <li>Cada parte responde por suas obrigações na medida de sua atuação (controladora/operadora), nos termos dos Arts. 42 a 45 da LGPD;</li>
+  <li>Este DPA vigora enquanto a Nastaclin tratar dados dos pacientes em nome da CLÍNICA e permanece regido pela lei brasileira, no foro eleito nos <a href="termos.html">Termos de Uso</a>;</li>
+  <li>Alterações relevantes seguirão o mesmo procedimento de atualização dos Termos e da Política, com aviso à CLÍNICA e novo número de versão.</li>
+</ul>
+
+<h3>13. Aceite</h3>
+<p>A CLÍNICA manifesta seu aceite a este DPA ao aceitar os <a href="termos.html">Termos de Uso</a> no cadastro e, adicionalmente, poderá registrar um <strong>aceite específico</strong> deste documento dentro do NastaDesk (em <strong>Minha Clínica → Privacidade e segurança</strong>), ficando o aceite gravado com data, hora e versão.</p>
+
+<h3>14. Contato e Encarregado (DPO)</h3>
+<ul>
+  <li><strong>Suporte e contato geral:</strong> <a href="mailto:nastaclincont@gmail.com">nastaclincont@gmail.com</a></li>
+  <li><strong>Encarregado pelo tratamento de dados (DPO):</strong> Eduardo Moraes do Nascimento — <a href="mailto:nastaclincont@gmail.com">nastaclincont@gmail.com</a></li>
+</ul>
+
+    <div class="doc-nav">
+      <button class="no-print" onclick="window.print()">Imprimir / Salvar em PDF</button>
+      <a href="termos.html">Ler os Termos de Uso →</a>
+      <a href="privacidade.html">Política de Privacidade →</a>
+      <a href="/" class="primaria">Voltar ao NastaDesk</a>
+    </div>
+  </div>
+  <div class="rodape">NastaDesk · uma ferramenta <a href="https://nastaclin.vercel.app" target="_blank" rel="noopener">Nastaclin</a></div>
+</div>
+
+</body>
+</html>

@@ -797,7 +797,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="auth-esqueci"><a onclick="esqueciSenha()">Esqueci minha senha</a></div>
       <button class="auth-btn" id="login-btn" onclick="fazerLogin()">Entrar</button>
       <div class="auth-troca">Não tem conta? <a onclick="alternarForm('cadastro')">Criar conta grátis</a></div>
-      <div class="auth-troca" style="margin-top:10px;font-size:12px"><a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> · <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></div>
+      <div class="auth-troca" style="margin-top:10px;font-size:12px"><a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> · <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a> · <a href="/dpa.html" target="_blank" rel="noopener">DPA</a></div>
     </div>
     <!-- CADASTRO -->
     <div class="auth-form-wrap" id="form-cadastro" style="display:none">
@@ -1548,6 +1548,45 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="config-campo"><label>Confirmar nova senha</label><input type="password" id="perf-senha2" placeholder="Repita a senha" autocomplete="new-password"></div>
         <button class="btn btn-secundario" onclick="alterarSenha()">Alterar senha</button>
       </div>
+
+      <!-- Privacidade e segurança (LGPD): 2FA + aceite do DPA -->
+      <div class="card" style="padding:28px;max-width:580px;margin-top:16px">
+        <div class="card-titulo" style="margin-bottom:16px">Privacidade e segurança</div>
+
+        <!-- Verificação em duas etapas (2FA / TOTP) -->
+        <div style="border:1px solid var(--cinza-claro);border-radius:12px;padding:16px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <div style="font-weight:700">Verificação em duas etapas (2FA)</div>
+              <div style="font-size:13px;color:var(--cinza-medio)">Camada extra de segurança: além da senha, um código do seu app autenticador (Google Authenticator, Authy, etc.).</div>
+            </div>
+            <div id="mfa-status" style="font-size:13px;color:var(--cinza-medio)">—</div>
+          </div>
+          <div id="mfa-setup" style="display:none;margin-top:14px;border-top:1px dashed var(--cinza-claro);padding-top:14px">
+            <div style="font-size:13px;color:var(--cinza-escuro);margin-bottom:8px"><strong>1.</strong> Escaneie o QR Code no seu app autenticador (ou digite a chave abaixo):</div>
+            <div id="mfa-qr" style="display:flex;justify-content:center;margin-bottom:8px"></div>
+            <div style="font-size:12px;color:var(--cinza-medio);text-align:center;margin-bottom:14px">Chave: <code id="mfa-secret" style="user-select:all;word-break:break-all"></code></div>
+            <div style="font-size:13px;color:var(--cinza-escuro);margin-bottom:6px"><strong>2.</strong> Digite o código de 6 dígitos que aparece no app:</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <input type="text" id="mfa-code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" style="flex:1;min-width:120px;letter-spacing:5px;text-align:center;font-size:16px">
+              <button class="btn btn-primario" onclick="confirmarMfa()">Ativar 2FA</button>
+              <button class="btn btn-secundario" onclick="cancelarMfa()">Cancelar</button>
+            </div>
+            <div id="mfa-setup-erro" style="font-size:13px;color:var(--vermelho);margin-top:8px;display:none"></div>
+          </div>
+        </div>
+
+        <!-- Acordo de Tratamento de Dados (DPA) -->
+        <div style="border:1px solid var(--cinza-claro);border-radius:12px;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <div style="font-weight:700">Acordo de Tratamento de Dados (DPA)</div>
+              <div style="font-size:13px;color:var(--cinza-medio)">Contrato de operador entre a sua clínica e a Nastaclin. <a href="dpa.html" target="_blank" rel="noopener" style="color:var(--verde);font-weight:600;text-decoration:none">Ler o DPA →</a></div>
+            </div>
+            <div id="dpa-status" style="font-size:13px;color:var(--cinza-medio);text-align:right">—</div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- PLANOS -->
@@ -1699,6 +1738,11 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
             Eliminar dados pessoais
           </button>
+        </div>
+        <div style="margin-top:14px;border-top:1px solid var(--cinza-claro);padding-top:12px">
+          <div style="font-size:12.5px;font-weight:700;color:var(--verde-escuro);margin-bottom:2px">Registro de acessos (LGPD)</div>
+          <div style="font-size:11.5px;color:var(--cinza-medio);margin-bottom:8px">Trilha de quando esta ficha foi aberta, editada, exportada ou teve dados eliminados.</div>
+          <div id="ficha-auditoria-lista" style="max-height:180px;overflow-y:auto"></div>
         </div>
       </div>
       <button class="btn btn-primario ficha-salvar" id="ficha-salvar-btn" onclick="salvarFicha()" style="width:100%;padding:12px">Salvar alterações</button>
@@ -1959,6 +2003,19 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="config-campo"><label>Confirmar nova senha</label><input type="password" id="rec-senha2" placeholder="Repita a senha" autocomplete="new-password"></div>
     <div class="modal-acoes">
       <button class="btn btn-primario" onclick="salvarNovaSenhaRecovery()">Salvar nova senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2FA NO LOGIN (verificação em duas etapas) -->
+<div class="overlay" id="modal-mfa-login">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><div><div class="modal-titulo">Verificação em duas etapas</div><div class="modal-sub">Digite o código de 6 dígitos do seu app autenticador</div></div></div>
+    <div class="config-campo"><input type="text" id="mfa-login-code" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" style="letter-spacing:6px;text-align:center;font-size:18px"></div>
+    <div id="mfa-login-erro" style="font-size:13px;color:var(--vermelho);margin-bottom:10px;display:none"></div>
+    <div class="modal-acoes" style="display:flex;gap:10px">
+      <button class="btn btn-secundario" style="flex:1" onclick="cancelarMfaLogin()">Cancelar</button>
+      <button class="btn btn-primario" id="mfa-login-btn" style="flex:1" onclick="verificarMfaLogin()">Verificar</button>
     </div>
   </div>
 </div>
@@ -2248,7 +2305,7 @@ async function init() {
   try {
     const { data: { session } } = await db.auth.getSession();
     if (session) {
-      await entrarNoApp(session.user);
+      await entrarComMfa(session.user);
     } else {
       ocultarSplash();
       document.getElementById('auth-wrap').style.display = 'flex';
@@ -2259,10 +2316,63 @@ async function init() {
     document.getElementById('auth-wrap').style.display = 'flex';
   }
   db.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session && !clinicaId) await entrarNoApp(session.user);
+    if (event === 'SIGNED_IN' && session && !clinicaId) await entrarComMfa(session.user);
     if (event === 'SIGNED_OUT') voltarParaLogin();
     if (event === 'PASSWORD_RECOVERY') document.getElementById('modal-recovery').classList.add('aberto');
   });
+}
+
+// Gate de 2FA: contas COM verificação em duas etapas ativa (aal2 exigido) passam
+// pelo desafio antes de entrar. Contas SEM 2FA nunca são afetadas — para elas
+// nextLevel === 'aal1' === currentLevel, então o fluxo segue normal.
+async function entrarComMfa(user) {
+  try {
+    if (db.auth && db.auth.mfa && db.auth.mfa.getAuthenticatorAssuranceLevel) {
+      const { data, error } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (!error && data && data.nextLevel === 'aal2' && data.currentLevel !== 'aal2') {
+        abrirModalMfaLogin();
+        ocultarSplash();
+        return;
+      }
+    }
+  } catch (e) { /* se a checagem falhar, não trava o login */ }
+  await entrarNoApp(user);
+}
+
+function abrirModalMfaLogin() {
+  document.getElementById('mfa-login-code').value = '';
+  const err = document.getElementById('mfa-login-erro'); if (err) err.style.display = 'none';
+  document.getElementById('auth-wrap').style.display = 'none';
+  document.getElementById('modal-mfa-login').classList.add('aberto');
+  setTimeout(() => { const el = document.getElementById('mfa-login-code'); if (el) el.focus(); }, 100);
+}
+async function verificarMfaLogin() {
+  const err = document.getElementById('mfa-login-erro');
+  const code = (document.getElementById('mfa-login-code').value || '').replace(/\D/g, '');
+  if (code.length !== 6) { err.textContent = 'Digite os 6 dígitos do app.'; err.style.display = 'block'; return; }
+  const btn = document.getElementById('mfa-login-btn');
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  try {
+    const { data: fdata } = await db.auth.mfa.listFactors();
+    const totp = ((fdata && fdata.totp) || []).find(f => f.status === 'verified');
+    if (!totp) { err.textContent = 'Nenhum método 2FA encontrado.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Verificar'; return; }
+    const { data: ch, error: che } = await db.auth.mfa.challenge({ factorId: totp.id });
+    if (che) { err.textContent = 'Não foi possível validar agora. Tente de novo.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Verificar'; return; }
+    const { error: ve } = await db.auth.mfa.verify({ factorId: totp.id, challengeId: ch.id, code });
+    if (ve) { err.textContent = 'Código incorreto ou expirado. Tente de novo.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Verificar'; return; }
+    document.getElementById('modal-mfa-login').classList.remove('aberto');
+    btn.disabled = false; btn.textContent = 'Verificar';
+    const { data: { user } } = await db.auth.getUser();
+    await entrarNoApp(user);
+  } catch (e) {
+    err.textContent = 'Erro ao verificar. Tente novamente.'; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Verificar';
+  }
+}
+async function cancelarMfaLogin() {
+  document.getElementById('modal-mfa-login').classList.remove('aberto');
+  try { await db.auth.signOut(); } catch (e) {}
+  document.getElementById('auth-wrap').style.display = 'flex';
 }
 
 async function entrarNoApp(user) {
@@ -3633,6 +3743,7 @@ async function exportarDadosPaciente() {
     a.href = url; a.download = nomeArq;
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
+    logAcesso(pid, 'exportou_dados');
     toast('Dados exportados ✓ (arquivo JSON baixado)');
   } catch (e) {
     console.error(e);
@@ -3653,11 +3764,51 @@ function anonimizarPaciente() {
     async () => {
       const { data, error } = await db.rpc('paciente_anonimizar', { p_paciente_id: pid });
       if (error || !data?.ok) { toast('Erro ao eliminar: ' + (error?.message || data?.erro || 'tente novamente')); return; }
+      logAcesso(pid, 'anonimizou_dados');
       fecharFicha();
       await carregarPacientes();
       toast('Dados pessoais eliminados ✓ (registro LGPD gravado)');
     }
   );
+}
+
+// ===== TRILHA DE AUDITORIA (LGPD) — registro de acesso/edição de fichas =====
+// Fire-and-forget: nunca bloqueia a navegação nem quebra se a rede falhar.
+function logAcesso(pacienteId, acao, detalhe) {
+  try {
+    const p = db.rpc('registrar_auditoria', {
+      p_paciente_id: pacienteId || null,
+      p_acao: acao,
+      p_detalhe: detalhe || null,
+      p_user_agent: (navigator.userAgent || '').slice(0, 200),
+    });
+    if (p && p.then) p.then(()=>{}, ()=>{});
+  } catch (e) { /* silencioso */ }
+}
+
+const AUDITORIA_ROTULOS = {
+  visualizou_ficha: 'Abriu a ficha',
+  editou_ficha: 'Editou os dados',
+  registrou_evolucao: 'Registrou evolução',
+  exportou_dados: 'Exportou os dados (LGPD)',
+  anonimizou_dados: 'Eliminou dados pessoais (LGPD)',
+};
+async function carregarAuditoriaFicha(pacienteId) {
+  const box = document.getElementById('ficha-auditoria-lista');
+  if (!box) return;
+  box.innerHTML = '<div style="font-size:12px;color:var(--cinza-medio)">Carregando…</div>';
+  const { data, error } = await db.from('auditoria')
+    .select('acao,detalhe,criado_em')
+    .eq('paciente_id', pacienteId)
+    .order('criado_em', { ascending: false })
+    .limit(30);
+  if (error) { box.innerHTML = '<div style="font-size:12px;color:var(--cinza-medio)">Não foi possível carregar o registro.</div>'; return; }
+  if (!data || !data.length) { box.innerHTML = '<div style="font-size:12px;color:var(--cinza-medio)">Sem registros de acesso ainda.</div>'; return; }
+  box.innerHTML = data.map(r => {
+    const dt = new Date(r.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const rot = AUDITORIA_ROTULOS[r.acao] || r.acao;
+    return `<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--cinza-claro);font-size:12.5px"><span>${rot}</span><span style="color:var(--cinza-medio);white-space:nowrap">${dt}</span></div>`;
+  }).join('');
 }
 
 // ===== FICHA DO PACIENTE =====
@@ -3707,6 +3858,8 @@ async function abrirFicha(pacienteId) {
 
   carregarConsultasFicha(pacienteId);
   carregarEvolucoes(pacienteId);
+  logAcesso(pacienteId, 'visualizou_ficha');
+  carregarAuditoriaFicha(pacienteId);
 }
 
 function atualizarBtnStatusFicha(status) {
@@ -3784,6 +3937,7 @@ async function salvarFicha() {
     document.getElementById('ficha-sub').textContent = payload.queixa_principal || 'Sem queixa registrada';
     Object.assign(pacienteAtual, payload);
     await carregarPacientes();
+    logAcesso(pacienteAtual.id, 'editou_ficha');
   } else {
     if (error.code === '23505' || `${error.message}`.includes('duplicate')) toast('Já existe outro paciente com esse CPF');
     else toast('Erro ao salvar. Tente novamente.');
@@ -3846,6 +4000,7 @@ async function salvarEvolucao() {
     document.getElementById('evolucao-nova-texto').value = '';
     toast('Evolução salva ✓');
     await carregarEvolucoes(pacienteAtual.id);
+    logAcesso(pacienteAtual.id, 'registrou_evolucao');
   } else {
     toast('Erro ao salvar evolução');
   }
@@ -4813,6 +4968,120 @@ async function carregarPerfil() {
   document.getElementById('perf-wpp').value = cl.whatsapp || '';
   document.getElementById('perf-endereco').value = cl.endereco || '';
   document.getElementById('perf-complemento').value = cl.endereco_complemento || '';
+  carregarStatusMfa();
+  carregarStatusDpa();
+}
+
+// ===== 2FA (TOTP) — verificação em duas etapas (opt-in, Supabase Auth nativo) =====
+let mfaEnrollId = null;
+function mfaSetErro(msg) {
+  const e = document.getElementById('mfa-setup-erro');
+  if (!e) return;
+  if (msg) { e.textContent = msg; e.style.display = 'block'; } else { e.style.display = 'none'; }
+}
+async function carregarStatusMfa() {
+  const box = document.getElementById('mfa-status');
+  if (!box || !(db.auth && db.auth.mfa)) return;
+  try {
+    const { data, error } = await db.auth.mfa.listFactors();
+    if (error) { box.textContent = 'Indisponível'; return; }
+    const ativos = ((data && data.totp) || []).filter(f => f.status === 'verified');
+    if (ativos.length) {
+      box.innerHTML = `<span style="color:var(--verde);font-weight:700">✓ Ativado</span> <button class="btn btn-secundario" style="padding:6px 12px;margin-left:8px" onclick="desativarMfa()">Desativar</button>`;
+      const s = document.getElementById('mfa-setup'); if (s) s.style.display = 'none';
+    } else {
+      box.innerHTML = `<button class="btn btn-secundario" style="padding:6px 12px" onclick="iniciarMfa()">Ativar</button>`;
+    }
+  } catch (e) { box.textContent = 'Indisponível'; }
+}
+async function iniciarMfa() {
+  mfaSetErro('');
+  try {
+    // Limpa fatores pendentes não verificados (evita erro de duplicidade ao reenrolar).
+    const { data: fl } = await db.auth.mfa.listFactors();
+    for (const f of ((fl && fl.all) || []).filter(x => x.status === 'unverified')) {
+      try { await db.auth.mfa.unenroll({ factorId: f.id }); } catch (e) {}
+    }
+    const { data, error } = await db.auth.mfa.enroll({ factorType: 'totp' });
+    if (error) { toast('Não foi possível iniciar o 2FA: ' + traduzirErro(error.message)); return; }
+    mfaEnrollId = data.id;
+    const qrBox = document.getElementById('mfa-qr');
+    const qr = data.totp && data.totp.qr_code;
+    if (qr && qr.trim().startsWith('<svg')) qrBox.innerHTML = qr;
+    else if (qr) qrBox.innerHTML = `<img alt="QR Code para 2FA" style="width:180px;height:180px" src="${qr}">`;
+    else qrBox.innerHTML = '';
+    document.getElementById('mfa-secret').textContent = (data.totp && data.totp.secret) || '';
+    document.getElementById('mfa-code').value = '';
+    document.getElementById('mfa-setup').style.display = 'block';
+  } catch (e) { toast('Erro ao iniciar o 2FA.'); }
+}
+async function confirmarMfa() {
+  mfaSetErro('');
+  const code = (document.getElementById('mfa-code').value || '').replace(/\D/g, '');
+  if (code.length !== 6) { mfaSetErro('Digite os 6 dígitos do app.'); return; }
+  if (!mfaEnrollId) { mfaSetErro('Recomece a ativação clicando em "Ativar".'); return; }
+  try {
+    const { data: ch, error: che } = await db.auth.mfa.challenge({ factorId: mfaEnrollId });
+    if (che) { mfaSetErro('Não foi possível validar agora. Tente de novo.'); return; }
+    const { error: ve } = await db.auth.mfa.verify({ factorId: mfaEnrollId, challengeId: ch.id, code });
+    if (ve) { mfaSetErro('Código incorreto ou expirado. Confira o app e tente de novo.'); return; }
+    mfaEnrollId = null;
+    toast('Verificação em duas etapas ativada ✓');
+    carregarStatusMfa();
+  } catch (e) { mfaSetErro('Erro ao ativar. Tente novamente.'); }
+}
+async function cancelarMfa() {
+  try { if (mfaEnrollId) await db.auth.mfa.unenroll({ factorId: mfaEnrollId }); } catch (e) {}
+  mfaEnrollId = null;
+  mfaSetErro('');
+  document.getElementById('mfa-setup').style.display = 'none';
+  carregarStatusMfa();
+}
+function desativarMfa() {
+  abrirModalConfirm(
+    'Desativar 2FA?',
+    'A verificação em duas etapas será removida da sua conta. Você voltará a entrar apenas com e-mail e senha.',
+    'Desativar 2FA',
+    async () => {
+      try {
+        const { data } = await db.auth.mfa.listFactors();
+        for (const f of ((data && data.all) || [])) { try { await db.auth.mfa.unenroll({ factorId: f.id }); } catch (e) {} }
+        toast('2FA desativado.');
+      } catch (e) { toast('Não foi possível desativar agora.'); }
+      carregarStatusMfa();
+    }
+  );
+}
+
+// ===== DPA (contrato de operador) — aceite específico da clínica =====
+async function carregarStatusDpa() {
+  const box = document.getElementById('dpa-status');
+  if (!box || !clinicaId) return;
+  try {
+    const { data, error } = await db.from('consentimentos')
+      .select('versao,criado_em').eq('contexto', 'dpa').eq('clinica_id', clinicaId)
+      .order('criado_em', { ascending: false }).limit(1);
+    if (error) { box.textContent = 'Indisponível'; return; }
+    if (data && data.length) {
+      const dt = new Date(data[0].criado_em).toLocaleDateString('pt-BR');
+      box.innerHTML = `<span style="color:var(--verde);font-weight:700">✓ Aceito</span><br><span style="color:var(--cinza-medio);font-size:12px">em ${dt}</span>`;
+    } else {
+      box.innerHTML = `<button class="btn btn-secundario" style="padding:6px 12px" onclick="aceitarDpa()">Registrar aceite</button>`;
+    }
+  } catch (e) { box.textContent = 'Indisponível'; }
+}
+function aceitarDpa() {
+  abrirModalConfirm(
+    'Registrar aceite do DPA',
+    'Ao confirmar, fica registrado (com data, hora e versão) que a sua clínica aceita o Acordo de Tratamento de Dados — as cláusulas de operador entre você e a Nastaclin. Recomendamos ler o DPA antes de aceitar.',
+    'Aceitar DPA',
+    async () => {
+      const { data, error } = await db.rpc('registrar_aceite_dpa', { p_versao: POLITICA_VERSAO });
+      if (error || !(data && data.ok)) { toast('Não foi possível registrar agora. Tente de novo.'); return; }
+      toast('Aceite do DPA registrado ✓');
+      carregarStatusDpa();
+    }
+  );
 }
 
 async function salvarPerfil() {
