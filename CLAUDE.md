@@ -231,6 +231,8 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-02** — **Senha forte no cadastro/alteração/recuperação (front) — alternativa grátis ao "leaked password" (que exige Pro).**
+  O "Prevent use of leaked passwords" do Supabase **só existe no plano Pro** (print do dono). No lugar, de graça: o dono ativou no Supabase Auth **Password requirements = minúscula + MAIÚSCULA + número + símbolo**, e o **front** (`nastadesk/index.html`) passou a **validar a força da senha** nos 3 fluxos — cadastro (`fazerCadastro`), alterar senha (`alterarSenha`) e recuperação (`salvarNovaSenhaRecovery`): mínimo **8** + as 4 classes, com **dica ao vivo** (✓/○, função `atualizarReqSenha`) no cadastro e mensagem clara quando falta algo (evita o erro genérico do servidor). Validado: `node --check` + teste de navegador (hint 1/5 × 5/5, bloqueia senha fraca **sem** chamar `signUp`, passa com senha forte; zero erro de JS). **Próxima entrega decidida pelo dono: Fase 1 (LGPD) em um chat dedicado.**
 - **2026-07-02** — **Fase 0 · Performance do banco: índices em FKs + RLS `(select auth.uid())` + limpeza de policies duplicadas.**
   Correções mecânicas de performance, **sem mudar comportamento**. (1) **Índices** nas FKs sem índice (migration `20260702180000_indices_fks.sql`): `consultas.paciente_id/pacote_id`, `conversas.paciente_id`, `evolucoes.clinica_id/consulta_id`, `ia_uso.conversa_id`, `lembretes.clinica_id`, `notas_fiscais.paciente_id`. (2) **RLS performático** (migration `20260702190000_rls_performance.sql`): ~21 policies reescritas de `auth.uid()` (reavaliado por linha) para `(select auth.uid())` (avaliado 1×) + escopo `TO authenticated` — **lógica idêntica**. (3) **Policies duplicadas**: removidas as 3 de DELETE redundantes (`pacientes`/`consultas`/`evolucoes`); a de `clinicas` (SELECT dono + admin) foi **mantida de propósito**. **Validado:** advisors `auth_rls_initplan` e `unindexed_foreign_keys` **zerados**; **teste funcional de isolamento com JWT simulado** — dono vê só o dele (5 pacientes / 10 consultas), usuário aleatório vê **0**. Tudo aplicado em produção numa transação (tudo-ou-nada). **Sobra da Fase 0:** só o **"Leaked Password Protection"** (1 clique no painel do Supabase — Auth → Policies; não dá pra fazer por código) e a remoção opcional do código morto do Mercado Pago.
 - **2026-07-02** — **Agendamento online: CPF obrigatório + identifica paciente NOVO × recorrente + aviso de possível duplicado.**
@@ -363,7 +365,7 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Correções mecânicas e seguras. **Fazer primeiro.** Não mudam comportamento visível.
 
-- [~] **"Leaked Password Protection"** — ⚠️ **EXIGE plano Pro do Supabase** (confirmado 2026-07-02 pelo dono: no free tier o painel retorna *"available on Pro Plans and up"*). **Adiado de propósito** — não vale pagar só por isso. **Alternativa grátis** (mesmo painel Auth → Providers → Email): **comprimento mínimo de senha = 8** + **Password requirements** (letras+números); opcional: checagem de senha fraca no front do cadastro.
+- [~] **"Leaked Password Protection"** — ⚠️ **EXIGE plano Pro do Supabase** (confirmado 2026-07-02 pelo print do dono: *"available on Pro Plans and up"*). **Adiado de propósito** — não vale pagar só por isso. **No lugar (grátis), FEITO 2026-07-02:** o dono ativou no painel **Password requirements = minúscula + MAIÚSCULA + número + símbolo**, e o **front passou a validar a força da senha** nos 3 fluxos (cadastro, alterar senha, recuperação) com **dica ao vivo** e aviso claro. Só o "leaked password" (HaveIBeenPwned) — que exige Pro — fica pendente.
 - [x] **Corrigir `cakto-webhook` (fail-open)** — FEITO 2026-07-02. Agora **fail-closed** (secret obrigatório; sem secret configurado → HTTP 503), **comparação em tempo constante** (double-HMAC com chave aleatória — não vaza nem o comprimento) e a função **registrada no `config.toml`** (`verify_jwt=false`). Re-deployada em produção (v4) e testada (secret errado → 401). *Obs.:* a Cakto usa **secret compartilhado no corpo** (`body.secret`), **não** HMAC-do-corpo — por isso validamos o secret em tempo constante em vez de uma assinatura HMAC.
 - [x] **Migration de performance RLS** — FEITO 2026-07-02 (`20260702190000_rls_performance.sql`). ~21 policies reescritas de `auth.uid()` → `(select auth.uid())` + `TO authenticated` (advisor `auth_rls_initplan` **zerado**). **Lógica idêntica**; **testado com JWT simulado**: dono da clínica vê só os dados dele (5 pac / 10 cons), usuário aleatório vê **zero**.
 - [x] **Remover policies permissivas duplicadas** — FEITO 2026-07-02. Removidas as **3 policies de DELETE redundantes** (`pacientes`, `consultas`, `evolucoes`) — a policy `ALL` já cobre DELETE com a mesma condição. Restou **1** `multiple_permissive` em `clinicas` (SELECT: `clinica_propria` + `admin_ve_todas_clinicas`), **mantida de propósito** (é o admin que vê todas as clínicas).
@@ -374,8 +376,12 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 ### 10.3 FASE 1 — Compliance / LGPD (semanas; destrava vendas)
 
 > **Mais grave.** Dados de saúde = dado sensível (Art. 11 LGPD). A página pública
-> `agendar.html` coleta nome + WhatsApp + "motivo da consulta" (queixa clínica)
+> `agendar.html` coleta nome + WhatsApp + CPF + "motivo da consulta" (queixa clínica)
 > **sem aviso nem consentimento**.
+>
+> ▶️ **DECISÃO (2026-07-02):** o dono vai tocar a **Fase 1 (LGPD) em um chat dedicado.**
+> Começar por: aviso de privacidade + termos + **consentimento com registro** (checkbox
+> obrigatório no cadastro e no agendamento público, gravando data/hora/versão do termo).
 
 - [ ] **Aviso de privacidade + termos de uso** — criar as páginas e linkar no cadastro do app e no formulário público de agendamento.
 - [ ] **Consentimento com registro** — checkbox obrigatório no cadastro e no agendamento; gravar data/hora/versão do termo aceito (nova tabela `consentimentos`).
