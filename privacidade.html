@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidade — NastaDesk</title>
+<meta name="description" content="Como o NastaDesk coleta, usa e protege dados pessoais, em conformidade com a LGPD.">
+<meta name="robots" content="index, follow">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif' fill='white'>N</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --verde: #0B6E4F; --verde-escuro: #07523A; --verde-medio: #17A076; --verde-claro: #D6F2E6;
+  --verde-suave: #F1FAF6; --creme: #F8F7F3; --cinza-escuro: #1B221E;
+  --cinza-medio: #66706A; --cinza-claro: #E6E8E3;
+  --sombra: 0 1px 2px rgba(16,40,32,0.05), 0 8px 24px -14px rgba(16,40,32,0.14);
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cinza-escuro); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.6; }
+.topo { background: linear-gradient(165deg, var(--verde) 0%, var(--verde-escuro) 100%); padding: 34px 20px 70px; text-align: center; color: white; position: relative; overflow: hidden; }
+.topo::before { content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,255,255,0.06); top: -130px; right: -90px; }
+.topo-logo { font-family: 'DM Serif Display', serif; font-size: 16px; opacity: .75; margin-bottom: 12px; position: relative; }
+.topo-nome { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: -0.4px; position: relative; }
+.wrap { max-width: 760px; margin: -46px auto 0; padding: 0 16px 56px; position: relative; }
+.card { background: white; border-radius: 20px; border: 1px solid var(--cinza-claro); box-shadow: var(--sombra); padding: 30px 26px; }
+.doc h2 { font-family: 'DM Serif Display', serif; font-size: 25px; line-height: 1.25; margin: 0 0 6px; color: var(--cinza-escuro); }
+.doc h3 { font-size: 17px; font-weight: 700; margin: 26px 0 8px; color: var(--verde-escuro); }
+.doc p { margin: 0 0 12px; font-size: 15px; color: #303733; }
+.doc ul, .doc ol { margin: 0 0 12px; padding-left: 22px; }
+.doc li { font-size: 15px; margin-bottom: 6px; color: #303733; }
+.doc li > ul, .doc li > ol { margin-top: 6px; }
+.doc strong { color: var(--cinza-escuro); font-weight: 700; }
+.doc a { color: var(--verde); font-weight: 600; text-decoration: none; }
+.doc a:hover { text-decoration: underline; }
+.doc table { width: 100%; border-collapse: collapse; margin: 4px 0 16px; font-size: 14px; display: block; overflow-x: auto; }
+.doc th, .doc td { border: 1px solid var(--cinza-claro); padding: 9px 11px; text-align: left; vertical-align: top; }
+.doc th { background: var(--verde-suave); font-weight: 700; color: var(--verde-escuro); }
+.doc-topo-versao { font-size: 13px; color: var(--cinza-medio); margin-bottom: 4px; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--cinza-claro); }
+.doc-nav a { display: inline-block; padding: 10px 16px; border-radius: 11px; border: 1.5px solid var(--cinza-claro); background: white; color: var(--cinza-escuro); font-size: 14px; font-weight: 600; text-decoration: none; transition: all .15s; }
+.doc-nav a:hover { background: var(--verde-suave); border-color: var(--verde-claro); }
+.doc-nav a.primaria { background: var(--verde); border-color: var(--verde); color: white; }
+.doc-nav a.primaria:hover { background: var(--verde-escuro); }
+.rodape { text-align: center; font-size: 12px; color: var(--cinza-medio); padding: 26px 16px 34px; }
+.rodape a { color: var(--verde); text-decoration: none; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <div class="topo-logo">NastaDesk · por Nastaclin</div>
+  <div class="topo-nome">Política de Privacidade</div>
+</div>
+
+<div class="wrap">
+  <div class="card doc">
+<h2>Política de Privacidade — NastaDesk</h2>
+<p class="doc-topo-versao"><strong>Versão 1.0 — vigente a partir de 3 de julho de 2026.</strong></p>
+
+<h3>1. Introdução e a quem esta Política se aplica</h3>
+<p>Esta Política de Privacidade explica, de forma transparente, como o <strong>NastaDesk</strong> — software de gestão para clínicas desenvolvido e operado por <strong>Eduardo Moraes do Nascimento</strong>, pessoa física, sob a marca <strong>Nastaclin</strong>, estabelecido em Rio de Janeiro/RJ — coleta, usa, armazena, compartilha e protege dados pessoais, em conformidade com a <strong>Lei Geral de Proteção de Dados Pessoais — LGPD (Lei nº 13.709/2018)</strong> e com o Marco Civil da Internet (Lei nº 12.965/2014).</p>
+<p>Esta Política se aplica a:</p>
+<ul>
+  <li><strong>Clínicas clientes</strong> que contratam e utilizam o NastaDesk (e as pessoas que as representam);</li>
+  <li><strong>Pacientes</strong> das clínicas clientes, cujos dados são registrados no NastaDesk pela clínica ou por eles próprios, por meio da página pública de agendamento online;</li>
+  <li><strong>Visitantes</strong> das páginas do NastaDesk, incluindo a página pública de agendamento.</li>
+</ul>
+<p>Se você é <strong>paciente</strong> de uma clínica que usa o NastaDesk, leia com atenção a seção 3: quem decide como seus dados são usados é a <strong>sua clínica</strong> (controladora), e a Nastaclin atua como <strong>operadora</strong>, tratando seus dados exclusivamente por conta e ordem dela.</p>
+
+<h3>2. Definições importantes</h3>
+<ul>
+  <li><strong>Dado pessoal:</strong> qualquer informação relacionada a uma pessoa natural identificada ou identificável (ex.: nome, CPF, telefone, e-mail).</li>
+  <li><strong>Dado pessoal sensível:</strong> categoria especial de dado pessoal que exige proteção reforçada, incluindo <strong>dados referentes à saúde</strong> (Art. 5º, II, e Art. 11 da LGPD) — ex.: motivo da consulta, histórico clínico, evoluções de atendimento.</li>
+  <li><strong>Titular:</strong> a pessoa natural a quem os dados pessoais se referem (ex.: o paciente, o responsável pela clínica).</li>
+  <li><strong>Tratamento:</strong> toda operação realizada com dados pessoais — coleta, registro, armazenamento, uso, compartilhamento, eliminação, entre outras.</li>
+  <li><strong>Controlador:</strong> quem toma as decisões sobre o tratamento dos dados pessoais (o que coletar, para quê, por quanto tempo).</li>
+  <li><strong>Operador:</strong> quem realiza o tratamento de dados pessoais em nome e conforme as instruções do controlador.</li>
+  <li><strong>Encarregado (DPO):</strong> pessoa indicada para atuar como canal de comunicação entre a organização, os titulares e a Autoridade Nacional de Proteção de Dados (ANPD).</li>
+  <li><strong>ANPD:</strong> Autoridade Nacional de Proteção de Dados, órgão responsável por fiscalizar o cumprimento da LGPD no Brasil.</li>
+</ul>
+
+<h3>3. Quem somos e quais são os papéis de cada um (LGPD)</h3>
+<p>O NastaDesk é um sistema <em>multi-tenant</em>: cada clínica cliente possui seu próprio ambiente, com dados isolados dos das demais clínicas. Na cadeia de tratamento de dados, os papéis são os seguintes:</p>
+<ul>
+  <li><strong>A clínica cliente é a CONTROLADORA dos dados dos seus pacientes.</strong> É a clínica quem decide quais dados coletar de seus pacientes, com que finalidade e por quanto tempo mantê-los. A clínica é responsável por informar seus pacientes, obter os consentimentos necessários (especialmente para dados de saúde) e utilizar os dados de forma lícita, além de observar o sigilo profissional aplicável à sua atividade.</li>
+  <li><strong>A Nastaclin é a OPERADORA dos dados dos pacientes.</strong> Tratamos os dados dos pacientes exclusivamente por conta e ordem da clínica controladora, para viabilizar o funcionamento do NastaDesk (agenda, prontuário, financeiro, lembretes, chatbot). Não usamos os dados de pacientes para fins próprios, não os vendemos e não os utilizamos para publicidade.</li>
+  <li><strong>A Nastaclin é a CONTROLADORA dos dados de cadastro da própria clínica.</strong> Em relação aos dados da conta da clínica (nome da clínica, nome do responsável, e-mail, WhatsApp, dados de assinatura e faturamento, dados de uso do sistema), a Nastaclin decide as finalidades do tratamento — por exemplo, prestar o serviço, cobrar a assinatura e dar suporte — e responde como controladora.</li>
+  <li><strong>O paciente é o TITULAR</strong> dos seus dados pessoais, inclusive dos dados de saúde, e possui os direitos descritos na seção 12.</li>
+</ul>
+
+<h3>4. Quais dados pessoais coletamos</h3>
+
+<h3>4.1. Dados da conta da clínica (Nastaclin como controladora)</h3>
+<ul>
+  <li>Nome da clínica e nome do responsável;</li>
+  <li>E-mail e número de WhatsApp de contato;</li>
+  <li>Senha de acesso (armazenada exclusivamente na forma de <em>hash</em> criptográfico — nunca em texto legível, nem mesmo para a Nastaclin);</li>
+  <li>Dados de faturamento e assinatura (plano contratado, status de pagamento), processados pela plataforma de pagamentos <strong>Cakto</strong>;</li>
+  <li>Dados de uso do sistema (registros técnicos de acesso e utilização, para segurança, suporte e melhoria do serviço).</li>
+</ul>
+
+<h3>4.2. Dados dos pacientes (Nastaclin como operadora; clínica como controladora)</h3>
+<p>Inseridos pela clínica no sistema ou fornecidos pelo próprio paciente no agendamento online:</p>
+<ul>
+  <li><strong>Dados cadastrais:</strong> nome, CPF, WhatsApp, e-mail, data de nascimento, endereço, gênero, profissão e convênio;</li>
+  <li><strong>Dados de saúde (dados pessoais SENSÍVEIS — Art. 11 da LGPD):</strong> motivo/queixa da consulta, histórico médico, medicamentos em uso, alergias, evoluções clínicas e registros de consultas/atendimentos.</li>
+</ul>
+
+<h3>4.3. Agendamento online (página pública)</h3>
+<p>Na página pública de agendamento (acessível sem login), coletamos do paciente:</p>
+<ul>
+  <li>Nome, número de WhatsApp e CPF (o CPF é usado para identificar corretamente o paciente e evitar cadastros duplicados);</li>
+  <li>Motivo da consulta (dado de saúde — sensível);</li>
+  <li><strong>Registro do consentimento:</strong> data, hora, versão do termo aceito e <strong>endereço IP</strong>, como prova do aceite;</li>
+  <li>Dados da verificação anti-robô (<strong>hCaptcha</strong>), utilizada exclusivamente para impedir abusos e agendamentos automatizados fraudulentos.</li>
+</ul>
+
+<h3>4.4. Conversas de WhatsApp e inteligência artificial</h3>
+<p>Quando a clínica utiliza a integração de WhatsApp do NastaDesk, as mensagens trocadas entre o paciente e o número da clínica são processadas pelo sistema para viabilizar o atendimento (menus automáticos, agendamento, confirmação e lembretes). Nos planos <strong>Profissional</strong> e <strong>Premium</strong>, mensagens de texto livre podem ser processadas por um serviço de <strong>inteligência artificial (Anthropic — modelo Claude)</strong> para interpretar a intenção do paciente e responder dúvidas com base nas informações fornecidas pela clínica. Esse processamento serve exclusivamente ao atendimento do paciente pela clínica; <strong>os dados não são utilizados para treinar modelos de IA para outros fins pela Nastaclin</strong>.</p>
+
+<h3>4.5. Dados técnicos, cookies e registros</h3>
+<ul>
+  <li>Registros de acesso (endereço IP, data e hora), mantidos conforme o Marco Civil da Internet;</li>
+  <li>Informações técnicas do dispositivo/navegador estritamente necessárias ao funcionamento e à segurança do serviço;</li>
+  <li>Cookies e armazenamento local, em uso mínimo (ver seção 9).</li>
+</ul>
+
+<h3>5. Para que usamos os dados (finalidades)</h3>
+<ul>
+  <li><strong>Prestar o serviço contratado:</strong> manter agenda, cadastro de pacientes, prontuário/evoluções, financeiro, relatórios e lembretes da clínica;</li>
+  <li><strong>Viabilizar o agendamento online:</strong> registrar a solicitação do paciente e apresentá-la à clínica, identificando pacientes novos e recorrentes pelo CPF, para evitar duplicidades;</li>
+  <li><strong>Atendimento por WhatsApp:</strong> enviar e receber mensagens em nome da clínica (lembretes, confirmações, chatbot), inclusive com apoio de IA nos planos que a incluem;</li>
+  <li><strong>Gerenciar a conta e a assinatura da clínica:</strong> autenticação, cobrança recorrente, suporte, comunicações sobre o serviço (avisos de manutenção, mudanças de funcionalidades, cobrança);</li>
+  <li><strong>Segurança e prevenção a fraudes e abusos:</strong> autenticação, verificação anti-robô, registros de acesso, isolamento de dados entre clínicas;</li>
+  <li><strong>Cumprir obrigações legais e regulatórias</strong> (fiscais, contábeis, de guarda de registros) e <strong>exercer regularmente direitos</strong> em processos administrativos, judiciais ou arbitrais;</li>
+  <li><strong>Melhorar o serviço</strong>, a partir de dados de uso agregados e, sempre que possível, anonimizados.</li>
+</ul>
+<p><strong>O que NÃO fazemos:</strong> não vendemos dados pessoais; não usamos dados de pacientes para publicidade; não compartilhamos dados de uma clínica com outra.</p>
+
+<h3>6. Bases legais do tratamento</h3>
+<p>Tratamos dados pessoais com fundamento nas seguintes bases legais da LGPD:</p>
+<ul>
+  <li><strong>Dados de saúde dos pacientes (dados sensíveis — Art. 11):</strong>
+    <ul>
+      <li><strong>Consentimento específico e destacado do titular</strong> (Art. 11, I) — por exemplo, o aceite registrado no agendamento online; e/ou</li>
+      <li><strong>Tutela da saúde</strong>, em procedimento realizado por profissionais de saúde ou serviços de saúde (Art. 11, II, "a") — base aplicável ao registro e à condução do atendimento pela clínica.</li>
+    </ul>
+  </li>
+  <li><strong>Dados cadastrais dos pacientes (dados comuns — Art. 7º):</strong> execução de contrato ou de procedimentos preliminares (Art. 7º, V — ex.: agendar e realizar o atendimento), consentimento (Art. 7º, I) e legítimo interesse da clínica (Art. 7º, IX — ex.: lembretes de consulta), conforme definido pela clínica controladora.</li>
+  <li><strong>Dados da conta da clínica:</strong> execução do contrato de assinatura (Art. 7º, V), cumprimento de obrigação legal ou regulatória (Art. 7º, II — ex.: guarda de documentos fiscais), exercício regular de direitos (Art. 7º, VI) e legítimo interesse (Art. 7º, IX — ex.: segurança do serviço e comunicações operacionais).</li>
+</ul>
+<p><strong>Importante:</strong> cabe à <strong>clínica controladora</strong> obter o consentimento dos seus pacientes quando essa for a base legal adotada, bem como informá-los adequadamente sobre o tratamento. O NastaDesk oferece os mecanismos técnicos para registrar esse consentimento (ex.: aceite no agendamento online, com data, hora, versão do termo e IP).</p>
+
+<h3>7. Com quem compartilhamos dados (operadores e suboperadores)</h3>
+<p>Para funcionar, o NastaDesk utiliza provedores de tecnologia cuidadosamente selecionados, que atuam como operadores/suboperadores e recebem <strong>apenas o mínimo necessário</strong> para cumprir sua função:</p>
+<table>
+  <tr>
+    <th>Provedor</th>
+    <th>Finalidade</th>
+  </tr>
+  <tr>
+    <td><strong>Supabase</strong></td>
+    <td>Infraestrutura de banco de dados e autenticação (hospedagem e armazenamento seguro dos dados do sistema).</td>
+  </tr>
+  <tr>
+    <td><strong>Vercel</strong></td>
+    <td>Hospedagem da aplicação web (interface que a clínica e o paciente acessam no navegador).</td>
+  </tr>
+  <tr>
+    <td><strong>Anthropic (Claude)</strong></td>
+    <td>Processamento por inteligência artificial das mensagens do chatbot de WhatsApp, exclusivamente nos planos Profissional e Premium, para interpretar e responder mensagens do paciente.</td>
+  </tr>
+  <tr>
+    <td><strong>Evolution API</strong></td>
+    <td>Integração técnica de envio e recebimento de mensagens de WhatsApp da clínica.</td>
+  </tr>
+  <tr>
+    <td><strong>Cakto</strong></td>
+    <td>Processamento de pagamentos e gestão da assinatura da clínica (dados de cobrança da clínica; não recebe dados de pacientes).</td>
+  </tr>
+  <tr>
+    <td><strong>hCaptcha (Intuition Machines)</strong></td>
+    <td>Verificação anti-robô na página pública de agendamento, para prevenir abusos e agendamentos automatizados.</td>
+  </tr>
+  <tr>
+    <td><strong>Google</strong></td>
+    <td>Geração opcional de link "adicionar ao Google Agenda" — dados são enviados ao Google somente se o próprio paciente clicar no link.</td>
+  </tr>
+</table>
+<p>Além desses provedores, dados pessoais podem ser compartilhados: (i) com <strong>autoridades públicas</strong>, mediante obrigação legal, regulatória ou ordem judicial; e (ii) para o <strong>exercício regular de direitos</strong> da Nastaclin ou da clínica em processos administrativos, judiciais ou arbitrais.</p>
+
+<h3>8. Transferência internacional de dados</h3>
+<p>Alguns dos provedores listados na seção 7 podem armazenar ou processar dados <strong>fora do Brasil</strong>. Nesses casos, a transferência internacional é realizada em conformidade com o <strong>Art. 33 da LGPD</strong>, adotando-se salvaguardas adequadas, tais como: contratação de provedores que ofereçam grau de proteção de dados compatível com a LGPD, cláusulas contratuais de proteção de dados, criptografia em trânsito e compartilhamento restrito ao mínimo necessário para cada finalidade.</p>
+
+<h3>9. Cookies e tecnologias semelhantes</h3>
+<p>O NastaDesk faz <strong>uso mínimo</strong> de cookies e tecnologias de armazenamento local, limitado a finalidades <strong>essenciais</strong>:</p>
+<ul>
+  <li><strong>Sessão e autenticação:</strong> manter a clínica conectada com segurança à sua conta;</li>
+  <li><strong>Segurança:</strong> funcionamento da verificação anti-robô (hCaptcha) na página pública de agendamento.</li>
+</ul>
+<p><strong>Não utilizamos</strong> cookies de publicidade nem de rastreamento para fins de marketing. Como esses cookies são estritamente necessários ao funcionamento do serviço, o seu bloqueio pelo navegador pode impedir o uso do sistema.</p>
+
+<h3>10. Segurança da informação</h3>
+<p>Adotamos medidas técnicas e organizacionais para proteger os dados pessoais, incluindo:</p>
+<ul>
+  <li><strong>Isolamento multi-tenant</strong> por <em>Row Level Security</em> no banco de dados: cada clínica só acessa os próprios dados, com a separação garantida na camada do banco;</li>
+  <li><strong>Criptografia em trânsito</strong> (HTTPS/TLS) em todas as comunicações;</li>
+  <li><strong>Senhas armazenadas com hash criptográfico</strong> (nunca em texto legível) e <strong>requisitos de senha forte</strong>;</li>
+  <li><strong>Controle de acesso por autenticação</strong> em todas as áreas restritas;</li>
+  <li><strong>Verificação anti-robô</strong> (hCaptcha) e limites de uso na página pública de agendamento;</li>
+  <li>Segredos e chaves de integração mantidos em ambiente seguro de servidor, nunca expostos no navegador.</li>
+</ul>
+<p>Nenhum sistema é 100% imune a incidentes. Caso ocorra um incidente de segurança com risco ou dano relevante aos titulares, a Nastaclin adotará as providências previstas na LGPD, incluindo a comunicação às clínicas controladoras afetadas e, quando cabível, à ANPD e aos titulares.</p>
+
+<h3>11. Por quanto tempo guardamos os dados (retenção e eliminação)</h3>
+<ul>
+  <li><strong>Durante a relação ativa:</strong> os dados são mantidos enquanto a conta da clínica estiver ativa e o tratamento for necessário às finalidades desta Política;</li>
+  <li><strong>Registros de saúde/prontuário:</strong> por serem registros assistenciais, seguem os <strong>prazos prolongados de guarda</strong> exigidos pelas normas dos conselhos profissionais de saúde aplicáveis à clínica (a guarda de prontuário pode alcançar prazos de até 20 anos, conforme a norma aplicável) — a definição do prazo cabe à clínica controladora;</li>
+  <li><strong>Documentos fiscais e financeiros:</strong> pelo prazo legal aplicável (em regra, <strong>5 anos</strong>);</li>
+  <li><strong>Registros de acesso a aplicações:</strong> pelo prazo mínimo de 6 meses, conforme o Marco Civil da Internet;</li>
+  <li><strong>Após o término da relação ou o fim da finalidade:</strong> os dados são <strong>eliminados ou anonimizados</strong>, ressalvadas as hipóteses legais de conservação (Art. 16 da LGPD).</li>
+</ul>
+
+<h3>12. Direitos do titular (Art. 18 da LGPD) e como exercê-los</h3>
+<p>Todo titular de dados pessoais (paciente ou responsável pela clínica) pode requerer, a qualquer momento e gratuitamente:</p>
+<ul>
+  <li>Confirmação da existência de tratamento dos seus dados;</li>
+  <li><strong>Acesso</strong> aos dados;</li>
+  <li><strong>Correção</strong> de dados incompletos, inexatos ou desatualizados;</li>
+  <li><strong>Anonimização, bloqueio ou eliminação</strong> de dados desnecessários, excessivos ou tratados em desconformidade com a LGPD;</li>
+  <li><strong>Portabilidade</strong> dos dados a outro fornecedor de serviço ou produto;</li>
+  <li><strong>Eliminação</strong> dos dados tratados com base no consentimento (ressalvadas as hipóteses legais de conservação);</li>
+  <li>Informação sobre com quem seus dados foram <strong>compartilhados</strong>;</li>
+  <li>Informação sobre a <strong>possibilidade de não fornecer consentimento</strong> e as consequências da negativa;</li>
+  <li><strong>Revogação do consentimento</strong> (ver seção 15).</li>
+</ul>
+<p><strong>Como exercer:</strong></p>
+<ul>
+  <li><strong>Se você é paciente:</strong> dirija sua solicitação, preferencialmente, <strong>à sua clínica</strong> — ela é a controladora dos seus dados e possui, no NastaDesk, as ferramentas para atendê-lo (ver seção 13). Se preferir, você também pode contatar o Encarregado da Nastaclin (seção 17), que encaminhará a solicitação à clínica responsável e prestará o apoio necessário;</li>
+  <li><strong>Se você é responsável por uma clínica cliente:</strong> contate o Encarregado da Nastaclin diretamente (seção 17).</li>
+</ul>
+<p>O titular também tem o direito de peticionar perante a <strong>ANPD</strong>.</p>
+
+<h3>13. Portal do titular — exportação e eliminação de dados de pacientes</h3>
+<p>O NastaDesk disponibiliza à clínica um <strong>"Portal do titular"</strong>: uma funcionalidade pela qual a clínica (controladora) pode, a pedido do paciente:</p>
+<ul>
+  <li><strong>Exportar</strong> todos os dados de um paciente em formato legível e estruturado (atendendo aos direitos de acesso e portabilidade); e</li>
+  <li><strong>Eliminar ou anonimizar</strong> os dados de um paciente (atendendo ao direito de eliminação), respeitados os prazos legais de guarda de registros de saúde e documentos fiscais, quando aplicáveis.</li>
+</ul>
+
+<h3>14. Dados de crianças e adolescentes</h3>
+<p>Quando o paciente for <strong>criança ou adolescente</strong>, o tratamento de seus dados observará o seu melhor interesse (Art. 14 da LGPD). Nesses casos, cabe à clínica controladora garantir que o cadastro, o consentimento e as comunicações sejam realizados pelo <strong>responsável legal</strong> (pai, mãe ou responsável), e que o agendamento online em nome de menores seja feito pelo responsável. A Nastaclin não coleta deliberadamente dados de menores por iniciativa própria.</p>
+
+<h3>15. Revogação do consentimento</h3>
+<p>Quando o tratamento se basear em consentimento, o titular pode <strong>revogá-lo a qualquer momento</strong>, gratuitamente e por procedimento simples: o paciente pode manifestar-se à sua clínica (ou ao Encarregado da Nastaclin), e a clínica pode utilizar o Portal do titular para efetivar a solicitação. A revogação não afeta a licitude do tratamento realizado antes dela, e determinados dados poderão ser conservados quando houver outra base legal ou obrigação de guarda (ex.: prontuário e documentos fiscais).</p>
+
+<h3>16. Alterações desta Política</h3>
+<p>Esta Política pode ser atualizada para refletir mudanças no serviço ou na legislação. A versão vigente estará sempre publicada, com número de versão e data de vigência no topo. Em caso de alterações relevantes, as clínicas clientes serão avisadas pelos canais de contato cadastrados e/ou por aviso dentro do próprio sistema. Recomendamos a leitura periódica deste documento.</p>
+
+<h3>17. Contato e Encarregado pelo Tratamento de Dados (DPO)</h3>
+<p>A Nastaclin nomeou Encarregado pelo tratamento de dados pessoais, nos termos do Art. 41 da LGPD:</p>
+<ul>
+  <li><strong>Encarregado (DPO):</strong> Eduardo Moraes do Nascimento</li>
+  <li><strong>E-mail do Encarregado:</strong> <a href="mailto:nastaclincont@gmail.com">nastaclincont@gmail.com</a></li>
+  <li><strong>Contato geral:</strong> <a href="mailto:nastaclincont@gmail.com">nastaclincont@gmail.com</a></li>
+  <li><strong>Controlador/Operador (conforme o papel descrito na seção 3):</strong> Eduardo Moraes do Nascimento, pessoa física, atuando sob a marca Nastaclin — Rio de Janeiro/RJ — contato: <a href="mailto:nastaclincont@gmail.com">nastaclincont@gmail.com</a></li>
+</ul>
+<p>Responderemos às solicitações no menor prazo possível, observados os prazos da LGPD e das regulamentações da ANPD.</p>
+
+    <div class="doc-nav">
+      <a href="termos.html">Ler os Termos de Uso →</a>
+      <a href="/" class="primaria">Voltar ao NastaDesk</a>
+    </div>
+  </div>
+  <div class="rodape">NastaDesk · uma ferramenta <a href="https://nastaclin.vercel.app" target="_blank" rel="noopener">Nastaclin</a></div>
+</div>
+
+</body>
+</html>

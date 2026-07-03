@@ -81,6 +81,9 @@ Deno.serve(async (req) => {
       p_hora: String(body.p_hora || body.hora || ""),
       p_queixa: body.p_queixa ?? body.queixa ?? null,
       p_cpf: body.p_cpf ?? body.cpf ?? null,
+      // LGPD: versão do termo aceito pelo paciente + IP, para registro do consentimento
+      p_consent_versao: body.p_consent_versao ?? body.consent_versao ?? null,
+      p_ip: ip,
     });
     if (error) {
       console.error("AGENDAR: erro na RPC agendar_online:", error.message);

@@ -33,7 +33,7 @@ Esta seção fixa (entre os marcadores 🔒) NÃO deve ser alterada.
 
 # NastaDesk — Contexto da ferramenta
 
-> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-07-01**.
+> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-07-03**.
 
 > ⭐ **COMO O DONO GOSTA DE TRABALHAR (ler sempre, vale para qualquer chat):**
 > - **Pode deixar as melhorias APARENTES para os clientes.** A intenção é que eles
@@ -98,7 +98,7 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | `mercadopago-checkout` | Cria checkout de assinatura no Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
 | `mercadopago-webhook` | Recebe eventos de cobrança do Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
 | `cakto-webhook` | Recebe eventos da Cakto (compra aprovada, assinatura criada/renovada/cancelada, reembolso, chargeback) e libera/suspende o acesso da clínica. Mapeia o comprador pelo **e-mail**, identifica o plano pelo **valor** (97/197/347) e **nunca derruba clínica em cortesia**. |
-| `agendar-publico` | Porteiro anti-robô do agendamento online. Recebe o booking + token do hCaptcha, verifica o token no servidor (secret em `admin_config`) e, se válido, delega à RPC `agendar_online`. `verify_jwt=false`. |
+| `agendar-publico` | Porteiro anti-robô do agendamento online. Recebe o booking + token do hCaptcha, verifica o token no servidor (secret em `admin_config`) e, se válido, delega à RPC `agendar_online` — repassando também a **versão do consentimento LGPD + IP** para registro. `verify_jwt=false`. |
 | `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. |
 
 ## 4. Funcionalidades do app (nastadesk)
@@ -111,14 +111,17 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   e usa RPCs públicas (`clinica_publica`, `horarios_ocupados`, `agendar_online`) que
   validam tudo no servidor. O paciente é **casado por CPF** (evita duplicados) e a
   clínica vê se é **novo ou recorrente** (etiqueta na agenda + alerta), com aviso de
-  **possível cadastro duplicado**.
+  **possível cadastro duplicado**. Exige **consentimento LGPD** (checkbox obrigatório,
+  registrado na tabela `consentimentos` com data/hora/versão/IP).
 - **Salas / salões de atendimento** — organizar consultas por sala, além de
   data/horário.
 - **Lembretes WhatsApp** — mensagens prontas (confirmação, véspera, dia) com
   envio em 1 clique (via `wa.me`), além dos lembretes automáticos.
 - **Pacientes** — ficha completa: anamnese, evoluções, histórico, convênio, CPF;
   **modalidade** (Fisio/Pilates/…) e **cobrança** (mensalidade fixa OU por sessão,
-  com valor e dia de vencimento); importação/exportação por CSV.
+  com valor e dia de vencimento); importação/exportação por CSV. **Portal do titular
+  (LGPD)** na ficha: exportar todos os dados do paciente (JSON) e eliminar os dados
+  pessoais mantendo o financeiro de-identificado.
 - **Modalidades** — lista configurável de tipos de atendimento (Fisioterapia,
   Pilates, RPG…), com cor por modalidade. Vira etiqueta no paciente, na agenda do
   dia e no financeiro, e dá pra filtrar pacientes por modalidade. Gerenciada em
@@ -231,6 +234,8 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-03** — **Fase 1 · LGPD (parte 1): Política de Privacidade + Termos de Uso + consentimento com registro + Portal do titular.**
+  Os 3 primeiros itens da Fase 1, de uma vez. **(1) Páginas legais** `privacidade.html` e `termos.html` (novas, no visual da marca): Política de Privacidade e Termos de Uso completos, orientados à LGPD — papéis (clínica = controladora dos dados dos pacientes; Nastaclin = operadora; e controladora dos dados da conta), dados coletados (incl. dados de saúde Art. 11), bases legais, lista de suboperadores (Supabase/Vercel/Anthropic/Evolution/Cakto/hCaptcha/Google) com finalidade, transferência internacional (Art. 33), retenção, direitos do titular (Art. 18), seção de DPA/cláusulas de operador nos Termos, planos/preços, WhatsApp+IA ("a IA pode errar; não dá orientação clínica"). ✅ **Placeholders preenchidos (2026-07-03):** o dono **não tem CNPJ/empresa formal** — as páginas foram preenchidas na versão **pessoa física** (nome do dono + cidade/UF + e-mail de contato, sob a marca Nastaclin; CPF e endereço residencial **não** publicados por privacidade do próprio dono). *Recomendação registrada:* avaliar abrir **MEI** no futuro (não trava o lançamento). Versão dos termos: **1.0 (2026-07-03)** (constante `POLITICA_VERSAO` nos 2 fronts — ao mudar o texto, suba a versão). **(2) Consentimento com registro** — migration `20260703120000_lgpd_consentimento_portal_titular.sql` **aplicada em produção**: tabela **`consentimentos`** (contexto, clinica/user/paciente, documentos, **versão, data/hora, IP**; RLS só-leitura p/ o dono — escrita apenas via funções DEFINER). Checkbox **obrigatório** no cadastro (`fazerCadastro` envia `lgpd_consent_versao` no metadata → trigger `criar_clinica_no_signup` grava) e no agendamento público (`agendar.html` → edge `agendar-publico` v3 repassa versão+IP → RPC `agendar_online` grava com CPF mascarado "CPF final XXXX"; registro tolerante a falha — não derruba o agendamento). Links legais no login, no cadastro e no rodapé do agendamento. **(3) Portal do titular** — na ficha do paciente (aba Dados), bloco "Privacidade do paciente (LGPD)": **Exportar dados** (JSON com paciente+consultas+evoluções+pacotes+mensalidades+consentimentos — acesso/portabilidade) e **Eliminar dados pessoais** (RPC **`paciente_anonimizar`**: apaga nome/CPF/contato/anamnese/evoluções/conversas, mantém o esqueleto financeiro de-identificado + grava evento na trilha). Bônus: **`paciente_excluir`** (RPC atômica cobrindo TODAS as tabelas filhas) — o "Excluir" antigo do front falhava se o paciente tivesse pacotes/mensalidades/notas (FK sem cascade). **Validado:** RPC testada em produção **com ROLLBACK** (consentimento gravado com versão+IP; zero resíduo); RPCs do portal recusam sem `auth.uid()`; advisors de segurança sem regressão; `node --check` + **30/30 testes de navegador** (Playwright, tudo mockado): gate de consentimento nos 2 fluxos (sem aceite → bloqueia SEM chamar rede), versão enviada no body/metadata, export baixa JSON, anonimizar/excluir confirmam e chamam as RPCs certas, páginas legais renderizam. **Restam da Fase 1:** trilha de auditoria de acesso a prontuário, 2FA (TOTP) e DPA como documento separado (a essência já está na seção 6 dos Termos).
 - **2026-07-02** — **Senha forte no cadastro/alteração/recuperação (front) — alternativa grátis ao "leaked password" (que exige Pro).**
   O "Prevent use of leaked passwords" do Supabase **só existe no plano Pro** (print do dono). No lugar, de graça: o dono ativou no Supabase Auth **Password requirements = minúscula + MAIÚSCULA + número + símbolo**, e o **front** (`nastadesk/index.html`) passou a **validar a força da senha** nos 3 fluxos — cadastro (`fazerCadastro`), alterar senha (`alterarSenha`) e recuperação (`salvarNovaSenhaRecovery`): mínimo **8** + as 4 classes, com **dica ao vivo** (✓/○, função `atualizarReqSenha`) no cadastro e mensagem clara quando falta algo (evita o erro genérico do servidor). Validado: `node --check` + teste de navegador (hint 1/5 × 5/5, bloqueia senha fraca **sem** chamar `signUp`, passa com senha forte; zero erro de JS). **Próxima entrega decidida pelo dono: Fase 1 (LGPD) em um chat dedicado.**
 - **2026-07-02** — **Fase 0 · Performance do banco: índices em FKs + RLS `(select auth.uid())` + limpeza de policies duplicadas.**
@@ -382,13 +387,19 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 > ▶️ **DECISÃO (2026-07-02):** o dono vai tocar a **Fase 1 (LGPD) em um chat dedicado.**
 > Começar por: aviso de privacidade + termos + **consentimento com registro** (checkbox
 > obrigatório no cadastro e no agendamento público, gravando data/hora/versão do termo).
+>
+> ✅ **INICIADA em 2026-07-03** — os 3 primeiros itens foram entregues (detalhes no
+> Histórico, seção 9). Placeholders `{{...}}` de `privacidade.html`/`termos.html`
+> **já preenchidos** (versão pessoa física — dono sem CNPJ; ver Histórico). Ao alterar
+> o texto dos termos, **subir a `POLITICA_VERSAO`** (constante nos 2 fronts) para os
+> novos aceites registrarem a versão nova.
 
-- [ ] **Aviso de privacidade + termos de uso** — criar as páginas e linkar no cadastro do app e no formulário público de agendamento.
-- [ ] **Consentimento com registro** — checkbox obrigatório no cadastro e no agendamento; gravar data/hora/versão do termo aceito (nova tabela `consentimentos`).
-- [ ] **Portal do titular** — exportar e excluir todos os dados de um paciente (direito de acesso/eliminação).
+- [x] **Aviso de privacidade + termos de uso** — FEITO 2026-07-03. Páginas `privacidade.html` + `termos.html` (texto LGPD completo: papéis controladora/operadora, dados sensíveis Art. 11, suboperadores, Art. 33, retenção, Art. 18, DPA embutido nos Termos, planos/preços, IA). Linkadas no login, no cadastro e no agendamento público. **Placeholders preenchidos** (versão pessoa física — dono sem CNPJ; nome + cidade/UF + e-mail, sob a marca Nastaclin).
+- [x] **Consentimento com registro** — FEITO 2026-07-03. Tabela **`consentimentos`** (data/hora, **versão do termo**, IP, identificador mascarado; RLS só-leitura p/ o dono, escrita só via funções DEFINER) — migration `20260703120000_lgpd_consentimento_portal_titular.sql` **em produção**. Checkbox **obrigatório** no cadastro (metadata `lgpd_consent_versao` → trigger de signup grava) e no agendamento público (edge `agendar-publico` v3 repassa versão+IP → `agendar_online` grava; tolerante a falha). Versão atual: `POLITICA_VERSAO = '1.0 (2026-07-03)'`.
+- [x] **Portal do titular** — FEITO 2026-07-03. Na ficha do paciente (aba Dados): **Exportar dados** (JSON completo — acesso/portabilidade) e **Eliminar dados pessoais** (RPC `paciente_anonimizar`, escopo por `auth.uid()`: apaga dados pessoais/sensíveis + conversas, mantém financeiro de-identificado, grava evento). Bônus: `paciente_excluir` (exclusão total atômica; corrige o Excluir antigo que falhava com pacotes/mensalidades/notas).
 - [ ] **Trilha de auditoria** — logar quem acessou/alterou ficha de paciente (tabela `auditoria` + gravação nos pontos de leitura/edição de prontuário).
 - [ ] **2FA (TOTP)** para as clínicas — o Supabase Auth já suporta nativo; ativar + UI de setup.
-- [ ] **DPA / contrato de operador** — modelo p/ os clientes (clínica = controladora; Nastaclin = operador).
+- [ ] **DPA / contrato de operador** — a essência já está na **seção 6 dos Termos** (cláusulas de operador). Falta só, se o dono quiser, um documento separado assinável por cliente.
 
 ### 10.4 FASE 2 — Paridade de mercado (o que toda concorrente tem)
 

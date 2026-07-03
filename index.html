@@ -259,6 +259,21 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .senha-req { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 5px 12px; font-size: 12px; color: var(--cinza-medio); }
 .senha-req .req-item { white-space: nowrap; }
 .senha-req .req-item.ok { color: var(--verde-medio); font-weight: 600; }
+/* Consentimento LGPD no cadastro */
+.auth-consent { display: flex; gap: 9px; align-items: flex-start; margin-top: 14px; padding: 11px 12px; background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: var(--raio-p); cursor: pointer; }
+.auth-consent input { width: 17px; height: 17px; margin-top: 1px; accent-color: var(--verde); flex-shrink: 0; cursor: pointer; }
+.auth-consent span { font-size: 12.5px; line-height: 1.5; color: var(--cinza-medio); }
+.auth-consent a { color: var(--verde); font-weight: 600; }
+/* Portal do titular (LGPD) na ficha do paciente */
+.ficha-lgpd { margin-top: 18px; padding: 14px 16px; background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: 12px; }
+.ficha-lgpd-titulo { font-size: 12px; font-weight: 700; color: var(--verde-escuro); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.ficha-lgpd-sub { font-size: 12.5px; color: var(--cinza-medio); line-height: 1.5; margin-bottom: 10px; }
+.ficha-lgpd-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.ficha-lgpd-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 9px; border: 1.5px solid var(--cinza-claro); background: white; font-size: 13px; font-weight: 600; font-family: inherit; color: var(--cinza-escuro); cursor: pointer; transition: all .15s; }
+.ficha-lgpd-btn:hover { border-color: var(--verde-medio); }
+.ficha-lgpd-btn svg { width: 14px; height: 14px; }
+.ficha-lgpd-btn.perigo { color: var(--vermelho); }
+.ficha-lgpd-btn.perigo:hover { border-color: #E3A5A1; background: #FFF6F5; }
 .status-pill { font-size: 11px; font-weight: 500; padding: 3px 10px 3px 8px; border-radius: 20px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
 .status-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .status-confirmado { background: var(--verde-claro); color: var(--verde); }
@@ -782,6 +797,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="auth-esqueci"><a onclick="esqueciSenha()">Esqueci minha senha</a></div>
       <button class="auth-btn" id="login-btn" onclick="fazerLogin()">Entrar</button>
       <div class="auth-troca">Não tem conta? <a onclick="alternarForm('cadastro')">Criar conta grátis</a></div>
+      <div class="auth-troca" style="margin-top:10px;font-size:12px"><a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> · <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></div>
     </div>
     <!-- CADASTRO -->
     <div class="auth-form-wrap" id="form-cadastro" style="display:none">
@@ -794,6 +810,11 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="auth-campo"><label>WhatsApp da clínica</label><input type="text" id="cad-wpp" placeholder="Ex: 11999990001"></div>
       <div class="auth-campo"><label>E-mail</label><input type="email" id="cad-email" placeholder="seu@email.com" autocomplete="email"></div>
       <div class="auth-campo"><label>Senha</label><input type="password" id="cad-senha" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="atualizarReqSenha()"><div class="senha-req" id="cad-senha-req"></div></div>
+      <!-- Consentimento LGPD (obrigatório): aceite registrado com data/hora/versão no banco -->
+      <label class="auth-consent" for="cad-consent">
+        <input type="checkbox" id="cad-consent">
+        <span>Li e concordo com os <a href="/termos.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Termos de Uso</a> e com a <a href="/privacidade.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Política de Privacidade</a> do NastaDesk.</span>
+      </label>
       <button class="auth-btn" id="cadastro-btn" onclick="fazerCadastro()">Criar minha conta</button>
       <div class="auth-troca">Já tem conta? <a onclick="alternarForm('login')">Entrar</a></div>
     </div>
@@ -1665,6 +1686,21 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         </div>
         <div style="font-size:12px;color:var(--cinza-medio);margin-top:2px">Na <strong>mensalidade</strong>, todo mês abre uma cobrança no dia de vencimento (acompanhe em Financeiro → Mensalidades). No <strong>por sessão</strong>, o valor entra como padrão a cada consulta.</div>
       </div>
+      <!-- Portal do titular (LGPD): direitos de acesso e eliminação do paciente -->
+      <div class="ficha-lgpd">
+        <div class="ficha-lgpd-titulo">Privacidade do paciente (LGPD)</div>
+        <div class="ficha-lgpd-sub">Se o paciente pedir, você atende aqui os direitos dele: <strong>exportar</strong> uma cópia de todos os dados (acesso/portabilidade) ou <strong>eliminar os dados pessoais</strong> mantendo só o histórico financeiro sem identificação (eliminação).</div>
+        <div class="ficha-lgpd-acoes">
+          <button class="ficha-lgpd-btn" onclick="exportarDadosPaciente()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+            Exportar dados
+          </button>
+          <button class="ficha-lgpd-btn perigo" onclick="anonimizarPaciente()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+            Eliminar dados pessoais
+          </button>
+        </div>
+      </div>
       <button class="btn btn-primario ficha-salvar" id="ficha-salvar-btn" onclick="salvarFicha()" style="width:100%;padding:12px">Salvar alterações</button>
     </div>
 
@@ -2022,6 +2058,7 @@ const FORMA_LABEL = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito',
 function nomeCompetencia(comp) { const p = String(comp).split('-'); return `${MESES[parseInt(p[1],10)-1]} ${p[0]}`; }
 const CORES = ['av-1','av-2','av-3','av-4','av-5','av-6'];
 const TZ = 'America/Sao_Paulo';
+const POLITICA_VERSAO = '1.0 (2026-07-03)'; // versão dos Termos/Política registrada no consentimento
 const { createClient } = supabase;
 const db = createClient(SUPA_URL, SUPA_KEY);
 
@@ -2325,11 +2362,17 @@ async function fazerCadastro() {
   if (!clinica || !nome || !email || !senha) { erro.textContent = 'Preencha todos os campos obrigatórios.'; erro.classList.add('visivel'); return; }
   const errSenha = erroSenha(senha);
   if (errSenha) { erro.textContent = errSenha; erro.classList.add('visivel'); document.getElementById('cad-senha').focus(); return; }
+  // LGPD: aceite obrigatório dos Termos + Política (registrado no banco pelo trigger de signup)
+  if (!document.getElementById('cad-consent').checked) {
+    erro.textContent = 'Para criar a conta, aceite os Termos de Uso e a Política de Privacidade.';
+    erro.classList.add('visivel');
+    return;
+  }
   btn.disabled = true; btn.textContent = 'Criando conta...';
   const { error } = await db.auth.signUp({
     email, password: senha,
     options: {
-      data: { nome_clinica: clinica, responsavel: nome, whatsapp: wpp },
+      data: { nome_clinica: clinica, responsavel: nome, whatsapp: wpp, lgpd_consent_versao: POLITICA_VERSAO },
       emailRedirectTo: location.origin + '/confirmado.html'
     }
   });
@@ -3337,7 +3380,7 @@ function abrirModalImportar() {
 function fecharModalImportar() { document.getElementById('modal-importar').classList.remove('aberto'); }
 
 function normHeader(h) {
-  return (h||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'').trim();
+  return (h||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'').trim();
 }
 function detectarDelim(linha) {
   let best = ',', max = -1;
@@ -3542,19 +3585,77 @@ function deletarPaciente() {
   const nomeParaDeletar = pacienteAtual.nome;
   abrirModalConfirm(
     'Excluir paciente?',
-    `Isso vai remover "${nomeParaDeletar}" e todas as suas consultas permanentemente. Esta ação não pode ser desfeita.`,
-    'Excluir',
+    `Isso vai remover "${nomeParaDeletar}" e TUDO que é dele — consultas, evoluções, pacotes, mensalidades e conversas — permanentemente. Esta ação não pode ser desfeita. Se a intenção é atender um pedido LGPD mantendo o histórico financeiro, use "Eliminar dados pessoais" na ficha.`,
+    'Excluir tudo',
     async () => {
-      await db.from('evolucoes').delete().eq('paciente_id', idParaDeletar);
-      await db.from('lembretes').delete().in('consulta_id',
-        ((await db.from('consultas').select('id').eq('paciente_id', idParaDeletar)).data || []).map(c => c.id).concat(['00000000-0000-0000-0000-000000000000']));
-      const { error: errConsultas } = await db.from('consultas').delete().eq('paciente_id', idParaDeletar);
-      if (errConsultas) { toast('Erro ao excluir consultas: ' + errConsultas.message); return; }
-      const { error: errPaciente } = await db.from('pacientes').delete().eq('id', idParaDeletar);
-      if (errPaciente) { toast('Erro ao excluir paciente: ' + errPaciente.message); return; }
+      // Exclusão atômica no banco (RPC cobre todas as tabelas filhas, na ordem certa)
+      const { data, error } = await db.rpc('paciente_excluir', { p_paciente_id: idParaDeletar });
+      if (error || !data?.ok) { toast('Erro ao excluir: ' + (error?.message || data?.erro || 'tente novamente')); return; }
       fecharFicha();
       await carregarPacientes();
       toast('Paciente excluído ✓');
+    }
+  );
+}
+
+// ===== PORTAL DO TITULAR (LGPD) =====
+// Direito de acesso/portabilidade: exporta TODOS os dados do paciente num JSON legível.
+async function exportarDadosPaciente() {
+  if (!pacienteAtual) return;
+  const pid = pacienteAtual.id;
+  toast('Gerando exportação...');
+  try {
+    const [pac, cons, evo, pac2, mens, consent] = await Promise.all([
+      db.from('pacientes').select('*').eq('id', pid).single(),
+      db.from('consultas').select('*').eq('paciente_id', pid).order('data_hora'),
+      db.from('evolucoes').select('*').eq('paciente_id', pid).order('criado_em'),
+      db.from('pacotes').select('*').eq('paciente_id', pid).order('criado_em'),
+      db.from('mensalidades').select('*').eq('paciente_id', pid).order('competencia'),
+      db.from('consentimentos').select('*').eq('paciente_id', pid).order('criado_em'),
+    ]);
+    const dump = {
+      exportacao: {
+        gerado_em: new Date().toISOString(),
+        origem: 'NastaDesk — Portal do titular (LGPD, Art. 18: acesso e portabilidade)',
+        clinica: clinicaAtual?.nome || null,
+      },
+      paciente: pac.data || null,
+      consultas: cons.data || [],
+      evolucoes: evo.data || [],
+      pacotes: pac2.data || [],
+      mensalidades: mens.data || [],
+      consentimentos: consent.data || [],
+    };
+    const nomeArq = `dados-paciente-${(pacienteAtual.nome || 'sem-nome').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')}-${new Date().toISOString().slice(0,10)}.json`;
+    const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nomeArq;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('Dados exportados ✓ (arquivo JSON baixado)');
+  } catch (e) {
+    console.error(e);
+    toast('Erro ao exportar os dados. Tente novamente.');
+  }
+}
+
+// Direito de eliminação: apaga os dados pessoais/sensíveis e mantém só o
+// esqueleto financeiro sem identificação (obrigações contábeis preservadas).
+function anonimizarPaciente() {
+  if (!pacienteAtual) return;
+  const pid = pacienteAtual.id;
+  const nome = pacienteAtual.nome;
+  abrirModalConfirm(
+    'Eliminar dados pessoais? (LGPD)',
+    `Os dados pessoais e de saúde de "${nome}" serão apagados permanentemente — nome, CPF, contato, anamnese, evoluções e conversas. O histórico financeiro (consultas, pacotes, mensalidades) continua, sem identificação. Dica: exporte os dados antes, se o paciente quiser uma cópia. Esta ação não pode ser desfeita.`,
+    'Eliminar dados pessoais',
+    async () => {
+      const { data, error } = await db.rpc('paciente_anonimizar', { p_paciente_id: pid });
+      if (error || !data?.ok) { toast('Erro ao eliminar: ' + (error?.message || data?.erro || 'tente novamente')); return; }
+      fecharFicha();
+      await carregarPacientes();
+      toast('Dados pessoais eliminados ✓ (registro LGPD gravado)');
     }
   );
 }
