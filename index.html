@@ -1543,7 +1543,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 
         <div class="card" id="equipe-card" style="padding:28px;margin-top:16px">
           <div class="card-titulo" style="margin-bottom:6px">Logins da equipe</div>
-          <div class="card-sub" style="margin-bottom:20px">Dê acesso para quem trabalha com você. Cada pessoa entra com o <strong>próprio email e senha</strong>, vê só os dados desta clínica e tem permissões conforme o papel: <strong>Recepção</strong> (agenda, pacientes, financeiro, lembretes) ou <strong>Profissional</strong> (agenda e pacientes; sem financeiro). Só você (dono) gerencia os acessos e as configurações.</div>
+          <div class="card-sub" style="margin-bottom:20px">Dê acesso para quem trabalha com você. Cada pessoa entra com o <strong>próprio email e senha</strong>: <strong>Recepção</strong> usa este painel (agenda, pacientes, financeiro, lembretes) e <strong>Profissional</strong> entra num <strong>portal próprio e restrito</strong> — vê <strong>somente as consultas dele e os pacientes que ele atende</strong>, com ficha somente-leitura e registro de evoluções. Sem financeiro, sem excluir nada. Só você (dono) gerencia os acessos e as configurações.</div>
           <div class="config-campo"><label>Nome</label><input type="text" id="equipe-nome" placeholder="Ex: Marina (recepção)" maxlength="80"></div>
           <div class="modal-grid">
             <div class="config-campo"><label>Email de acesso</label><input type="email" id="equipe-email" placeholder="email@exemplo.com" maxlength="120"></div>
@@ -1551,14 +1551,17 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           </div>
           <div class="modal-grid">
             <div class="config-campo"><label>Papel</label>
-              <select id="equipe-papel">
+              <select id="equipe-papel" onchange="atualizarHintEquipe()">
                 <option value="recepcao">Recepção</option>
                 <option value="profissional">Profissional</option>
               </select>
             </div>
-            <div class="config-campo"><label>Vincular ao profissional (opcional)</label>
+            <div class="config-campo"><label id="equipe-prof-label">Vincular ao profissional (opcional)</label>
               <select id="equipe-prof"><option value="">—</option></select>
             </div>
+          </div>
+          <div id="equipe-hint" style="display:none;font-size:12.5px;line-height:1.55;color:var(--verde);background:var(--verde-suave);border:1px solid var(--verde-claro);border-radius:10px;padding:10px 12px;margin-bottom:14px">
+            O papel <strong>Profissional</strong> entra pelo <strong>Portal do Profissional</strong> e enxerga <strong>apenas a própria agenda e os próprios pacientes</strong>. Por isso é <strong>obrigatório vincular</strong> o login a um profissional cadastrado (aba acima) — é esse vínculo que define o que a pessoa vê.
           </div>
           <button class="btn btn-primario" id="equipe-btn-criar" onclick="criarAcessoEquipe()">Criar acesso</button>
           <div id="equipe-lista" style="margin-top:22px"></div>
@@ -2735,6 +2738,9 @@ async function carregarDados(user) {
       meuPapel = membro.papel || 'recepcao';
       meuProfissionalId = membro.profissional_id || null;
       clinica.__membroNome = membro.nome || null;
+      // O papel PROFISSIONAL usa um portal próprio (só a agenda e os
+      // pacientes dele) — nunca o painel completo da clínica.
+      if (meuPapel === 'profissional') { window.location.replace('/profissional.html'); return; }
     }
   }
   if (!clinica) {
@@ -6418,6 +6424,16 @@ async function alternarMembro(id, ativar) {
   carregarEquipe();
 }
 
+// O papel Profissional exige vínculo com um profissional cadastrado — é o
+// vínculo que define o que a pessoa enxerga no portal dela.
+function atualizarHintEquipe() {
+  const papel = document.getElementById('equipe-papel')?.value;
+  const hint = document.getElementById('equipe-hint');
+  const label = document.getElementById('equipe-prof-label');
+  if (hint) hint.style.display = (papel === 'profissional') ? 'block' : 'none';
+  if (label) label.textContent = (papel === 'profissional') ? 'Vincular ao profissional (obrigatório)' : 'Vincular ao profissional (opcional)';
+}
+
 async function criarAcessoEquipe() {
   const nome = document.getElementById('equipe-nome').value.trim();
   const email = document.getElementById('equipe-email').value.trim();
@@ -6426,6 +6442,7 @@ async function criarAcessoEquipe() {
   const profissional_id = document.getElementById('equipe-prof').value || null;
   if (!email) { toast('Informe o email do funcionário'); return; }
   if (senha.length < 8) { toast('A senha precisa ter ao menos 8 caracteres'); return; }
+  if (papel === 'profissional' && !profissional_id) { toast('Vincule o login a um profissional cadastrado — é ele que define o que a pessoa vê no portal'); return; }
   const btn = document.getElementById('equipe-btn-criar');
   btn.disabled = true; btn.textContent = 'Criando...';
   let erroMsg = null;

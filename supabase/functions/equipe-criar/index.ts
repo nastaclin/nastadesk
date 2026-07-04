@@ -56,6 +56,22 @@ Deno.serve(async (req) => {
   if (senha.length < 8) return json({ error: "a senha precisa ter ao menos 8 caracteres" }, 400);
   if (!["recepcao", "profissional"].includes(papel)) return json({ error: "papel inválido" }, 400);
 
+  // Papel PROFISSIONAL entra num portal restrito: só vê as consultas e os
+  // pacientes do profissional vinculado. Por isso o vínculo é OBRIGATÓRIO —
+  // e precisa ser um profissional DA PRÓPRIA clínica (nunca de outra).
+  if (papel === "profissional" && !profissional_id) {
+    return json({ error: "Vincule o login a um profissional cadastrado (Configurações → Profissionais)." }, 400);
+  }
+  if (profissional_id) {
+    const { data: prof } = await db
+      .from("profissionais")
+      .select("id")
+      .eq("id", profissional_id)
+      .eq("clinica_id", clinica.id)
+      .maybeSingle();
+    if (!prof) return json({ error: "profissional vinculado inválido" }, 400);
+  }
+
   // 4) Cria o usuário de auth
   const { data: created, error: createErr } = await db.auth.admin.createUser({
     email,

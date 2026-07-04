@@ -24,6 +24,10 @@
       "dest": "/agendar.html"
     },
     {
+      "src": "/profissional",
+      "dest": "/profissional.html"
+    },
+    {
       "handle": "filesystem"
     },
     {

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NastaDesk — Portal do Profissional</title>
+<meta name="theme-color" content="#0B6E4F">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --verde: #0B6E4F; --verde-escuro: #07523A; --verde-medio: #17A076; --verde-claro: #D6F2E6;
+  --verde-suave: #F1FAF6; --creme: #F8F7F3; --cinza-escuro: #1B221E;
+  --cinza-medio: #66706A; --cinza-claro: #E6E8E3; --branco: #FFFFFF;
+  --laranja: #E87040; --azul: #3B6FD4; --vermelho: #D44545; --amarelo: #E8A820;
+  --sombra: 0 1px 2px rgba(16,40,32,0.05), 0 8px 24px -14px rgba(16,40,32,0.14);
+  --sombra-alta: 0 2px 4px rgba(16,40,32,0.06), 0 16px 40px -16px rgba(16,40,32,0.22);
+  --anel: 0 0 0 3px rgba(23,160,118,0.18);
+  --raio: 16px; --raio-m: 12px; --raio-p: 10px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cinza-escuro); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--verde-claro); }
+button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
+input, select, textarea { font-family: 'DM Sans', sans-serif; }
+
+/* ===== CARREGANDO / TELAS DE ESTADO ===== */
+.tela-estado { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
+.tela-estado .logo { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--verde); }
+.tela-estado p { font-size: 14px; color: var(--cinza-medio); max-width: 420px; line-height: 1.6; }
+.spinner { width: 28px; height: 28px; border: 3px solid var(--verde-claro); border-top-color: var(--verde); border-radius: 50%; animation: girar .8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* ===== APP ===== */
+#app { display: none; max-width: 860px; margin: 0 auto; padding: 0 16px 96px; }
+.topo { display: flex; align-items: center; gap: 12px; padding: 18px 2px 14px; }
+.topo-logo { font-family: 'DM Serif Display', serif; font-size: 21px; color: var(--verde); }
+.topo-badge { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--verde); background: var(--verde-claro); border-radius: 999px; padding: 4px 10px; }
+.topo-dir { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.btn-sair { background: none; border: 1.5px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--cinza-medio); transition: all .15s; }
+.btn-sair:hover { border-color: var(--vermelho); color: var(--vermelho); }
+
+.ola-card { background: linear-gradient(120deg, var(--verde) 0%, var(--verde-medio) 100%); border-radius: var(--raio); padding: 22px 24px; color: white; box-shadow: var(--sombra-alta); margin-bottom: 18px; }
+.ola-card h1 { font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 400; margin-bottom: 4px; }
+.ola-card p { font-size: 13.5px; opacity: .9; }
+.ola-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.16); border-radius: 999px; padding: 5px 12px; }
+.ola-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: #fff; }
+
+/* Abas */
+.abas { display: flex; gap: 6px; background: white; border: 1px solid var(--cinza-claro); border-radius: 999px; padding: 5px; margin-bottom: 18px; box-shadow: var(--sombra); position: sticky; top: 10px; z-index: 50; }
+.aba { flex: 1; border: none; background: none; border-radius: 999px; padding: 10px 8px; font-size: 13.5px; font-weight: 600; color: var(--cinza-medio); transition: all .15s; }
+.aba.ativa { background: var(--verde); color: white; box-shadow: var(--sombra); }
+
+.card { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio); box-shadow: var(--sombra); }
+.secao-titulo { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--cinza-escuro); margin: 4px 2px 12px; }
+
+/* Consulta (linha) */
+.consulta { display: flex; gap: 14px; padding: 15px 18px; border-bottom: 1px solid var(--cinza-claro); align-items: flex-start; }
+.consulta:last-child { border-bottom: none; }
+.consulta-hora { font-size: 15px; font-weight: 700; color: var(--verde); min-width: 48px; padding-top: 2px; }
+.consulta-info { flex: 1; min-width: 0; }
+.consulta-nome { font-size: 15px; font-weight: 600; cursor: pointer; }
+.consulta-nome:hover { color: var(--verde); text-decoration: underline; }
+.consulta-sub { font-size: 12.5px; color: var(--cinza-medio); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tag-mod { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; background: var(--verde-suave); color: var(--verde); }
+.tag-mod .dot { width: 7px; height: 7px; border-radius: 50%; }
+.status-pill { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 10px; text-transform: uppercase; letter-spacing: .03em; }
+.st-agendado { background: #EEF2FF; color: var(--azul); }
+.st-confirmado { background: var(--verde-claro); color: var(--verde); }
+.st-aguardando { background: #FDF3DC; color: var(--amarelo); }
+.st-atendido { background: var(--verde); color: white; }
+.st-cancelado { background: #FBE9E9; color: var(--vermelho); }
+.consulta-acoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.btn-mini { border: 1.5px solid var(--cinza-claro); background: white; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--cinza-medio); transition: all .15s; }
+.btn-mini:hover { border-color: var(--verde-medio); color: var(--verde); }
+.btn-mini.destaque { background: var(--verde); border-color: var(--verde); color: white; }
+.btn-mini.perigo:hover { border-color: var(--vermelho); color: var(--vermelho); }
+
+.dia-header { font-size: 13px; font-weight: 700; text-transform: capitalize; color: var(--verde); background: var(--verde-suave); padding: 9px 18px; border-bottom: 1px solid var(--cinza-claro); }
+.empty { padding: 34px 20px; text-align: center; color: var(--cinza-medio); font-size: 14px; line-height: 1.6; }
+.empty svg { width: 34px; height: 34px; color: var(--cinza-claro); margin-bottom: 8px; }
+
+/* Pacientes */
+.busca { width: 100%; padding: 12px 16px; border: 1.5px solid var(--cinza-claro); border-radius: var(--raio-m); font-size: 14px; background: white; outline: none; margin-bottom: 12px; transition: border-color .15s, box-shadow .15s; }
+.busca:focus { border-color: var(--verde-medio); box-shadow: var(--anel); }
+.paciente-row { display: flex; align-items: center; gap: 13px; padding: 14px 18px; border-bottom: 1px solid var(--cinza-claro); cursor: pointer; transition: background .12s; }
+.paciente-row:hover { background: var(--verde-suave); }
+.paciente-row:last-child { border-bottom: none; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--verde-claro); color: var(--verde); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.paciente-row .nome { font-size: 14.5px; font-weight: 600; }
+.paciente-row .sub { font-size: 12.5px; color: var(--cinza-medio); margin-top: 1px; }
+
+/* Ficha (slide-over) */
+.ficha-overlay { position: fixed; inset: 0; background: rgba(10,25,18,0.4); backdrop-filter: blur(2px); z-index: 400; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.ficha-overlay.visivel { opacity: 1; pointer-events: auto; }
+.ficha { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); background: var(--creme); z-index: 401; transform: translateX(100%); transition: transform .28s ease; overflow-y: auto; box-shadow: var(--sombra-alta); }
+.ficha.visivel { transform: translateX(0); }
+.ficha-head { position: sticky; top: 0; background: var(--creme); padding: 18px 20px 12px; display: flex; align-items: center; gap: 12px; z-index: 2; border-bottom: 1px solid var(--cinza-claro); }
+.ficha-head h2 { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; flex: 1; min-width: 0; }
+.btn-fechar { border: none; background: white; border: 1px solid var(--cinza-claro); width: 34px; height: 34px; border-radius: 50%; font-size: 17px; color: var(--cinza-medio); }
+.ficha-corpo { padding: 16px 20px 40px; display: flex; flex-direction: column; gap: 14px; }
+.ficha-bloco { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio-m); padding: 16px 18px; }
+.ficha-bloco h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--cinza-medio); margin-bottom: 10px; }
+.dado { display: flex; justify-content: space-between; gap: 14px; font-size: 13.5px; padding: 5px 0; }
+.dado .k { color: var(--cinza-medio); }
+.dado .v { font-weight: 600; text-align: right; }
+.aviso-leitura { font-size: 12px; color: var(--cinza-medio); background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: var(--raio-p); padding: 9px 12px; line-height: 1.5; }
+.evolucao-item { border-left: 3px solid var(--verde-claro); padding: 2px 0 2px 12px; margin-bottom: 12px; }
+.evolucao-data { font-size: 11.5px; font-weight: 700; color: var(--verde); margin-bottom: 3px; }
+.evolucao-texto { font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
+textarea#evo-texto { width: 100%; min-height: 92px; padding: 12px 14px; border: 1.5px solid var(--cinza-claro); border-radius: var(--raio-p); font-size: 14px; background: var(--creme); outline: none; resize: vertical; }
+textarea#evo-texto:focus { border-color: var(--verde-medio); background: white; box-shadow: var(--anel); }
+.btn { border: none; border-radius: var(--raio-p); padding: 12px 18px; font-size: 14px; font-weight: 600; transition: all .15s; }
+.btn-primario { background: var(--verde); color: white; }
+.btn-primario:hover { background: var(--verde-escuro); }
+.btn-primario:disabled { opacity: .6; cursor: default; }
+.hist-item { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 7px 0; border-bottom: 1px dashed var(--cinza-claro); }
+.hist-item:last-child { border-bottom: none; }
+
+/* Toast */
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--cinza-escuro); color: white; font-size: 13.5px; font-weight: 500; padding: 12px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 999; box-shadow: var(--sombra-alta); max-width: 92vw; text-align: center; }
+#toast.visivel { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 560px) {
+  .topo-badge { display: none; }
+  .ola-card h1 { font-size: 21px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Estado: carregando / sem vínculo -->
+<div id="tela-carregando" class="tela-estado">
+  <div class="logo">NastaDesk</div>
+  <div class="spinner"></div>
+  <p>Abrindo o seu portal…</p>
+</div>
+<div id="tela-sem-vinculo" class="tela-estado" style="display:none">
+  <div class="logo">NastaDesk</div>
+  <p><strong>Seu acesso ainda não está vinculado a um profissional.</strong><br>
+  Peça para a clínica abrir <em>Configurações → Profissionais → Logins da equipe</em> e vincular o seu login ao seu cadastro de profissional. Depois é só entrar de novo.</p>
+  <button class="btn btn-primario" onclick="sair()">Sair</button>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="topo">
+    <div class="topo-logo">NastaDesk</div>
+    <div class="topo-badge">Portal do Profissional</div>
+    <div class="topo-dir">
+      <button class="btn-sair" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="ola-card">
+    <h1 id="ola-nome">Olá!</h1>
+    <p id="ola-clinica">—</p>
+    <div class="ola-chip"><span class="dot" id="ola-dot"></span><span id="ola-prof">—</span></div>
+  </div>
+
+  <div class="abas">
+    <button class="aba ativa" data-aba="hoje" onclick="irAba('hoje')">Hoje</button>
+    <button class="aba" data-aba="agenda" onclick="irAba('agenda')">Agenda</button>
+    <button class="aba" data-aba="pacientes" onclick="irAba('pacientes')">Meus pacientes</button>
+  </div>
+
+  <!-- HOJE -->
+  <div id="aba-hoje">
+    <div class="secao-titulo" id="hoje-titulo">Suas consultas de hoje</div>
+    <div class="card" id="lista-hoje"></div>
+  </div>
+
+  <!-- AGENDA (próximos dias) -->
+  <div id="aba-agenda" style="display:none">
+    <div class="secao-titulo">Próximos 14 dias</div>
+    <div class="card" id="lista-agenda"></div>
+  </div>
+
+  <!-- PACIENTES -->
+  <div id="aba-pacientes" style="display:none">
+    <div class="secao-titulo">Pacientes que você atende</div>
+    <input class="busca" id="busca-pac" placeholder="Buscar por nome…" oninput="renderPacientes()">
+    <div class="card" id="lista-pacientes"></div>
+  </div>
+</div>
+
+<!-- Ficha do paciente (somente leitura + evoluções) -->
+<div class="ficha-overlay" id="ficha-overlay" onclick="fecharFicha()"></div>
+<div class="ficha" id="ficha">
+  <div class="ficha-head">
+    <div class="avatar" id="ficha-avatar">—</div>
+    <h2 id="ficha-nome">—</h2>
+    <button class="btn-fechar" onclick="fecharFicha()">✕</button>
+  </div>
+  <div class="ficha-corpo">
+    <div class="aviso-leitura">Você vê apenas os pacientes que atende. Os dados cadastrais são <strong>somente leitura</strong> — alterações ficam com a recepção/dono da clínica.</div>
+    <div class="ficha-bloco">
+      <h3>Dados do paciente</h3>
+      <div id="ficha-dados"></div>
+    </div>
+    <div class="ficha-bloco">
+      <h3>Suas consultas com este paciente</h3>
+      <div id="ficha-historico"></div>
+    </div>
+    <div class="ficha-bloco">
+      <h3>Nova evolução</h3>
+      <textarea id="evo-texto" placeholder="Registre a evolução clínica de hoje…"></textarea>
+      <button class="btn btn-primario" id="evo-btn" style="width:100%;margin-top:10px" onclick="salvarEvolucao()">Salvar evolução</button>
+    </div>
+    <div class="ficha-bloco">
+      <h3>Evoluções</h3>
+      <div id="ficha-evolucoes"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// NastaDesk — Portal do Profissional
+// Front dedicado para logins de equipe com papel 'profissional'.
+// O RLS no banco garante o escopo (só as consultas dele e os
+// pacientes que ele atende); este front nem pede outra coisa.
+// Sem financeiro, sem valores, sem excluir nada.
+// ============================================================
+const SUPA_URL = 'https://zrkadblxozddreiwruhv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpya2FkYmx4b3pkZHJlaXdydWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NjA4MjEsImV4cCI6MjA5NjUzNjgyMX0.BQkXr831MlctUk-FhfEYkrgs6Amdpho5yDWcR3BtXok';
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+const TZ = 'America/Sao_Paulo';
+const STATUS_LABEL = { agendado:'Agendado', confirmado:'Confirmado', aguardando:'Aguardando', atendido:'Atendido', cancelado:'Cancelado' };
+
+let membro = null;          // linha de clinica_membros (papel profissional)
+let clinicaId = null;
+let clinicaNome = '';
+let meuProfId = null;       // profissionais.id vinculado a este login
+let meuProf = null;         // linha de profissionais (nome/cor)
+let consultasHoje = [];
+let consultasProx = [];
+let pacientes = [];
+let pacienteAtual = null;
+
+// ===== Helpers =====
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function dataLocalISO(d) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit' }).format(d);
+}
+function horaSP(iso) { return new Date(iso).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone: TZ }); }
+function diaInicioISO(dataStr) { return `${dataStr}T00:00:00-03:00`; }
+function diaFimISO(dataStr) { return `${dataStr}T23:59:59-03:00`; }
+function iniciaisDe(nome) { return (nome || '—').split(' ').filter(Boolean).map(n => n[0]).slice(0,2).join('').toUpperCase(); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('visivel');
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('visivel'), 2600);
+}
+// Trilha de auditoria (LGPD) — fire-and-forget, nunca trava a navegação.
+function logAcesso(pacienteId, acao, detalhe) {
+  try {
+    db.rpc('registrar_auditoria', {
+      p_paciente_id: pacienteId, p_acao: acao,
+      p_detalhe: detalhe || null, p_user_agent: navigator.userAgent
+    }).then(() => {}, () => {});
+  } catch (_) {}
+}
+
+// ===== Boot =====
+async function iniciar() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { window.location.replace('/'); return; }
+
+  // Este portal é SÓ para logins de equipe com papel 'profissional'.
+  const { data: m } = await db.from('clinica_membros')
+    .select('id, papel, profissional_id, nome, clinica_id, clinicas(id, nome)')
+    .eq('user_id', session.user.id).eq('ativo', true).maybeSingle();
+  if (!m || m.papel !== 'profissional') { window.location.replace('/'); return; }
+
+  membro = m;
+  clinicaId = m.clinica_id || (m.clinicas && m.clinicas.id) || null;
+  clinicaNome = (m.clinicas && m.clinicas.nome) || '';
+  meuProfId = m.profissional_id || null;
+
+  if (!meuProfId) {
+    document.getElementById('tela-carregando').style.display = 'none';
+    document.getElementById('tela-sem-vinculo').style.display = 'flex';
+    return;
+  }
+
+  const { data: prof } = await db.from('profissionais').select('id, nome, registro, cor')
+    .eq('id', meuProfId).maybeSingle();
+  meuProf = prof || null;
+
+  const primeiroNome = (m.nome || (prof && prof.nome) || '').split(' ')[0];
+  document.getElementById('ola-nome').textContent = primeiroNome ? `Olá, ${primeiroNome}!` : 'Olá!';
+  document.getElementById('ola-clinica').textContent = clinicaNome ? `${clinicaNome} · sua agenda e seus pacientes` : 'Sua agenda e seus pacientes';
+  document.getElementById('ola-prof').textContent = (prof && prof.nome) ? `${prof.nome}${prof.registro ? ' · ' + prof.registro : ''}` : 'Profissional';
+  if (prof && prof.cor) document.getElementById('ola-dot').style.background = prof.cor;
+
+  const hoje = new Date();
+  document.getElementById('hoje-titulo').textContent =
+    'Suas consultas de ' + hoje.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', timeZone: TZ });
+
+  await Promise.all([carregarHoje(), carregarProximos(), carregarPacientes()]);
+
+  document.getElementById('tela-carregando').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // Tempo real: qualquer mudança nas consultas DESTE profissional recarrega.
+  try {
+    db.channel('portal-prof')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas', filter: `profissional_id=eq.${meuProfId}` }, () => {
+        carregarHoje(); carregarProximos(); carregarPacientes();
+      })
+      .subscribe();
+  } catch (_) {}
+}
+
+async function sair() {
+  try { await db.auth.signOut(); } catch (_) {}
+  window.location.replace('/');
+}
+
+function irAba(aba) {
+  document.querySelectorAll('.aba').forEach(b => b.classList.toggle('ativa', b.dataset.aba === aba));
+  ['hoje','agenda','pacientes'].forEach(a => {
+    document.getElementById('aba-' + a).style.display = (a === aba) ? '' : 'none';
+  });
+}
+
+// ===== Consultas =====
+// Todas as queries filtram por profissional_id = o MEU. O RLS no banco já
+// garante isso mesmo se o filtro sumisse — é cinto e suspensório.
+async function carregarHoje() {
+  const hojeStr = dataLocalISO(new Date());
+  const { data } = await db.from('consultas')
+    .select('id, data_hora, status, queixa, paciente_id, pacientes(id, nome, whatsapp, total_consultas), modalidades(nome, cor), salas(nome)')
+    .eq('profissional_id', meuProfId)
+    .gte('data_hora', diaInicioISO(hojeStr)).lte('data_hora', diaFimISO(hojeStr))
+    .order('data_hora');
+  consultasHoje = data || [];
+  renderHoje();
+}
+
+function htmlConsulta(c, comAcoes) {
+  const st = c.status || 'agendado';
+  const mod = c.modalidades ? `<span class="tag-mod"><span class="dot" style="background:${esc(c.modalidades.cor || '#17A076')}"></span>${esc(c.modalidades.nome)}</span>` : '';
+  const sala = c.salas && c.salas.nome ? `<span>· ${esc(c.salas.nome)}</span>` : '';
+  const nome = c.pacientes ? c.pacientes.nome : 'Paciente';
+  const acoes = comAcoes && st !== 'atendido' && st !== 'cancelado' ? `
+    <div class="consulta-acoes">
+      ${st !== 'confirmado' ? `<button class="btn-mini" onclick="mudarStatus('${c.id}','confirmado')">Confirmar</button>` : ''}
+      ${st !== 'aguardando' ? `<button class="btn-mini" onclick="mudarStatus('${c.id}','aguardando')">Chegou</button>` : ''}
+      <button class="btn-mini destaque" onclick="mudarStatus('${c.id}','atendido')">Atendido ✓</button>
+      <button class="btn-mini perigo" onclick="cancelarConsulta('${c.id}')">Cancelar</button>
+    </div>` : '';
+  const queixa = c.queixa ? `<div class="consulta-sub" style="margin-top:3px">Queixa: ${esc(c.queixa)}</div>` : '';
+  return `<div class="consulta">
+    <div class="consulta-hora">${horaSP(c.data_hora)}</div>
+    <div class="consulta-info">
+      <div class="consulta-nome" onclick="abrirFicha('${c.paciente_id}')">${esc(nome)}</div>
+      <div class="consulta-sub">${mod}${sala}<span class="status-pill st-${esc(st)}">${STATUS_LABEL[st] || esc(st)}</span></div>
+      ${queixa}
+      ${acoes}
+    </div>
+  </div>`;
+}
+
+function renderHoje() {
+  const el = document.getElementById('lista-hoje');
+  if (!consultasHoje.length) {
+    el.innerHTML = `<div class="empty"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><br>Nenhuma consulta sua hoje. Bom descanso! 🌿</div>`;
+    return;
+  }
+  el.innerHTML = consultasHoje.map(c => htmlConsulta(c, true)).join('');
+}
+
+async function carregarProximos() {
+  const hoje = new Date();
+  const fim = new Date(hoje); fim.setDate(fim.getDate() + 14);
+  const amanha = new Date(hoje); amanha.setDate(amanha.getDate() + 1);
+  const { data } = await db.from('consultas')
+    .select('id, data_hora, status, paciente_id, pacientes(id, nome), modalidades(nome, cor), salas(nome)')
+    .eq('profissional_id', meuProfId)
+    .gte('data_hora', diaInicioISO(dataLocalISO(amanha)))
+    .lte('data_hora', diaFimISO(dataLocalISO(fim)))
+    .order('data_hora');
+  consultasProx = data || [];
+  renderProximos();
+}
+
+function renderProximos() {
+  const el = document.getElementById('lista-agenda');
+  if (!consultasProx.length) {
+    el.innerHTML = `<div class="empty"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><br>Nada agendado para os próximos 14 dias.</div>`;
+    return;
+  }
+  const porDia = {};
+  consultasProx.forEach(c => {
+    const d = dataLocalISO(new Date(c.data_hora));
+    (porDia[d] = porDia[d] || []).push(c);
+  });
+  el.innerHTML = Object.keys(porDia).sort().map(d => {
+    const rotulo = new Date(`${d}T12:00:00-03:00`).toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', timeZone: TZ });
+    return `<div class="dia-header">${rotulo}</div>` + porDia[d].map(c => htmlConsulta(c, false)).join('');
+  }).join('');
+}
+
+async function mudarStatus(id, status) {
+  const { error } = await db.from('consultas').update({ status }).eq('id', id).eq('profissional_id', meuProfId);
+  if (error) { toast('Não foi possível atualizar'); return; }
+  toast((STATUS_LABEL[status] || status) + ' ✓');
+  carregarHoje(); carregarProximos();
+}
+
+function cancelarConsulta(id) {
+  if (!window.confirm('Cancelar esta consulta? A clínica verá o horário como cancelado (nada é excluído).')) return;
+  mudarStatus(id, 'cancelado');
+}
+
+// ===== Pacientes =====
+// O RLS devolve APENAS os pacientes com consulta com este profissional.
+async function carregarPacientes() {
+  const { data } = await db.from('pacientes')
+    .select('id, nome, whatsapp, convenio, queixa_principal, total_consultas, ultima_consulta, modalidade_id')
+    .eq('clinica_id', clinicaId)
+    .order('nome');
+  pacientes = data || [];
+  renderPacientes();
+}
+
+function renderPacientes() {
+  const el = document.getElementById('lista-pacientes');
+  const q = (document.getElementById('busca-pac').value || '').trim().toLowerCase();
+  const lista = q ? pacientes.filter(p => (p.nome || '').toLowerCase().includes(q)) : pacientes;
+  if (!lista.length) {
+    el.innerHTML = `<div class="empty"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M16 11a4 4 0 100-8"/></svg><br>${q ? 'Nenhum paciente encontrado.' : 'Você ainda não tem pacientes atribuídos.<br>Quando uma consulta for marcada com você, o paciente aparece aqui.'}</div>`;
+    return;
+  }
+  el.innerHTML = lista.map(p => `
+    <div class="paciente-row" onclick="abrirFicha('${p.id}')">
+      <div class="avatar">${iniciaisDe(p.nome)}</div>
+      <div>
+        <div class="nome">${esc(p.nome)}</div>
+        <div class="sub">${p.total_consultas || 0} consulta${p.total_consultas === 1 ? '' : 's'}${p.convenio ? ' · ' + esc(p.convenio) : ''}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ===== Ficha (somente leitura + evoluções) =====
+async function abrirFicha(pacienteId) {
+  if (!pacienteId) return;
+  const { data: p } = await db.from('pacientes')
+    .select('id, nome, whatsapp, convenio, queixa_principal, total_consultas, ultima_consulta, data_nascimento')
+    .eq('id', pacienteId).maybeSingle();
+  if (!p) { toast('Paciente não disponível para o seu acesso'); return; }
+  pacienteAtual = p;
+
+  document.getElementById('ficha-nome').textContent = p.nome || '—';
+  document.getElementById('ficha-avatar').textContent = iniciaisDe(p.nome);
+  const linhas = [
+    ['WhatsApp', p.whatsapp || '—'],
+    ['Nascimento', p.data_nascimento ? new Date(`${p.data_nascimento}T12:00:00-03:00`).toLocaleDateString('pt-BR', { timeZone: TZ }) : '—'],
+    ['Convênio', p.convenio || '—'],
+    ['Queixa principal', p.queixa_principal || '—'],
+    ['Total de consultas', String(p.total_consultas || 0)],
+  ];
+  document.getElementById('ficha-dados').innerHTML =
+    linhas.map(([k, v]) => `<div class="dado"><span class="k">${k}</span><span class="v">${esc(v)}</span></div>`).join('');
+
+  document.getElementById('ficha-overlay').classList.add('visivel');
+  document.getElementById('ficha').classList.add('visivel');
+  document.getElementById('evo-texto').value = '';
+
+  logAcesso(p.id, 'visualizou_ficha', 'portal do profissional');
+  carregarHistorico(p.id);
+  carregarEvolucoes(p.id);
+}
+
+function fecharFicha() {
+  document.getElementById('ficha-overlay').classList.remove('visivel');
+  document.getElementById('ficha').classList.remove('visivel');
+  pacienteAtual = null;
+}
+
+async function carregarHistorico(pacienteId) {
+  const { data } = await db.from('consultas')
+    .select('id, data_hora, status, modalidades(nome)')
+    .eq('paciente_id', pacienteId).eq('profissional_id', meuProfId)
+    .order('data_hora', { ascending: false }).limit(20);
+  const el = document.getElementById('ficha-historico');
+  if (!data || !data.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhuma consulta sua com este paciente ainda.</div>'; return; }
+  el.innerHTML = data.map(c => `
+    <div class="hist-item">
+      <span>${new Date(c.data_hora).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', timeZone: TZ })} · ${horaSP(c.data_hora)}${c.modalidades ? ' · ' + esc(c.modalidades.nome) : ''}</span>
+      <span class="status-pill st-${esc(c.status || 'agendado')}">${STATUS_LABEL[c.status] || esc(c.status)}</span>
+    </div>`).join('');
+}
+
+async function carregarEvolucoes(pacienteId) {
+  const { data } = await db.from('evolucoes').select('id, texto, criado_em')
+    .eq('paciente_id', pacienteId).order('criado_em', { ascending: false });
+  const el = document.getElementById('ficha-evolucoes');
+  if (!data || !data.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhuma evolução registrada ainda.</div>'; return; }
+  el.innerHTML = data.map(e => `
+    <div class="evolucao-item">
+      <div class="evolucao-data">${new Date(e.criado_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone: TZ })}</div>
+      <div class="evolucao-texto">${esc(e.texto)}</div>
+    </div>`).join('');
+}
+
+async function salvarEvolucao() {
+  if (!pacienteAtual || !clinicaId) return;
+  const texto = document.getElementById('evo-texto').value.trim();
+  if (!texto) { toast('Escreva a evolução antes de salvar'); return; }
+  const btn = document.getElementById('evo-btn');
+  btn.disabled = true;
+  const { error } = await db.from('evolucoes').insert({
+    clinica_id: clinicaId, paciente_id: pacienteAtual.id, texto
+  });
+  btn.disabled = false;
+  if (error) { toast('Não foi possível salvar a evolução'); return; }
+  document.getElementById('evo-texto').value = '';
+  toast('Evolução salva ✓');
+  logAcesso(pacienteAtual.id, 'registrou_evolucao', 'portal do profissional');
+  carregarEvolucoes(pacienteAtual.id);
+}
+
+// Sessão expirada / logout em outra aba → volta para o login.
+db.auth.onAuthStateChange((evento) => {
+  if (evento === 'SIGNED_OUT') window.location.replace('/');
+});
+
+iniciar();
+</script>
+</body>
+</html>
