@@ -1540,6 +1540,29 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           </div>
           <div id="profissionais-lista"></div>
         </div>
+
+        <div class="card" id="equipe-card" style="padding:28px;margin-top:16px">
+          <div class="card-titulo" style="margin-bottom:6px">Logins da equipe</div>
+          <div class="card-sub" style="margin-bottom:20px">Dê acesso para quem trabalha com você. Cada pessoa entra com o <strong>próprio email e senha</strong>, vê só os dados desta clínica e tem permissões conforme o papel: <strong>Recepção</strong> (agenda, pacientes, financeiro, lembretes) ou <strong>Profissional</strong> (agenda e pacientes; sem financeiro). Só você (dono) gerencia os acessos e as configurações.</div>
+          <div class="config-campo"><label>Nome</label><input type="text" id="equipe-nome" placeholder="Ex: Marina (recepção)" maxlength="80"></div>
+          <div class="modal-grid">
+            <div class="config-campo"><label>Email de acesso</label><input type="email" id="equipe-email" placeholder="email@exemplo.com" maxlength="120"></div>
+            <div class="config-campo"><label>Senha inicial</label><input type="text" id="equipe-senha" placeholder="mín. 8 caracteres" maxlength="60"></div>
+          </div>
+          <div class="modal-grid">
+            <div class="config-campo"><label>Papel</label>
+              <select id="equipe-papel">
+                <option value="recepcao">Recepção</option>
+                <option value="profissional">Profissional</option>
+              </select>
+            </div>
+            <div class="config-campo"><label>Vincular ao profissional (opcional)</label>
+              <select id="equipe-prof"><option value="">—</option></select>
+            </div>
+          </div>
+          <button class="btn btn-primario" id="equipe-btn-criar" onclick="criarAcessoEquipe()">Criar acesso</button>
+          <div id="equipe-lista" style="margin-top:22px"></div>
+        </div>
       </div>
 
       <!-- ABA WHATSAPP & CHATBOT -->
@@ -2220,16 +2243,16 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 11-4.5-7.794M21 5l-9 9-3-3"/></svg>Conversas
     <span id="conv-badge-mais" style="display:none;background:#25D366;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;margin-left:auto"></span>
   </div>
-  <div class="menu-mais-item" onclick="fecharMenuMais();irPara('relatorio')">
+  <div class="menu-mais-item" data-sec="relatorio" onclick="fecharMenuMais();irPara('relatorio')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Relatório
   </div>
-  <div class="menu-mais-item" onclick="fecharMenuMais();irPara('planos')">
+  <div class="menu-mais-item" data-sec="planos" onclick="fecharMenuMais();irPara('planos')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>Planos
   </div>
-  <div class="menu-mais-item" onclick="fecharMenuMais();irPara('configuracoes')">
+  <div class="menu-mais-item" data-sec="configuracoes" onclick="fecharMenuMais();irPara('configuracoes')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configurações
   </div>
-  <div class="menu-mais-item" onclick="fecharMenuMais();irPara('perfil')">
+  <div class="menu-mais-item" data-sec="perfil" onclick="fecharMenuMais();irPara('perfil')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Minha Clínica
   </div>
   <div class="menu-mais-item" onclick="fecharMenuMais();toggleNotifPainel()">
@@ -2255,6 +2278,8 @@ const db = createClient(SUPA_URL, SUPA_KEY);
 
 let clinicaId = null;
 let clinicaAtual = null;
+let meuPapel = 'dono';          // 'dono' | 'recepcao' | 'profissional'
+let meuProfissionalId = null;   // profissional vinculado ao login (quando aplicável)
 let salas = [];
 let salasDisponivel = false;
 let modalidades = [];
@@ -2692,18 +2717,35 @@ async function carregarDados(user) {
   document.getElementById('satis-mes').textContent = MESES[hoje.getMonth()];
   document.getElementById('novo-data').value = dataLocalISO(hoje);
 
-  const { data: clinica } = await db.from('clinicas').select('*').eq('user_id', user.id).single();
+  // Resolve a clínica: primeiro tenta como DONO; se não for, tenta como FUNCIONÁRIO.
+  let clinica = null;
+  meuPapel = 'dono'; meuProfissionalId = null;
+  {
+    const { data } = await db.from('clinicas').select('*').eq('user_id', user.id).maybeSingle();
+    clinica = data || null;
+  }
+  if (!clinica) {
+    const { data: membro } = await db.from('clinica_membros')
+      .select('papel, profissional_id, nome, clinicas(*)')
+      .eq('user_id', user.id).eq('ativo', true).maybeSingle();
+    if (membro && membro.clinicas) {
+      clinica = membro.clinicas;
+      meuPapel = membro.papel || 'recepcao';
+      meuProfissionalId = membro.profissional_id || null;
+      clinica.__membroNome = membro.nome || null;
+    }
+  }
   if (clinica) {
     clinicaId = clinica.id;
     clinicaAtual = clinica;
-    document.getElementById('sb-nome').textContent = clinica.responsavel || '—';
+    document.getElementById('sb-nome').textContent = (meuPapel === 'dono') ? (clinica.responsavel || '—') : (clinica.__membroNome || 'Equipe');
     document.getElementById('sb-sub').textContent = clinica.nome || '—';
     const planos = { basico:'Plano Básico', profissional:'Plano Profissional', premium:'Plano Premium' };
-    document.getElementById('sb-plano').textContent = planos[clinica.plano] || clinica.plano || '—';
-    if (!clinica.onboarding_completo) mostrarOnboarding(clinica);
+    document.getElementById('sb-plano').textContent = (meuPapel === 'dono') ? (planos[clinica.plano] || clinica.plano || '—') : PAPEL_LABEL[meuPapel];
+    if (meuPapel === 'dono' && !clinica.onboarding_completo) mostrarOnboarding(clinica);
     aplicarGatesDePlano();
-    verificarAssinatura();
-    tratarRetornoPagamento();
+    gatearPorPapel();
+    if (meuPapel === 'dono') { verificarAssinatura(); tratarRetornoPagamento(); }
   }
 
   await carregarSalas();
@@ -5158,7 +5200,7 @@ function cfgTab(nome, el) {
   }
   if (nome === 'whatsapp') atualizarStatusWhatsapp();
   if (nome === 'modalidades') renderModalidadesConfig();
-  if (nome === 'profissionais') renderProfissionaisConfig();
+  if (nome === 'profissionais') { renderProfissionaisConfig(); carregarEquipe(); }
 }
 
 function cfgTabIrPara(nome) {
@@ -6233,13 +6275,14 @@ const PLANOS = {
   basico: {
     nome: 'Básica', preco: 97, destaque: false,
     tagline: 'Tudo para organizar sua clínica no dia a dia.',
-    whatsapp: true, chatbot: false, pacotes: false,
+    whatsapp: true, chatbot: false, pacotes: false, equipe: false,
     feats: [
       [true, 'Agenda e prontuário dos pacientes'],
       [true, 'Cadastro com CPF e busca inteligente'],
       [true, 'Financeiro, recibos e relatórios'],
       [true, 'Agendamento online (link + QR Code)'],
       [true, 'WhatsApp conectado + lembretes manuais'],
+      [false, 'Vários profissionais + logins de equipe'],
       [false, 'Chatbot de IA no WhatsApp'],
       [false, 'Pacotes de sessões'],
     ],
@@ -6247,9 +6290,10 @@ const PLANOS = {
   profissional: {
     nome: 'Profissional', preco: 197, destaque: true,
     tagline: 'Automatize o atendimento e capte mais pacientes.',
-    whatsapp: true, chatbot: true, pacotes: true,
+    whatsapp: true, chatbot: true, pacotes: true, equipe: true,
     feats: [
       [true, 'Tudo da Básica'],
+      [true, 'Vários profissionais + logins de equipe (recepção/profissional)'],
       [true, 'Chatbot de IA no WhatsApp (agenda e tira dúvidas)'],
       [true, 'Lembretes automáticos com confirmação'],
       [true, 'Captação de leads pelo WhatsApp'],
@@ -6260,11 +6304,11 @@ const PLANOS = {
   premium: {
     nome: 'Premium', preco: 347, destaque: false,
     tagline: 'Para clínicas que querem escalar sem limites.',
-    whatsapp: true, chatbot: true, pacotes: true,
+    whatsapp: true, chatbot: true, pacotes: true, equipe: true,
     feats: [
       [true, 'Tudo do Profissional'],
       [true, 'Conversas de IA ilimitadas'],
-      [true, 'Profissionais ilimitados (em breve)'],
+      [true, 'Profissionais e logins de equipe ilimitados'],
       [true, 'Campanhas de reativação (em breve)'],
       [true, 'Relatórios do WhatsApp (em breve)'],
       [true, 'Suporte prioritário'],
@@ -6279,16 +6323,98 @@ function recursoLiberado(nome) { return !!planoAtual()[nome]; }
 function aplicarGatesDePlano() {
   const chatbot = recursoLiberado('chatbot');
   const pac = recursoLiberado('pacotes');
+  const equipe = recursoLiberado('equipe');
   const set = (el, on) => { if (el) el.style.display = on ? '' : 'none'; };
   // Caixa de Conversas (inbox do chatbot) só nos planos com chatbot (Profissional+)
   set(document.getElementById('nav-conversas'), chatbot);
   set(document.getElementById('mm-conversas'), chatbot);
   set(document.getElementById('ftab-pacotes'), pac);
+  // Multi-profissional + logins de equipe: só no Profissional+
+  const profTab = document.querySelector('.cfg-tab[data-cfg="profissionais"]');
+  if (profTab) profTab.style.display = equipe ? '' : 'none';
   // A aba de WhatsApp fica disponível em todos os planos (o Básico precisa conectar o número
   // para os lembretes manuais). Apenas o bloco do Chatbot fica restrito ao Profissional+.
   set(document.getElementById('cfg-bloco-chatbot'), chatbot);
   const tabWpp = document.querySelector('.cfg-tab[data-cfg="whatsapp"]');
   if (tabWpp) tabWpp.textContent = chatbot ? 'WhatsApp & Chatbot' : 'WhatsApp';
+}
+
+// ===== PAPÉIS (login de profissionais) =====
+const PAPEL_LABEL = { dono: 'Dono', recepcao: 'Recepção', profissional: 'Profissional' };
+// Seções que cada papel NÃO vê (o dono vê tudo). Só esconde — nunca força a mostrar
+// (os gates de plano continuam valendo).
+const SECOES_OCULTAS_POR_PAPEL = {
+  recepcao: ['planos', 'configuracoes', 'perfil'],
+  profissional: ['planos', 'configuracoes', 'perfil', 'financeiro', 'relatorio', 'conversas'],
+};
+function gatearPorPapel() {
+  if (meuPapel === 'dono') return;
+  const ocultar = SECOES_OCULTAS_POR_PAPEL[meuPapel] || [];
+  ocultar.forEach(sec => {
+    document.querySelectorAll(`.nav-item[data-sec="${sec}"]`).forEach(e => e.style.display = 'none');
+    const mn = document.getElementById('mnav-' + sec); if (mn) mn.style.display = 'none';
+    document.querySelectorAll(`.menu-mais-item[data-sec="${sec}"]`).forEach(e => e.style.display = 'none');
+  });
+  if (typeof secAtiva !== 'undefined' && ocultar.includes(secAtiva)) irPara('agenda');
+}
+
+// ===== EQUIPE / ACESSOS (só o dono gerencia, plano Profissional+) =====
+async function carregarEquipe() {
+  const card = document.getElementById('equipe-card');
+  if (!card || !clinicaId || meuPapel !== 'dono') { if (card) card.style.display = (meuPapel === 'dono') ? '' : 'none'; return; }
+  const sel = document.getElementById('equipe-prof');
+  if (sel) {
+    const ativos = (typeof profissionaisDisponivel !== 'undefined' && profissionaisDisponivel) ? profissionaisAtivos() : [];
+    sel.innerHTML = '<option value="">—</option>' + ativos.map(p => `<option value="${p.id}">${esc(p.nome)}</option>`).join('');
+  }
+  const { data } = await db.from('clinica_membros').select('*').eq('clinica_id', clinicaId).order('criado_em', { ascending: true });
+  const membros = data || [];
+  const el = document.getElementById('equipe-lista');
+  if (!el) return;
+  if (!membros.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhum acesso criado ainda.</div>'; return; }
+  el.innerHTML = membros.map(m => `<div class="fin-row">
+      <div class="fin-info">
+        <div class="fin-nome">${esc(m.nome || '—')} <span class="desp-cat-tag">${PAPEL_LABEL[m.papel] || m.papel}</span></div>
+        <div class="fin-sub">${m.ativo ? 'Acesso ativo' : 'Acesso desativado'}</div>
+      </div>
+      <button class="pag-pill ${m.ativo ? 'pag-pago' : 'pag-pendente'}" onclick="alternarMembro('${m.id}', ${!m.ativo})">${m.ativo ? 'Ativo' : 'Inativo'}</button>
+    </div>`).join('');
+}
+
+async function alternarMembro(id, ativar) {
+  const { error } = await db.from('clinica_membros').update({ ativo: ativar }).eq('id', id);
+  if (error) { toast('Erro ao atualizar o acesso'); return; }
+  toast(ativar ? 'Acesso reativado ✓' : 'Acesso desativado (a pessoa perde o acesso na hora)');
+  carregarEquipe();
+}
+
+async function criarAcessoEquipe() {
+  const nome = document.getElementById('equipe-nome').value.trim();
+  const email = document.getElementById('equipe-email').value.trim();
+  const senha = document.getElementById('equipe-senha').value;
+  const papel = document.getElementById('equipe-papel').value;
+  const profissional_id = document.getElementById('equipe-prof').value || null;
+  if (!email) { toast('Informe o email do funcionário'); return; }
+  if (senha.length < 8) { toast('A senha precisa ter ao menos 8 caracteres'); return; }
+  const btn = document.getElementById('equipe-btn-criar');
+  btn.disabled = true; btn.textContent = 'Criando...';
+  let erroMsg = null;
+  try {
+    const { data, error } = await db.functions.invoke('equipe-criar', { body: { nome, email, senha, papel, profissional_id } });
+    if (error) {
+      erroMsg = 'Não foi possível criar o acesso';
+      try { const b = await error.context.json(); if (b && b.error) erroMsg = b.error; } catch (_) {}
+    } else if (data && data.error) {
+      erroMsg = data.error;
+    }
+  } catch (e) { erroMsg = 'Não foi possível criar o acesso'; }
+  btn.disabled = false; btn.textContent = 'Criar acesso';
+  if (erroMsg) { toast(erroMsg); return; }
+  toast('Acesso criado ✓ — a pessoa já pode entrar com esse email e senha');
+  document.getElementById('equipe-nome').value = '';
+  document.getElementById('equipe-email').value = '';
+  document.getElementById('equipe-senha').value = '';
+  carregarEquipe();
 }
 
 function carregarPlanos() {

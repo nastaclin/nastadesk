@@ -23,3 +23,7 @@ verify_jwt = false
 # Agendamento público com hCaptcha (sem JWT) — verifica o token anti-robô e delega à RPC
 [functions.agendar-publico]
 verify_jwt = false
+
+# Criação de login de funcionário — exige login do dono (JWT); trava por plano no código
+[functions.equipe-criar]
+verify_jwt = true
