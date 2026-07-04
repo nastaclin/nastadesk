@@ -1606,6 +1606,13 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="config-campo"><label>Complemento</label><input type="text" id="perf-complemento"></div>
         <button class="btn btn-primario" onclick="salvarPerfil()">Salvar alterações</button>
       </div>
+      <div class="card" style="padding:28px;max-width:580px;margin-bottom:16px">
+        <div class="card-titulo" style="margin-bottom:6px">Dados para o recibo</div>
+        <div style="font-size:13px;color:var(--cinza-medio);line-height:1.6;margin-bottom:18px">Aparecem no <strong>Recibo de pagamento</strong> (botão nas consultas, mensalidades e pacotes pagos). Com o seu <strong>CPF</strong> e o <strong>registro profissional</strong>, o paciente pode usar o recibo para <strong>deduzir no Imposto de Renda</strong> (despesa médica). Não exige CNPJ.</div>
+        <div class="config-campo"><label>CPF ou CNPJ do emissor</label><input type="text" id="perf-recibo-doc" placeholder="Ex: 123.456.789-00" maxlength="20"></div>
+        <div class="config-campo"><label>Registro profissional (opcional)</label><input type="text" id="perf-recibo-registro" placeholder="Ex: CREFITO-3 123456-F" maxlength="40"></div>
+        <button class="btn btn-primario" onclick="salvarDadosRecibo()">Salvar dados do recibo</button>
+      </div>
       <div class="card" style="padding:28px;max-width:580px">
         <div class="card-titulo" style="margin-bottom:20px">Alterar senha</div>
         <div class="config-campo"><label>Nova senha</label><input type="password" id="perf-senha" placeholder="Mínimo 8 caracteres" autocomplete="new-password"></div>
@@ -4275,7 +4282,7 @@ async function carregarMensalidades() {
   // Abre/gera as cobranças do mês (idempotente; o banco só gera p/ mês corrente ou futuro)
   try { await db.rpc('gerar_mensalidades', { p_competencia: comp }); } catch (e) { /* tolerante a falha */ }
   const { data } = await db.from('mensalidades')
-    .select('*, pacientes(nome,modalidade_id,whatsapp)')
+    .select('*, pacientes(nome,modalidade_id,whatsapp,cpf)')
     .eq('clinica_id', clinicaId).eq('competencia', comp)
     .order('vencimento', { ascending: true });
   finMensalidades = data || [];
@@ -4313,6 +4320,7 @@ function renderMensalidades() {
         <div class="fin-sub">Mensalidade${m.forma_pagamento?` · ${FORMA_LABEL[m.forma_pagamento]||m.forma_pagamento}`:''}</div>
       </div>
       <div class="fin-valor">${fmtBRL(m.valor)}</div>
+      ${pago ? `<button class="btn-icone" title="Gerar recibo" onclick="gerarReciboMensalidade('${m.id}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></button>` : ''}
       <button class="pag-pill ${cls}" onclick="abrirModalMensalidade(finMensPorId('${m.id}'))">${label}</button>
     </div>`;
   }).join('');
@@ -4593,14 +4601,14 @@ async function carregarFinanceiro() {
   document.getElementById('fin-mes-label').textContent = `${MESES[mes]} ${ano}`;
   const inicio = new Date(ano, mes, 1);
   const fim = new Date(ano, mes+1, 0, 23, 59, 59);
-  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp,modalidade_id)')
+  const { data } = await db.from('consultas').select('*, pacientes(nome,whatsapp,modalidade_id,cpf)')
     .eq('clinica_id', clinicaId)
     .gte('data_hora', inicio.toISOString()).lte('data_hora', fim.toISOString())
     .order('data_hora', { ascending: false });
   finConsultas = data || [];
 
   // Pacotes pagos no mês (faturamento separado das consultas)
-  const { data: pacs } = await db.from('pacotes').select('*, pacientes(nome)')
+  const { data: pacs } = await db.from('pacotes').select('*, pacientes(nome,cpf)')
     .eq('clinica_id', clinicaId).eq('pagamento_status', 'pago')
     .gte('pago_em', inicio.toISOString()).lte('pago_em', fim.toISOString())
     .order('pago_em', { ascending: false });
@@ -4648,6 +4656,7 @@ function renderFinLista() {
         <div class="fin-sub">${esc(p.pacientes?.nome || '—')} · ${p.total_sessoes} sessões</div>
       </div>
       <div class="fin-valor">${fmtBRL(p.valor_pago)}</div>
+      <button class="btn-icone" title="Gerar recibo" onclick="gerarReciboPacote('${p.id}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></button>
       <span class="pag-pill pag-pago">Pago</span>
     </div>`;
   }).join('');
@@ -4766,54 +4775,108 @@ async function marcarIsento() {
 }
 
 // ===== RECIBO =====
-function gerarRecibo(consultaId) {
-  const c = finConsultaPorId(consultaId);
-  if (!c || !clinicaAtual) { toast('Não foi possível gerar o recibo'); return; }
-  const formaLabel = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Cartão de crédito', cartao_debito:'Cartão de débito', convenio:'Convênio', transferencia:'Transferência' };
-  const dataConsulta = new Date(c.data_hora).toLocaleDateString('pt-BR', { timeZone: TZ });
-  const dataPagamento = c.pago_em ? new Date(c.pago_em).toLocaleDateString('pt-BR', { timeZone: TZ }) : dataConsulta;
+const RECIBO_FORMA_LABEL = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Cartão de crédito', cartao_debito:'Cartão de débito', convenio:'Convênio', transferencia:'Transferência', boleto:'Boleto' };
+
+// Monta e abre o Recibo de pagamento (sem CNPJ — serve p/ pessoa física/autônomo).
+// dados: { titulo, tomadorNome, tomadorCpf, valor, forma, dataPagamento, descricao, extras:[[label,valor]] }
+function _abrirRecibo(dados) {
+  if (!clinicaAtual) { toast('Não foi possível gerar o recibo'); return; }
+  const emissorNome = clinicaAtual.responsavel || clinicaAtual.nome || '';
+  const doc = (clinicaAtual.recibo_cpf_cnpj || '').trim();
+  const registro = (clinicaAtual.recibo_registro || '').trim();
+  const cpfTomador = (dados.tomadorCpf || '').trim();
   const win = window.open('', '_blank');
   if (!win) { toast('Permita pop-ups para gerar o recibo'); return; }
-  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Recibo — ${esc(c.pacientes?.nome||'')}</title>
+  const extras = (dados.extras || []).filter(e => e && e[1]).map(e => `<tr><td>${esc(e[0])}</td><td>${esc(e[1])}</td></tr>`).join('');
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Recibo — ${esc(dados.tomadorNome||'')}</title>
   <style>
     body { font-family: Georgia, serif; max-width: 640px; margin: 40px auto; padding: 0 24px; color: #1B221E; }
-    .topo { border-bottom: 3px solid #0B6E4F; padding-bottom: 16px; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .topo { border-bottom: 3px solid #0B6E4F; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
     h1 { font-size: 22px; color: #0B6E4F; margin: 0; }
     .num { font-size: 12px; color: #66706A; }
     .clinica { font-size: 14px; line-height: 1.6; }
-    .valor-box { background: #F1FAF6; border: 1px solid #D6F2E6; border-radius: 10px; padding: 18px 22px; margin: 24px 0; text-align: center; }
+    .partes { font-size: 13px; color: #66706A; line-height: 1.7; margin-bottom: 8px; }
+    .partes strong { color: #1B221E; }
+    .valor-box { background: #F1FAF6; border: 1px solid #D6F2E6; border-radius: 10px; padding: 18px 22px; margin: 22px 0; text-align: center; }
     .valor { font-size: 30px; font-weight: bold; color: #0B6E4F; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 18px 0 30px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 14px 0 26px; }
     td { padding: 9px 4px; border-bottom: 1px solid #E6E8E3; }
     td:first-child { color: #66706A; width: 200px; }
-    .assinatura { margin-top: 70px; text-align: center; }
-    .linha { border-top: 1px solid #1B221E; width: 300px; margin: 0 auto 6px; }
-    .rodape { margin-top: 50px; font-size: 11px; color: #66706A; text-align: center; }
+    .ir { font-size: 12px; color: #07523A; background: #F1FAF6; border: 1px solid #D6F2E6; border-radius: 8px; padding: 10px 14px; margin: 8px 0 4px; line-height: 1.5; }
+    .assinatura { margin-top: 64px; text-align: center; }
+    .linha { border-top: 1px solid #1B221E; width: 320px; margin: 0 auto 6px; }
+    .assinatura .an { font-size: 13px; }
+    .assinatura .ad { font-size: 12px; color: #66706A; }
+    .rodape { margin-top: 46px; font-size: 11px; color: #66706A; text-align: center; }
     @media print { .no-print { display: none; } }
     .no-print { text-align: center; margin-top: 30px; }
     .no-print button { background: #0B6E4F; color: white; border: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; cursor: pointer; }
   </style></head><body>
   <div class="topo">
-    <div><h1>RECIBO</h1><div class="num">Consulta de ${dataConsulta}</div></div>
+    <div><h1>RECIBO</h1><div class="num">${esc(dados.titulo||'')}</div></div>
     <div class="clinica" style="text-align:right">
       <strong>${esc(clinicaAtual.nome||'')}</strong><br>
-      ${esc(clinicaAtual.responsavel||'')}<br>
+      ${esc(emissorNome)}<br>
+      ${doc?'CPF/CNPJ: '+esc(doc)+'<br>':''}
+      ${registro?esc(registro)+'<br>':''}
       ${clinicaAtual.endereco?esc(clinicaAtual.endereco)+'<br>':''}
       ${clinicaAtual.whatsapp?'WhatsApp: '+esc(clinicaAtual.whatsapp):''}
     </div>
   </div>
-  <p style="font-size:15px;line-height:1.8">Recebi de <strong>${esc(c.pacientes?.nome||'—')}</strong> a importância referente a <strong>1 (uma) sessão de fisioterapia</strong> realizada em <strong>${dataConsulta}</strong>.</p>
-  <div class="valor-box"><div class="valor">${fmtBRL(c.valor)}</div></div>
+  <div class="partes">Recebi de <strong>${esc(dados.tomadorNome||'—')}</strong>${cpfTomador?` (CPF ${esc(cpfTomador)})`:''} a importância abaixo, referente a:</div>
+  <p style="font-size:15px;line-height:1.8;margin-bottom:4px">${esc(dados.descricao||'')}</p>
+  <div class="valor-box"><div class="valor">${fmtBRL(dados.valor)}</div></div>
   <table>
-    <tr><td>Forma de pagamento</td><td>${formaLabel[c.forma_pagamento]||'—'}</td></tr>
-    <tr><td>Data do pagamento</td><td>${dataPagamento}</td></tr>
-    ${c.queixa?`<tr><td>Atendimento</td><td>${esc(c.queixa)}</td></tr>`:''}
+    ${dados.forma?`<tr><td>Forma de pagamento</td><td>${esc(RECIBO_FORMA_LABEL[dados.forma]||dados.forma)}</td></tr>`:''}
+    ${dados.dataPagamento?`<tr><td>Data do pagamento</td><td>${esc(dados.dataPagamento)}</td></tr>`:''}
+    ${extras}
   </table>
-  <div class="assinatura"><div class="linha"></div><div style="font-size:13px">${esc(clinicaAtual.responsavel||clinicaAtual.nome||'')}</div></div>
+  ${doc?`<div class="ir">Documento válido como comprovante de despesa com saúde para <strong>dedução no Imposto de Renda</strong> do paciente${cpfTomador?'':' (informe o CPF do paciente para maior validade)'}.</div>`:''}
+  <div class="assinatura"><div class="linha"></div><div class="an">${esc(emissorNome)}</div>${(doc||registro)?`<div class="ad">${[doc?'CPF/CNPJ '+esc(doc):'', registro?esc(registro):''].filter(Boolean).join(' · ')}</div>`:''}</div>
   <div class="rodape">Recibo gerado pelo NastaDesk — ${new Date().toLocaleDateString('pt-BR', { timeZone: TZ })}</div>
   <div class="no-print"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
   </body></html>`);
   win.document.close();
+}
+
+function gerarRecibo(consultaId) {
+  const c = finConsultaPorId(consultaId);
+  if (!c || !clinicaAtual) { toast('Não foi possível gerar o recibo'); return; }
+  const dataConsulta = new Date(c.data_hora).toLocaleDateString('pt-BR', { timeZone: TZ });
+  const dataPagamento = c.pago_em ? new Date(c.pago_em).toLocaleDateString('pt-BR', { timeZone: TZ }) : dataConsulta;
+  _abrirRecibo({
+    titulo: `Consulta de ${dataConsulta}`,
+    tomadorNome: c.pacientes?.nome, tomadorCpf: c.pacientes?.cpf,
+    valor: c.valor, forma: c.forma_pagamento, dataPagamento,
+    descricao: `1 (uma) sessão de fisioterapia realizada em ${dataConsulta}.`,
+    extras: [['Atendimento', c.queixa]],
+  });
+}
+
+function gerarReciboMensalidade(mensId) {
+  const m = finMensPorId(mensId);
+  if (!m || !clinicaAtual) { toast('Não foi possível gerar o recibo'); return; }
+  const comp = nomeCompetencia(m.competencia);
+  const dataPagamento = m.pago_em ? new Date(m.pago_em).toLocaleDateString('pt-BR', { timeZone: TZ }) : '';
+  _abrirRecibo({
+    titulo: `Mensalidade — ${comp}`,
+    tomadorNome: m.pacientes?.nome, tomadorCpf: m.pacientes?.cpf,
+    valor: m.valor, forma: m.forma_pagamento, dataPagamento,
+    descricao: `Mensalidade referente a ${comp}.`,
+  });
+}
+
+function gerarReciboPacote(pacoteId) {
+  const p = (finPacotes || []).find(x => x.id === pacoteId);
+  if (!p || !clinicaAtual) { toast('Não foi possível gerar o recibo'); return; }
+  const dataPagamento = p.pago_em ? new Date(p.pago_em).toLocaleDateString('pt-BR', { timeZone: TZ }) : '';
+  const n = p.total_sessoes || p.sessoes || '';
+  _abrirRecibo({
+    titulo: 'Pacote de sessões',
+    tomadorNome: p.pacientes?.nome, tomadorCpf: p.pacientes?.cpf,
+    valor: p.valor_pago != null ? p.valor_pago : p.valor, forma: p.forma_pagamento, dataPagamento,
+    descricao: `Pacote${n?` de ${n} sessões`:''} de fisioterapia.`,
+  });
 }
 
 // ===== RELATÓRIO =====
@@ -5312,6 +5375,10 @@ async function carregarPerfil() {
   document.getElementById('perf-wpp').value = cl.whatsapp || '';
   document.getElementById('perf-endereco').value = cl.endereco || '';
   document.getElementById('perf-complemento').value = cl.endereco_complemento || '';
+  const docEl = document.getElementById('perf-recibo-doc');
+  if (docEl) docEl.value = cl.recibo_cpf_cnpj || '';
+  const regEl = document.getElementById('perf-recibo-registro');
+  if (regEl) regEl.value = cl.recibo_registro || '';
   carregarStatusMfa();
   carregarStatusDpa();
 }
@@ -5438,6 +5505,15 @@ async function salvarPerfil() {
   }).eq('id', clinicaId);
   if (!error) { toast('Perfil salvo ✓'); carregarPerfil(); }
   else toast('Erro ao salvar');
+}
+
+async function salvarDadosRecibo() {
+  const doc = document.getElementById('perf-recibo-doc').value.trim() || null;
+  const reg = document.getElementById('perf-recibo-registro').value.trim() || null;
+  const { error } = await db.from('clinicas').update({ recibo_cpf_cnpj: doc, recibo_registro: reg }).eq('id', clinicaId);
+  if (error) { toast('Erro ao salvar'); return; }
+  if (clinicaAtual) { clinicaAtual.recibo_cpf_cnpj = doc; clinicaAtual.recibo_registro = reg; }
+  toast('Dados do recibo salvos ✓');
 }
 
 async function alterarSenha() {

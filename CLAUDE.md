@@ -164,12 +164,16 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   **Resumo do mês (DRE simples)** — entradas − despesas por categoria = resultado; e
   **export CSV**. Usa a tabela `despesas` que já existia em produção (schema
   `competencia` + `status`). O financeiro por consulta/mensalidade/repasse é inalterado.
-- **Nota fiscal / recibo** — **Recibo de pagamento em PDF** (botão na consulta paga)
-  — **não exige CNPJ**, serve para pessoa física/autônomo. A **NFS-e** (nota fiscal
-  eletrônica de verdade) exige **CNPJ** (ou inscrição municipal de autônomo) — por isso
-  fica como recurso **opcional/futuro** para clínicas que tenham CNPJ/MEI; o dono hoje
-  **não tem CNPJ**, então o caminho é o **recibo**. (Tabelas `config_fiscal`/`notas_fiscais`
-  existem no banco, mas a emissão via Focus NFe **não foi deployada** — depende de CNPJ.)
+- **Nota fiscal / recibo** — **Recibo de pagamento em PDF** (botão na consulta,
+  **mensalidade e pacote** pagos) — **não exige CNPJ**, serve para pessoa física/autônomo.
+  O recibo mostra os **dados do emissor** (CPF/CNPJ + registro profissional CREFITO/CRM,
+  editáveis em **Minha Clínica → Dados para o recibo**, guardados em `clinicas.recibo_cpf_cnpj`
+  e `clinicas.recibo_registro`), o **CPF do paciente** e uma nota de que **serve para dedução
+  no Imposto de Renda** (despesa médica) do paciente. A **NFS-e** (nota fiscal eletrônica de
+  verdade) exige **CNPJ** (ou inscrição municipal de autônomo) — por isso fica como recurso
+  **opcional/futuro** para clínicas que tenham CNPJ/MEI; o dono hoje **não tem CNPJ**, então o
+  caminho é o **recibo**. (Tabelas `config_fiscal`/`notas_fiscais` existem no banco, mas a
+  emissão via Focus NFe **não foi deployada** — depende de CNPJ.)
 - **App instalável (PWA)** — o `nastadesk` é um **PWA**: dá pra "instalar" no celular
   (ícone na tela inicial, abre em tela cheia) e no desktop. `manifest.json` + ícones +
   service worker com estratégia **network-first no HTML** (online sempre pega a versão
@@ -271,6 +275,8 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-04** — **Recibo turbinado (sem CNPJ): dados do emissor (CPF + CREFITO), CPF do paciente, nota de IR e recibo p/ mensalidade e pacote.**
+  A pedido do dono ("muda o sistema de notas fiscais — Focus exige CNPJ e eu não tenho"). Como NFS-e de verdade **exige CNPJ** (regra fiscal, sem contorno), o caminho sem CNPJ é o **Recibo**, agora enriquecido. **(1) Migration** `20260704120000_recibo_dados_emissor.sql` **aplicada em produção** (testada antes com ROLLBACK): 2 colunas nullable em `clinicas` — `recibo_cpf_cnpj` e `recibo_registro`. 100% aditiva. **(2) UI** — card **"Dados para o recibo"** em Minha Clínica (CPF/CNPJ do emissor + registro profissional CREFITO/CRM), com `salvarDadosRecibo()`/carregamento no perfil. **(3) Recibo** refatorado num gerador único `_abrirRecibo(dados)`: cabeçalho do emissor com **CPF/CNPJ + registro**, "Recebi de <paciente> (CPF …)", **nota de dedução no IR** (aparece só quando há CPF/CNPJ do emissor), assinatura com os dados. Novos botões de recibo em **mensalidade paga** (`gerarReciboMensalidade`) e **pacote pago** (`gerarReciboPacote`), além da consulta (`gerarRecibo`). CPF do paciente incluído nos selects de consultas/mensalidades/pacotes. **Validado:** `node --check` + **22/22 testes de navegador** (Playwright, Supabase mockado): recibo de consulta/mensalidade/pacote com CPF+registro do emissor e CPF do paciente, nota de IR presente/ausente conforme o CPF do emissor, e o form de Minha Clínica carrega/salva — **zero erro de JS**. *Falta:* deploy do front na `main`.
 - **2026-07-03** — **Fase 2 · Paridade de mercado: PWA + Financeiro completo (Despesas/caixa/DRE) reconstruído na `main`. NFS-e → recibo (dono sem CNPJ).**
   Três frentes, tudo **deployado na `main`** (a pedido do dono: "faz o deploy de tudo").
   **(1) PWA instalável — DEPLOYADO** (PR #14). `manifest.json` + ícones PNG (192/512 + apple-touch 180, "N" branco em quadrado verde) + `sw.js` **network-first no HTML** (online sempre pega a versão nova — não congela a clínica; cache-first só nos ícones; não intercepta cross-origin; cache versionado). Metas de PWA no `<head>`, botão flutuante "Instalar app" (`beforeinstallprompt`) e **`vercel.json` corrigido** (publicava só `*.html`; add `manifest.json`/`sw.js`/`*.png`).
