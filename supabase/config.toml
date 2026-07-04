@@ -27,3 +27,7 @@ verify_jwt = false
 # Criação de login de funcionário — exige login do dono (JWT); trava por plano no código
 [functions.equipe-criar]
 verify_jwt = true
+
+# Exclusão de login de funcionário — exige login do dono (JWT)
+[functions.equipe-remover]
+verify_jwt = true

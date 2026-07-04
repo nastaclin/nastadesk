@@ -2700,14 +2700,18 @@ function traduzirErro(msg) {
 
 // ===== CARREGAR DADOS =====
 async function carregarInfoClinica() {
-  const { data: clinica } = await db.from('clinicas').select('*').eq('id', clinicaId).single();
+  const { data: clinica } = await db.from('clinicas').select('*').eq('id', clinicaId).maybeSingle();
   if (!clinica) return null;
+  const membroNome = clinicaAtual && clinicaAtual.__membroNome;
   clinicaAtual = clinica;
-  document.getElementById('sb-nome').textContent = clinica.responsavel || '—';
+  if (membroNome) clinicaAtual.__membroNome = membroNome;
+  // Rótulo do topo respeita o papel (funcionário não vê "Plano X" nem o nome do dono).
+  document.getElementById('sb-nome').textContent = (meuPapel === 'dono') ? (clinica.responsavel || '—') : (membroNome || 'Equipe');
   document.getElementById('sb-sub').textContent = clinica.nome || '—';
   const planos = { basico:'Plano Básico', profissional:'Plano Profissional', premium:'Plano Premium' };
-  document.getElementById('sb-plano').textContent = planos[clinica.plano] || clinica.plano || '—';
+  document.getElementById('sb-plano').textContent = (meuPapel === 'dono') ? (planos[clinica.plano] || clinica.plano || '—') : PAPEL_LABEL[meuPapel];
   aplicarGatesDePlano();
+  if (meuPapel !== 'dono') gatearPorPapel();
   return clinica;
 }
 
@@ -2717,14 +2721,12 @@ async function carregarDados(user) {
   document.getElementById('satis-mes').textContent = MESES[hoje.getMonth()];
   document.getElementById('novo-data').value = dataLocalISO(hoje);
 
-  // Resolve a clínica: primeiro tenta como DONO; se não for, tenta como FUNCIONÁRIO.
+  // Resolve a clínica. FUNCIONÁRIO tem prioridade sobre "dono": assim, mesmo que
+  // exista uma clínica órfã com o user_id do funcionário, ele cai na clínica certa
+  // (e nunca no onboarding). Só quem NÃO é funcionário é tratado como dono.
   let clinica = null;
   meuPapel = 'dono'; meuProfissionalId = null;
   {
-    const { data } = await db.from('clinicas').select('*').eq('user_id', user.id).maybeSingle();
-    clinica = data || null;
-  }
-  if (!clinica) {
     const { data: membro } = await db.from('clinica_membros')
       .select('papel, profissional_id, nome, clinicas(*)')
       .eq('user_id', user.id).eq('ativo', true).maybeSingle();
@@ -2734,6 +2736,11 @@ async function carregarDados(user) {
       meuProfissionalId = membro.profissional_id || null;
       clinica.__membroNome = membro.nome || null;
     }
+  }
+  if (!clinica) {
+    meuPapel = 'dono';
+    const { data } = await db.from('clinicas').select('*').eq('user_id', user.id).maybeSingle();
+    clinica = data || null;
   }
   if (clinica) {
     clinicaId = clinica.id;
@@ -6372,13 +6379,36 @@ async function carregarEquipe() {
   const el = document.getElementById('equipe-lista');
   if (!el) return;
   if (!membros.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhum acesso criado ainda.</div>'; return; }
-  el.innerHTML = membros.map(m => `<div class="fin-row">
+  el.innerHTML = membros.map(m => {
+    const status = m.ativo
+      ? '<span style="font-size:11px;font-weight:700;color:var(--verde)">● ativo</span>'
+      : '<span style="font-size:11px;font-weight:700;color:var(--cinza-medio)">● desativado</span>';
+    const nomeSeguro = (m.nome || '').replace(/[<>"'`]/g, '');
+    return `<div class="fin-row">
       <div class="fin-info">
-        <div class="fin-nome">${esc(m.nome || '—')} <span class="desp-cat-tag">${PAPEL_LABEL[m.papel] || m.papel}</span></div>
-        <div class="fin-sub">${m.ativo ? 'Acesso ativo' : 'Acesso desativado'}</div>
+        <div class="fin-nome">${esc(m.nome || '—')} <span class="desp-cat-tag">${PAPEL_LABEL[m.papel] || m.papel}</span> ${status}</div>
+        <div class="fin-sub">${m.ativo ? 'Pode entrar no sistema' : 'Não consegue entrar'}</div>
       </div>
-      <button class="pag-pill ${m.ativo ? 'pag-pago' : 'pag-pendente'}" onclick="alternarMembro('${m.id}', ${!m.ativo})">${m.ativo ? 'Ativo' : 'Inativo'}</button>
-    </div>`).join('');
+      <button class="btn btn-secundario" style="flex:0 0 auto;padding:8px 15px;font-size:13px" onclick="alternarMembro('${m.id}', ${!m.ativo})">${m.ativo ? 'Desativar' : 'Reativar'}</button>
+      <button class="btn-icone" title="Excluir acesso" onclick="excluirMembro('${m.id}','${nomeSeguro}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="17" height="17"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+    </div>`;
+  }).join('');
+}
+
+function excluirMembro(id, nome) {
+  abrirModalConfirm('Excluir acesso', `Excluir o acesso de ${nome || 'este funcionário'}? A pessoa perde o login na hora e o email fica livre para reuso. Essa ação não pode ser desfeita.`, 'Excluir', async () => {
+    let erroMsg = null;
+    try {
+      const { data, error } = await db.functions.invoke('equipe-remover', { body: { membro_id: id } });
+      if (error) {
+        erroMsg = 'Não foi possível excluir o acesso';
+        try { const b = await error.context.json(); if (b && b.error) erroMsg = b.error; } catch (_) {}
+      } else if (data && data.error) { erroMsg = data.error; }
+    } catch (e) { erroMsg = 'Não foi possível excluir o acesso'; }
+    if (erroMsg) { toast(erroMsg); return; }
+    toast('Acesso excluído');
+    carregarEquipe();
+  });
 }
 
 async function alternarMembro(id, ativar) {
