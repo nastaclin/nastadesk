@@ -6,9 +6,16 @@
         "source": "github",
         "repo": "mksglu/context-mode"
       }
+    },
+    "claude-mem": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      }
     }
   },
   "enabledPlugins": {
-    "context-mode@context-mode": true
+    "context-mode@context-mode": true,
+    "claude-mem@claude-mem": true
   }
 }
