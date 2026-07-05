@@ -6382,6 +6382,7 @@ async function carregarEquipe() {
   }
   const { data } = await db.from('clinica_membros').select('*').eq('clinica_id', clinicaId).order('criado_em', { ascending: true });
   const membros = data || [];
+  const profs = (typeof profissionaisDisponivel !== 'undefined' && profissionaisDisponivel) ? profissionaisAtivos() : [];
   const el = document.getElementById('equipe-lista');
   if (!el) return;
   if (!membros.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhum acesso criado ainda.</div>'; return; }
@@ -6390,15 +6391,42 @@ async function carregarEquipe() {
       ? '<span style="font-size:11px;font-weight:700;color:var(--verde)">● ativo</span>'
       : '<span style="font-size:11px;font-weight:700;color:var(--cinza-medio)">● desativado</span>';
     const nomeSeguro = (m.nome || '').replace(/[<>"'`]/g, '');
-    return `<div class="fin-row">
+    // Para o papel Profissional: mostra/edita o vínculo. É o vínculo que define
+    // o que a pessoa vê no Portal do Profissional — sem ele, não vê paciente nenhum.
+    let vinculoHtml = '';
+    if (m.papel === 'profissional') {
+      const opcoes = '<option value="">— sem vínculo —</option>' +
+        profs.map(p => `<option value="${p.id}"${p.id === m.profissional_id ? ' selected' : ''}>${esc(p.nome)}</option>`).join('');
+      const aviso = m.profissional_id ? '' :
+        '<div class="fin-sub" style="color:var(--vermelho);font-weight:600;margin-top:2px">⚠ Sem vínculo: esta pessoa não vê nenhum paciente. Escolha o profissional abaixo.</div>';
+      vinculoHtml = `<div style="flex-basis:100%;margin-top:8px">
+        <label style="font-size:11px;font-weight:600;color:var(--cinza-medio);text-transform:uppercase;letter-spacing:.05em">Atende como (profissional)</label>
+        <select style="width:100%;margin-top:4px;padding:9px 11px;border:1.5px solid var(--cinza-claro);border-radius:10px;font-size:13px;background:white" onchange="vincularMembro('${m.id}', this.value)">${opcoes}</select>
+        ${aviso}
+      </div>`;
+    }
+    return `<div class="fin-row" style="flex-wrap:wrap">
       <div class="fin-info">
         <div class="fin-nome">${esc(m.nome || '—')} <span class="desp-cat-tag">${PAPEL_LABEL[m.papel] || m.papel}</span> ${status}</div>
         <div class="fin-sub">${m.ativo ? 'Pode entrar no sistema' : 'Não consegue entrar'}</div>
       </div>
       <button class="btn btn-secundario" style="flex:0 0 auto;padding:8px 15px;font-size:13px" onclick="alternarMembro('${m.id}', ${!m.ativo})">${m.ativo ? 'Desativar' : 'Reativar'}</button>
       <button class="btn-icone" title="Excluir acesso" onclick="excluirMembro('${m.id}','${nomeSeguro}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="17" height="17"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+      ${vinculoHtml}
     </div>`;
   }).join('');
+}
+
+// Vincula (ou troca) o profissional de um login de equipe já criado. O dono tem
+// permissão de RLS para editar clinica_membros da própria clínica — não precisa de
+// edge function. É o que "liga" o Portal do Profissional aos dados certos.
+async function vincularMembro(membroId, profissionalId) {
+  const { error } = await db.from('clinica_membros')
+    .update({ profissional_id: profissionalId || null })
+    .eq('id', membroId).eq('clinica_id', clinicaId);
+  if (error) { toast('Não foi possível salvar o vínculo'); return; }
+  toast(profissionalId ? 'Vínculo salvo ✓ — a pessoa passa a ver só os pacientes desse profissional' : 'Vínculo removido');
+  carregarEquipe();
 }
 
 function excluirMembro(id, nome) {
