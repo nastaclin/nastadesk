@@ -157,6 +157,9 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .exame-nome { font-size: 13px; font-weight: 600; color: var(--cinza-escuro); word-break: break-all; }
 .exame-sub { font-size: 11px; color: var(--cinza-medio); }
 .tele-badge { display: inline-flex; align-items: center; gap: 3px; background: #EAF2FF; color: #2563EB; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.fixo-badge { display: inline-flex; align-items: center; gap: 3px; background: #E9F7EF; color: #0F7A4F; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.dia-chip { border: 1.5px solid var(--cinza-claro); background: white; color: var(--cinza-medio); font-size: 12.5px; font-weight: 700; padding: 6px 11px; border-radius: 20px; cursor: pointer; transition: all .12s; }
+.dia-chip.ativo { border-color: var(--verde); background: var(--verde); color: white; }
 .espera-item { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 11px 13px; margin-bottom: 8px; }
 .espera-nome { font-size: 13.5px; font-weight: 700; color: var(--cinza-escuro); }
 .espera-sub { font-size: 11.5px; color: var(--cinza-medio); margin-top: 2px; }
@@ -2078,8 +2081,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       </div>
     </div>
     <div class="modal-grid">
-      <div class="config-campo"><label>Data</label><input type="date" id="novo-data"></div>
-      <div class="config-campo"><label>Horário</label><input type="time" id="novo-hora" value="09:00"></div>
+      <div class="config-campo"><label>Data</label><input type="date" id="novo-data" onchange="onMudouDataHoraNova()"></div>
+      <div class="config-campo"><label>Horário</label><input type="time" id="novo-hora" value="09:00" onchange="onMudouDataHoraNova()"></div>
     </div>
     <div class="config-campo"><label>Queixa principal</label><input type="text" id="novo-queixa" placeholder="Ex: Dor no joelho direito"></div>
     <div class="config-campo"><label>Valor da consulta (R$)</label><input type="number" id="novo-valor" placeholder="Valor padrão da clínica" min="0" step="0.01"></div>
@@ -2092,6 +2095,24 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         📹 Teleconsulta (atendimento por vídeo)
       </label>
       <div style="font-size:11.5px;color:var(--cinza-medio);margin:3px 0 0 24px">Cria uma sala de vídeo segura — depois é só enviar o link ao paciente em 1 clique, direto da agenda.</div>
+    </div>
+    <div id="novo-recorrencia-wrap" style="margin:8px 0 2px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--cinza-escuro);cursor:pointer;font-weight:600">
+        <input type="checkbox" id="novo-repetir" style="width:16px;height:16px;accent-color:var(--verde);cursor:pointer" onchange="toggleRecorrencia()">
+        🔁 Repetir toda semana (horário fixo)
+      </label>
+      <div style="font-size:11.5px;color:var(--cinza-medio);margin:3px 0 0 24px">Cria as próximas semanas de uma vez — ideal para paciente com horário fixo (ex.: seg/qua/sex às 9h). Você não precisa recadastrar toda semana.</div>
+      <div id="novo-recorrencia-campos" style="display:none;margin:10px 0 0 24px;padding:11px 13px;background:#F5F7FA;border-radius:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--cinza-escuro);margin-bottom:7px">Em quais dias da semana?</div>
+        <div id="novo-dias-semana" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div style="font-size:12px;font-weight:700;color:var(--cinza-escuro);margin:13px 0 6px">Repetir por quanto tempo?</div>
+        <select id="novo-repetir-semanas" onchange="atualizarPreviewRecorrencia()" style="width:100%;padding:9px 11px;border:1.5px solid var(--cinza-claro);border-radius:9px;font-size:13.5px;background:white">
+          <option value="4">4 semanas (1 mês)</option>
+          <option value="8" selected>8 semanas (2 meses)</option>
+          <option value="12">12 semanas (3 meses)</option>
+        </select>
+        <div id="novo-recorrencia-preview" style="font-size:12px;color:#0F7A4F;margin-top:11px;font-weight:600;line-height:1.5"></div>
+      </div>
     </div>
     <div class="modal-acoes">
       <button class="btn btn-secundario" onclick="fecharModal()">Cancelar</button>
@@ -2503,6 +2524,20 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <button class="btn btn-secundario" style="flex:1" onclick="fecharModalConfirm()">Cancelar</button>
       <button class="btn btn-primario" id="confirm-btn" style="flex:1;background:var(--vermelho)">Confirmar</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL EXCLUIR SÉRIE (horário fixo / recorrente) -->
+<div class="overlay" id="modal-serie" onclick="if(event.target===this)fecharModalSerie()">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-titulo" style="margin-bottom:10px">🔁 Excluir consulta de horário fixo</div>
+    <p style="font-size:14px;color:var(--cinza-medio);margin-bottom:20px;line-height:1.6">Esta consulta faz parte de um <b>horário fixo</b> (série que se repete toda semana). O que você quer excluir?</p>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button class="btn btn-secundario" onclick="confirmarExcluirSerie('uma')">Só esta consulta</button>
+      <button class="btn btn-primario" style="background:var(--vermelho)" onclick="confirmarExcluirSerie('futuras')">Esta e as próximas da série</button>
+      <button class="btn btn-secundario" onclick="fecharModalSerie()">Cancelar</button>
+    </div>
+    <div style="font-size:11.5px;color:var(--cinza-medio);margin-top:12px;line-height:1.5">As consultas que já passaram na série não são afetadas.</div>
   </div>
 </div>
 
@@ -3483,6 +3518,9 @@ function tagNovoRec(c) {
   if (t == null) return '';
   return t <= 1 ? '<span class="novo-badge">1ª vez</span>' : '<span class="rec-badge">recorrente</span>';
 }
+function tagFixo(c) {
+  return c && c.serie_id ? '<span class="fixo-badge" title="Horário fixo (agendamento recorrente)">🔁 fixo</span>' : '';
+}
 
 async function carregarConsultas() {
   if (!clinicaId) return;
@@ -3578,7 +3616,7 @@ function cardSalao(c, cor) {
       <span class="salao-card-hora">${hora}</span>
       <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
     </div>
-    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagNovoRec(c)}</div>
+    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagNovoRec(c)}</div>
     ${(tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id) || tagProfissional(c.profissional_id))?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}${tagProfissional(c.profissional_id)}</div>`:''}
     ${c.queixa?`<div class="salao-card-queixa">${esc(c.queixa)}</div>`:''}
     <div class="salao-card-acoes" onclick="event.stopPropagation()">
@@ -3636,7 +3674,7 @@ function renderConsultas(lista) {
       <span class="consulta-hora">${hora}</span>
       <div class="avatar ${CORES[i%CORES.length]}${cancelada?' cancelado':''}">${esc(iniciais)}</div>
       <div class="consulta-info">
-        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagNovoRec(c)}</div>
+        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagNovoRec(c)}</div>
         <div class="consulta-queixa">${esc(c.queixa||'—')}</div>
         ${(salasDisponivel && salasAtivas().length)
           ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
@@ -3804,13 +3842,42 @@ async function atualizarStatus(id, status) {
   }
 }
 
-function excluirConsulta(id) {
+let serieExcluirCtx = null; // { id, serie_id, data_hora } da consulta escolhida
+async function excluirConsulta(id) {
+  const { data: c } = await db.from('consultas').select('id, serie_id, data_hora').eq('id', id).maybeSingle();
+  if (c && c.serie_id) { // faz parte de um horário fixo → oferece excluir só esta ou a série
+    serieExcluirCtx = c;
+    document.getElementById('modal-serie').classList.add('aberto');
+    return;
+  }
   abrirModalConfirm('Excluir consulta?', 'A consulta será removida permanentemente da agenda. Esta ação não pode ser desfeita.', 'Excluir', async () => {
     const { error } = await db.from('consultas').delete().eq('id', id);
     if (error) { toast('Erro ao excluir consulta'); return; }
     toast('Consulta excluída ✓');
     recarregarSecaoAtual();
   });
+}
+function fecharModalSerie() {
+  document.getElementById('modal-serie').classList.remove('aberto');
+  serieExcluirCtx = null;
+}
+async function confirmarExcluirSerie(escopo) {
+  const c = serieExcluirCtx;
+  if (!c) return;
+  document.getElementById('modal-serie').classList.remove('aberto');
+  if (escopo === 'uma') {
+    const { error } = await db.from('consultas').delete().eq('id', c.id);
+    if (error) { toast('Erro ao excluir consulta'); serieExcluirCtx = null; return; }
+    toast('Consulta excluída ✓');
+  } else { // esta e as próximas da mesma série — nunca mexe nas que já passaram
+    const { data: apagadas, error } = await db.from('consultas').delete()
+      .eq('clinica_id', clinicaId).eq('serie_id', c.serie_id).gte('data_hora', c.data_hora)
+      .select('id');
+    if (error) { toast('Erro ao excluir a série'); serieExcluirCtx = null; return; }
+    toast(`${(apagadas || []).length} consultas da série excluídas ✓`);
+  }
+  serieExcluirCtx = null;
+  recarregarSecaoAtual();
 }
 
 function recarregarSecaoAtual() {
@@ -4518,7 +4585,7 @@ async function carregarConsultasFicha(pacienteId) {
     return `<div class="ficha-consulta">
       <div class="ficha-consulta-data">${data}</div>
       <div class="ficha-consulta-info">
-        <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}</div>
+        <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}</div>
         <div class="ficha-consulta-status">${hora} · <span style="color:${stColor[c.status]||'var(--cinza-medio)'}">${stLabel[c.status]||esc(c.status)}</span>${pagInfo}</div>
         ${tags?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px">${tags}</div>`:''}
       </div>
@@ -5009,6 +5076,7 @@ function agendarDaEspera(id) {
     return;
   }
   abrirModal();
+  esconderRecorrencia(); // agendar da lista de espera é sempre uma consulta única
   setPacienteConsulta(e.paciente_id);
   const nm = document.getElementById('novo-modalidade'); if (nm && e.modalidade_id) nm.value = e.modalidade_id;
   const np = document.getElementById('novo-profissional'); if (np && e.profissional_id) np.value = e.profissional_id;
@@ -6435,6 +6503,9 @@ async function salvarConsulta() {
   if (salasDisponivel) payloadConsulta.sala_id = document.getElementById('novo-sala')?.value || null;
   if (modalidadesDisponivel) payloadConsulta.modalidade_id = document.getElementById('novo-modalidade')?.value || null;
   if (profissionaisDisponivel) payloadConsulta.profissional_id = document.getElementById('novo-profissional')?.value || null;
+  // Horário fixo (recorrente): só nos agendamentos avulsos — nunca com pacote/lista de espera
+  const repetir = !!document.getElementById('novo-repetir')?.checked && !usandoPacote && !esperaIdUsado;
+  if (repetir) return await salvarConsultaRecorrente(payloadConsulta, hora, nome);
   const { error } = await db.from('consultas').insert(payloadConsulta);
   if (!error) {
     fecharModal(); toast(usandoPacote ? 'Sessão do pacote agendada ✓' : 'Consulta agendada ✓');
@@ -6448,6 +6519,45 @@ async function salvarConsulta() {
     }
     recarregarSecaoAtual(); carregarAlertas(); carregarPacientes();
   } else toast('Erro ao agendar. Tente novamente.');
+}
+
+// Cria uma série de consultas com horário fixo (mesmo paciente/horário, semanal).
+// Idempotente: pula horários que o paciente já tem agendados (não duplica se rodar 2x).
+async function salvarConsultaRecorrente(basePayload, hora, nome) {
+  const datas = ocorrenciasRecorrencia();
+  if (!datas.length) { toast('Escolha ao menos um dia da semana para repetir'); return; }
+  const serieId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `serie-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  // Anti-duplicação: busca o que o paciente já tem no período e pula esses horários
+  const { data: existentes } = await db.from('consultas')
+    .select('data_hora')
+    .eq('clinica_id', clinicaId)
+    .eq('paciente_id', basePayload.paciente_id)
+    .neq('status', 'cancelado')
+    .gte('data_hora', diaInicioISO(datas[0]))
+    .lte('data_hora', diaFimISO(datas[datas.length - 1]));
+  const ocupados = new Set((existentes || []).map(e => `${dataSP(e.data_hora)}T${horaSP(e.data_hora)}`));
+
+  const linhas = [];
+  for (const dia of datas) {
+    if (ocupados.has(`${dia}T${hora}`)) continue;
+    linhas.push({ ...basePayload, data_hora: `${dia}T${hora}:00-03:00`, serie_id: serieId });
+  }
+  if (!linhas.length) {
+    fecharModal();
+    toast('Esses horários já estavam agendados ✓');
+    recarregarSecaoAtual();
+    return;
+  }
+  const { error } = await db.from('consultas').insert(linhas);
+  if (error) { toast('Erro ao criar as consultas fixas. Tente novamente.'); return; }
+  const puladas = datas.length - linhas.length;
+  fecharModal();
+  toast(`${linhas.length} consultas fixas criadas ✓${puladas ? ` (${puladas} já existiam)` : ''}`);
+  document.getElementById('novo-queixa').value = '';
+  document.getElementById('novo-valor').value = '';
+  await db.from('alertas').insert({ clinica_id: clinicaId, tipo: 'novo_agendamento', mensagem: `Horário fixo criado: ${nome} — ${linhas.length} consultas` });
+  recarregarSecaoAtual(); carregarAlertas(); carregarPacientes();
 }
 
 // ===== CALENDÁRIO =====
@@ -6579,7 +6689,7 @@ async function renderGradeSemanal() {
         html += consultasDia.map(c => `<div class="lista-agend-item" onclick="abrirFicha('${c.paciente_id}')">
             <span class="lista-agend-hora">${horaSP(c.data_hora)}</span>
             <div class="lista-agend-info">
-              <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}</div>
+              <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}</div>
               <div class="lista-agend-queixa">${esc(c.queixa||'—')}</div>
               ${c.sala_id ? `<div class="sala-tag" style="margin-top:5px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : ''}
               ${tagProfissional(c.profissional_id)?`<div style="margin-top:5px">${tagProfissional(c.profissional_id)}</div>`:''}
@@ -6655,7 +6765,7 @@ async function renderGradeSemanal() {
         const tituloSala = c.sala_id ? ` — ${esc(nomeSala(c.sala_id))}` : '';
         const tituloProf = prof ? ` — ${esc(prof.nome)}` : '';
         const dotProf = prof ? `<span class="mod-dot" style="background:${prof.cor};margin-right:3px"></span>` : '';
-        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf}${c.teleconsulta?' · 📹 teleconsulta':''} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${dotProf}${c.teleconsulta?'📹 ':''}${esc(nome)}</div>`;
+        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf}${c.teleconsulta?' · 📹 teleconsulta':''}${c.serie_id?' · 🔁 horário fixo':''} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${dotProf}${c.teleconsulta?'📹 ':''}${c.serie_id?'🔁 ':''}${esc(nome)}</div>`;
       }
       html += '</div>';
     }
@@ -6669,6 +6779,82 @@ function abrirModalSlot(data, hora) {
   document.getElementById('novo-data').value = data;
   document.getElementById('novo-hora').value = hora;
   abrirModal();
+}
+
+// ===== AGENDAMENTO RECORRENTE (horário fixo) =====
+const DIAS_SEMANA_LABEL = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const RECORRENCIA_MAX = 90; // teto de segurança de consultas geradas de uma vez
+let recorrenciaDias = new Set();
+
+// Reset (chamado ao abrir o modal). show=true reexibe a opção; usada por fluxos
+// avulsos (pacote / lista de espera) chamam esconderRecorrencia() para ocultar.
+function resetRecorrencia(show) {
+  const rep = document.getElementById('novo-repetir');
+  if (rep) rep.checked = false;
+  recorrenciaDias = new Set();
+  const campos = document.getElementById('novo-recorrencia-campos');
+  if (campos) campos.style.display = 'none';
+  const wrap = document.getElementById('novo-recorrencia-wrap');
+  if (wrap) wrap.style.display = show === false ? 'none' : 'block';
+  const sem = document.getElementById('novo-repetir-semanas');
+  if (sem) sem.value = '8';
+}
+// Fluxos de agendamento único (pacote, lista de espera) não permitem repetição.
+function esconderRecorrencia() { resetRecorrencia(false); }
+
+function toggleRecorrencia() {
+  const on = document.getElementById('novo-repetir').checked;
+  document.getElementById('novo-recorrencia-campos').style.display = on ? 'block' : 'none';
+  if (on) {
+    // Já começa marcando o dia da semana da data escolhida
+    recorrenciaDias = new Set();
+    const dv = document.getElementById('novo-data').value;
+    if (dv) recorrenciaDias.add(new Date(dv + 'T12:00:00').getDay());
+    renderDiasSemana();
+    atualizarPreviewRecorrencia();
+  }
+}
+function renderDiasSemana() {
+  const cont = document.getElementById('novo-dias-semana');
+  if (!cont) return;
+  cont.innerHTML = DIAS_SEMANA_LABEL.map((lbl, i) =>
+    `<button type="button" class="dia-chip${recorrenciaDias.has(i) ? ' ativo' : ''}" onclick="toggleDiaSemana(${i})">${lbl}</button>`
+  ).join('');
+}
+function toggleDiaSemana(i) {
+  if (recorrenciaDias.has(i)) recorrenciaDias.delete(i); else recorrenciaDias.add(i);
+  renderDiasSemana();
+  atualizarPreviewRecorrencia();
+}
+// Se a pessoa mexer na data/horário com a repetição ligada, atualiza o resumo.
+function onMudouDataHoraNova() {
+  if (document.getElementById('novo-repetir')?.checked) atualizarPreviewRecorrencia();
+}
+// Calcula as datas (YYYY-MM-DD) da série a partir da data escolhida, para cada
+// dia-da-semana marcado, semanalmente, dentro da janela de N semanas. Nunca cria
+// datas anteriores à data inicial escolhida.
+function ocorrenciasRecorrencia() {
+  const dv = document.getElementById('novo-data').value;
+  const semanas = parseInt(document.getElementById('novo-repetir-semanas')?.value, 10) || 8;
+  if (!dv || recorrenciaDias.size === 0) return [];
+  const inicio = new Date(dv + 'T12:00:00');
+  const fim = new Date(inicio); fim.setDate(fim.getDate() + semanas * 7 - 1);
+  const datas = [];
+  for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
+    if (recorrenciaDias.has(d.getDay())) datas.push(dataLocalISO(d));
+    if (datas.length >= RECORRENCIA_MAX) break;
+  }
+  return datas;
+}
+function atualizarPreviewRecorrencia() {
+  const el = document.getElementById('novo-recorrencia-preview');
+  if (!el) return;
+  const datas = ocorrenciasRecorrencia();
+  if (!datas.length) { el.textContent = 'Selecione pelo menos um dia da semana.'; return; }
+  const hora = document.getElementById('novo-hora').value || '09:00';
+  const dias = [...recorrenciaDias].sort((a, b) => a - b).map(i => DIAS_SEMANA_LABEL[i]).join(', ');
+  const fmt = s => s.split('-').reverse().slice(0, 2).join('/');
+  el.textContent = `Serão criadas ${datas.length} consultas: ${dias} às ${hora}, de ${fmt(datas[0])} a ${fmt(datas[datas.length - 1])}.`;
 }
 
 // ===== MODAL =====
@@ -6692,6 +6878,7 @@ function abrirModal() {
   document.getElementById('novo-profissional-wrap').style.display = (profissionaisDisponivel && profissionaisAtivos().length) ? 'block' : 'none';
   const novoTele = document.getElementById('novo-teleconsulta');
   if (novoTele) novoTele.checked = false;
+  resetRecorrencia(true); // volta ao estado padrão e reexibe a opção de horário fixo
   document.getElementById('modal').classList.add('aberto');
 }
 function fecharModal() {
@@ -7028,6 +7215,7 @@ function usarPacoteAgendar(pacoteId) {
   fecharFicha();
   document.getElementById('novo-queixa').value = '';
   abrirModal();
+  esconderRecorrencia(); // sessão de pacote é agendada uma a uma (não usar horário fixo)
   if (p) setPacienteConsulta(p.id, p);
   agendarPacoteId = pacoteId;
   document.getElementById('novo-pacote-nome').textContent = pk?.nome || 'pacote';

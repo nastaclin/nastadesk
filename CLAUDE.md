@@ -123,6 +123,18 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 
 - **Agenda do dia** — consultas em tempo real, status, métricas, mini-calendário.
 - **Agendamentos** — grade semanal (desktop) e lista (mobile); remarcar/excluir.
+- **Agendamento recorrente / horário fixo** *(2026-07-06)* — no modal **Nova consulta**,
+  opção **"🔁 Repetir toda semana (horário fixo)"**: escolhe os **dias da semana**
+  (seg/qua/sex…, já vem marcado o dia da data escolhida) e por **quantas semanas** (4/8/12),
+  com **preview ao vivo** ("Serão criadas N consultas…"); o sistema cria **todas as consultas
+  de uma vez** — a clínica **não precisa recadastrar o paciente toda semana**. Todas as
+  ocorrências ganham um **`serie_id`** comum (etiqueta **🔁 fixo** na agenda do dia, salões,
+  grade semanal, lista mobile e ficha). **Idempotente:** pula horários que o paciente já tem
+  (não duplica se rodar 2×) e nunca cria datas passadas. Ao **excluir** uma consulta da série,
+  oferece **"só esta"** ou **"esta e as próximas"** (nunca mexe nas que já passaram). **Não vale**
+  para sessão de **pacote** nem **lista de espera** (agendamento único). Como cada ocorrência é
+  uma consulta normal, entra sozinha nos **lembretes**, no **feed ICS** e no **financeiro**.
+  Coluna `consultas.serie_id` (nullable, aditiva).
 - **Agendamento online** — link público `/agendar/<slug>` para o paciente marcar
   sozinho, com QR Code. Coleta nome, WhatsApp e **CPF** (obrigatório, validado com
   dígitos verificadores); passa pelo **hCaptcha** (edge function `agendar-publico`)
@@ -364,6 +376,12 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-06** — **Agendamento recorrente / horário fixo (pedido de cliente por áudio). Migration APLICADA em produção; front na branch `claude/clinic-client-feature-rtl62b` dos 2 repos (falta merge na `main`).**
+  Uma clínica cliente relatou (áudio) que pacientes com **horário fixo** (ex.: Pilates seg/qua/sex às 9h) exigiam **recadastro manual toda semana** — a ferramenta só criava consultas avulsas. Feito, **aditivo e conservador com os dados** (só INSERT de consultas, como o agendamento manual normal; nada apagado/embaralhado).
+  **(1) DB — migration `20260706170000_consultas_serie_recorrente.sql` APLICADA em produção** (testada antes com **ROLLBACK** contra os dados reais — 2 linhas criadas com serie_id comum e **zero resíduo**): coluna **`consultas.serie_id`** (uuid, **nullable**, null = consulta avulsa) + índice parcial `idx_consultas_serie`. **Não altera RLS** (as policies de `consultas` são escopadas por `clinica_id`, agnósticas à coluna; INSERT em lote passa pela policy do dono/recepção que já existia). Advisors de segurança **sem regressão** (nenhuma função nova).
+  **(2) Front (`nastadesk/index.html`)** — opção **"🔁 Repetir toda semana (horário fixo)"** no modal de nova consulta: **chips de dias da semana** (já marca o dia da data escolhida; multi-seleção seg/qua/sex…), **"repetir por" 4/8/12 semanas** e **preview ao vivo** ("Serão criadas N consultas: … às HH:MM, de DD/MM a DD/MM"). `salvarConsulta` desvia para `salvarConsultaRecorrente`, que gera a série em **um único insert em lote** com `serie_id` compartilhado; **anti-duplicação** (busca o que o paciente já tem no período e **pula** horários ocupados → **idempotente** se rodar 2×), **nunca cria datas anteriores** à data inicial, **teto de 90** ocorrências. **Etiqueta 🔁 fixo** na Agenda do dia, salões, grade semanal, lista mobile e ficha (`tagFixo`). **Excluir ciente da série:** consulta com `serie_id` abre modal com **"Só esta"** × **"Esta e as próximas"** (o delete filtra `serie_id` + `gte data_hora` — **não toca nas que já passaram**). **Escondido** nos fluxos de **pacote** e **lista de espera** (agendamento único — evita consumir sessões de pacote em lote). Como cada ocorrência é uma consulta normal, entra sozinha nos **lembretes**, no **feed ICS (`agenda-ics`)** e no **financeiro** (sem mudança nesses).
+  **Validado:** `node --check` + **25/25 testes de navegador** (Playwright, Supabase mockado, rede externa bloqueada): geração de datas (dias/semanas, sem passado, ordem/únicas, 1ª data = data escolhida), **bulk insert com serie_id único** + valor/status/offset -03:00, **anti-duplicação** (cria 1 a menos quando o horário já existe), **avulsa inalterada** (objeto único, sem serie_id), badge `tagFixo`, **modal de série** + delete por `serie_id`/`gte`, avulsa não abre o modal de série, recorrência escondida em pacote/espera — **zero erro de JS**. Screenshot do modal conferido.
+  ***Falta:*** merge do front na `main` (Vercel) — a migration já está em produção e é **aditiva** (o front atual da `main` não é afetado). *Obs.: recurso é do painel (dono/recepção); o Portal do Profissional não cria recorrência (sem acesso), só enxerga as consultas normalmente.*
 - **2026-07-06** — **EXTRAS (fecha os "Restam" da 10.5) · Integração Google Agenda/Outlook (feed ICS) + NPS por WhatsApp + Controle de estoque + Relatórios exportáveis + TRIAL self-service de 7 dias com corte automático. Migration + edge `agenda-ics` EM PRODUÇÃO; front na branch `claude/claude-md-tasks-b07n15` dos 2 repos (falta merge na `main`).**
   A pedido do dono ("pode fazer essa parte dos Extras"). **Decisões do dono nesta data:** trial de **7 dias** no plano **Premium**; corte automático de cortesia vencida **valendo as datas já marcadas** — ⚠️ **B&D (vence 06/07) e AC Fisioterapia (14/07) serão suspensas pelo cron se não assinarem** (para reverter: conceder cortesia de novo pelo painel admin).
   🐛 **Bug corrigido de brinde:** a migration `20260704160000` reescreveu `criar_clinica_no_signup` e **perdeu o `ativo=false` do paywall** — desde 04/07 clínica nova entrava **de graça para sempre** (default da coluna é true). Agora o cadastro dá um **trial controlado** (ativo+cortesia+7d+premium).
