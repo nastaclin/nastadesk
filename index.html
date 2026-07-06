@@ -131,6 +131,37 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .evolucao-item { background: var(--verde-suave); border: 1px solid var(--verde-claro); border-radius: var(--raio-p); padding: 13px 15px; margin-bottom: 10px; }
 .evolucao-data { font-size: 11px; color: var(--cinza-medio); margin-bottom: 5px; }
 .evolucao-texto { font-size: 13px; color: var(--cinza-escuro); line-height: 1.6; white-space: pre-wrap; }
+/* ===== Fase 3: prontuário estruturado, exames, teleconsulta e lista de espera ===== */
+.aval-tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.aval-tipo-btn { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 11px 12px; cursor: pointer; text-align: left; transition: all .15s; font-family: inherit; }
+.aval-tipo-btn:hover { border-color: var(--verde); background: var(--verde-suave); }
+.aval-tipo-btn .aval-emoji { font-size: 20px; flex-shrink: 0; }
+.aval-tipo-btn strong { display: block; font-size: 12.5px; color: var(--cinza-escuro); }
+.aval-tipo-btn small { font-size: 10.5px; color: var(--cinza-medio); display: block; }
+.aval-item { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 13px 15px; margin-bottom: 10px; }
+.aval-item-topo { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; flex-wrap: wrap; }
+.aval-item-tipo { font-size: 12.5px; font-weight: 700; color: var(--verde-escuro); }
+.aval-item-data { font-size: 11px; color: var(--cinza-medio); margin-left: auto; white-space: nowrap; }
+.aval-eva-num { font-size: 24px; font-weight: 800; line-height: 1; }
+.aval-corpo { font-size: 12.5px; color: var(--cinza-escuro); line-height: 1.55; }
+.aval-tabela { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+.aval-tabela th { text-align: left; color: var(--cinza-medio); font-weight: 600; padding: 3px 6px; border-bottom: 1px solid var(--cinza-claro); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+.aval-tabela td { padding: 4px 6px; border-bottom: 1px solid var(--cinza-claro); color: var(--cinza-escuro); }
+.gonio-row { display: grid; grid-template-columns: 1.25fr 1fr 62px 52px 52px 24px; gap: 5px; margin-bottom: 6px; align-items: center; }
+.gonio-row input, .gonio-row select { width: 100%; padding: 7px 7px; border: 1px solid var(--cinza-claro); border-radius: 8px; font-size: 12px; font-family: inherit; background: var(--creme); outline: none; }
+.gonio-row input:focus, .gonio-row select:focus { border-color: var(--verde-medio); background: white; }
+.gonio-head { display: grid; grid-template-columns: 1.25fr 1fr 62px 52px 52px 24px; gap: 5px; font-size: 10px; color: var(--cinza-medio); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+.gonio-del { background: none; border: none; color: var(--vermelho); cursor: pointer; font-size: 15px; padding: 0; line-height: 1; }
+.range-eva { width: 100%; accent-color: var(--verde); cursor: pointer; }
+.exame-row { display: flex; align-items: center; gap: 10px; background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 10px 13px; margin-bottom: 8px; }
+.exame-nome { font-size: 13px; font-weight: 600; color: var(--cinza-escuro); word-break: break-all; }
+.exame-sub { font-size: 11px; color: var(--cinza-medio); }
+.tele-badge { display: inline-flex; align-items: center; gap: 3px; background: #EAF2FF; color: #2563EB; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.espera-item { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 11px 13px; margin-bottom: 8px; }
+.espera-nome { font-size: 13.5px; font-weight: 700; color: var(--cinza-escuro); }
+.espera-sub { font-size: 11.5px; color: var(--cinza-medio); margin-top: 2px; }
+.espera-acoes { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+.espera-badge { display: none; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; background: var(--verde); color: white; border-radius: 20px; font-size: 11px; font-weight: 700; margin-left: 6px; }
 .evolucao-nova { width: 100%; padding: 11px 13px; border: 1.5px solid var(--cinza-claro); border-radius: var(--raio-p); font-size: 14px; resize: none; height: 80px; outline: none; background: white; transition: border-color .15s, box-shadow .15s; }
 .evolucao-nova:focus { border-color: var(--verde-medio); box-shadow: var(--anel); }
 .evolucao-nova-acoes { display: flex; justify-content: flex-end; margin-top: 8px; }
@@ -1122,6 +1153,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="topbar-acoes">
           <select class="filtro-sala" id="filtro-sala-semana" onchange="renderGradeSemanal()" style="display:none"></select>
           <button class="btn btn-secundario" id="btn-toggle-view" onclick="toggleViewAgend()" style="display:none">Lista</button>
+          <button class="btn btn-secundario" onclick="abrirModalEspera()">Lista de espera<span class="espera-badge" id="espera-count-badge">0</span></button>
           <button class="btn btn-primario" onclick="abrirModal()">+ Agendar</button>
         </div>
       </div>
@@ -1739,6 +1771,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="ficha-tab" onclick="fichaTab('consultas',this)">Consultas</div>
     <div class="ficha-tab" id="ftab-pacotes" onclick="fichaTab('pacotes',this)">Pacotes</div>
     <div class="ficha-tab" onclick="fichaTab('evolucao',this)">Evolução</div>
+    <div class="ficha-tab" onclick="fichaTab('avaliacoes',this)">Avaliações</div>
+    <div class="ficha-tab" onclick="fichaTab('exames',this)">Exames</div>
     <div class="ficha-tab" onclick="fichaTab('anamnese',this)">Anamnese</div>
   </div>
   <div class="ficha-corpo">
@@ -1871,6 +1905,41 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       </div>
     </div>
 
+    <!-- TAB: AVALIAÇÕES (prontuário estruturado de fisio) -->
+    <div id="ficha-tab-avaliacoes" style="display:none">
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Nova avaliação</div>
+        <div class="aval-tipo-grid">
+          <button class="aval-tipo-btn" onclick="abrirModalAvaliacao('eva')"><span class="aval-emoji">📉</span><span><strong>EVA — Dor</strong><small>Escala visual 0–10</small></span></button>
+          <button class="aval-tipo-btn" onclick="abrirModalAvaliacao('goniometria')"><span class="aval-emoji">📐</span><span><strong>Goniometria</strong><small>Amplitude articular (graus)</small></span></button>
+          <button class="aval-tipo-btn" onclick="abrirModalAvaliacao('postural')"><span class="aval-emoji">🧍</span><span><strong>Avaliação postural</strong><small>Vistas anterior/lateral/posterior</small></span></button>
+          <button class="aval-tipo-btn" onclick="abrirModalAvaliacao('funcional')"><span class="aval-emoji">🏃</span><span><strong>Teste funcional</strong><small>TUG, Berg, caminhada 6min…</small></span></button>
+        </div>
+      </div>
+      <div class="ficha-secao" id="aval-grafico-secao" style="display:none">
+        <div class="ficha-secao-titulo">Evolução da dor (EVA)</div>
+        <div id="aval-grafico-eva"></div>
+      </div>
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Histórico de avaliações</div>
+        <div id="ficha-lista-avaliacoes"><div class="loading"><div class="loading-spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- TAB: EXAMES (anexos no Storage) -->
+    <div id="ficha-tab-exames" style="display:none">
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Anexar exame</div>
+        <div style="font-size:12px;color:var(--cinza-medio);margin-bottom:8px">PDF ou imagem (JPG, PNG, WebP, HEIC), até 10&nbsp;MB. Fica guardado com segurança — só a sua clínica acessa.</div>
+        <input type="file" id="exame-file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*" style="width:100%;font-size:13px">
+        <button class="btn btn-primario" id="exame-enviar-btn" onclick="enviarExame()" style="width:100%;margin-top:10px;padding:10px">Enviar exame</button>
+      </div>
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Exames anexados</div>
+        <div id="ficha-lista-exames"><div class="loading"><div class="loading-spinner"></div></div></div>
+      </div>
+    </div>
+
     <!-- TAB: ANAMNESE -->
     <div id="ficha-tab-anamnese" style="display:none">
       <div class="ficha-secao">
@@ -1933,9 +2002,129 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="config-campo" id="novo-sala-wrap" style="display:none"><label>Salão (opcional)</label><select id="novo-sala"></select></div>
     <div class="config-campo" id="novo-modalidade-wrap" style="display:none"><label>Modalidade (opcional)</label><select id="novo-modalidade"></select></div>
     <div class="config-campo" id="novo-profissional-wrap" style="display:none"><label>Profissional (opcional)</label><select id="novo-profissional"></select></div>
+    <div style="margin:4px 0 2px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--cinza-escuro);cursor:pointer;font-weight:600">
+        <input type="checkbox" id="novo-teleconsulta" style="width:16px;height:16px;accent-color:var(--verde);cursor:pointer">
+        📹 Teleconsulta (atendimento por vídeo)
+      </label>
+      <div style="font-size:11.5px;color:var(--cinza-medio);margin:3px 0 0 24px">Cria uma sala de vídeo segura — depois é só enviar o link ao paciente em 1 clique, direto da agenda.</div>
+    </div>
     <div class="modal-acoes">
       <button class="btn btn-secundario" onclick="fecharModal()">Cancelar</button>
       <button class="btn btn-primario" onclick="salvarConsulta()">Agendar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AVALIAÇÃO (prontuário estruturado de fisio) -->
+<div class="overlay" id="modal-avaliacao" onclick="if(event.target===this)fecharModalAvaliacao()">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-titulo" id="aval-modal-titulo">Nova avaliação</div><div class="modal-sub" id="aval-modal-sub">—</div></div><button class="modal-fechar" onclick="fecharModalAvaliacao()">×</button></div>
+
+    <!-- EVA -->
+    <div id="aval-form-eva" style="display:none">
+      <div class="config-campo">
+        <label>Intensidade da dor agora: <span id="av-eva-num" style="font-size:15px">5</span>/10</label>
+        <input type="range" class="range-eva" id="av-eva-valor" min="0" max="10" step="1" value="5" oninput="atualizarEvaPreview()">
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--cinza-medio);margin-top:2px"><span>0 · sem dor</span><span>10 · pior dor possível</span></div>
+      </div>
+      <div class="config-campo"><label>Local da dor</label><input type="text" id="av-eva-local" placeholder="Ex: lombar, joelho direito"></div>
+      <div class="config-campo"><label>Observações (opcional)</label><textarea id="av-eva-obs" placeholder="Ex: piora ao sentar por muito tempo"></textarea></div>
+    </div>
+
+    <!-- GONIOMETRIA -->
+    <div id="aval-form-goniometria" style="display:none">
+      <div style="font-size:12px;color:var(--cinza-medio);margin-bottom:8px">Amplitude de movimento (ADM) em graus, medida por articulação.</div>
+      <div class="gonio-head"><span>Articulação</span><span>Movimento</span><span>Lado</span><span>Ativa°</span><span>Passiva°</span><span></span></div>
+      <div id="av-gonio-rows"></div>
+      <button class="btn btn-secundario" onclick="addGonioRow()" style="width:100%;padding:8px;font-size:12.5px;margin:2px 0 12px">+ Adicionar medida</button>
+      <div class="config-campo"><label>Observações (opcional)</label><textarea id="av-gonio-obs" placeholder="Ex: dor no fim do arco de flexão"></textarea></div>
+    </div>
+
+    <!-- POSTURAL -->
+    <div id="aval-form-postural" style="display:none">
+      <div class="config-campo"><label>Vista anterior</label><textarea id="av-post-anterior" placeholder="Ex: ombro direito elevado, joelhos valgos…"></textarea></div>
+      <div class="config-campo"><label>Vista lateral</label><textarea id="av-post-lateral" placeholder="Ex: hiperlordose lombar, anteriorização da cabeça…"></textarea></div>
+      <div class="config-campo"><label>Vista posterior</label><textarea id="av-post-posterior" placeholder="Ex: escápula alada à esquerda, escoliose em C…"></textarea></div>
+      <div class="config-campo"><label>Observações (opcional)</label><textarea id="av-post-obs"></textarea></div>
+    </div>
+
+    <!-- TESTE FUNCIONAL -->
+    <div id="aval-form-funcional" style="display:none">
+      <div class="config-campo"><label>Teste</label>
+        <select id="av-func-teste" onchange="document.getElementById('av-func-outro-wrap').style.display = this.value==='outro' ? 'block' : 'none'">
+          <option value="TUG (Timed Up and Go)">TUG (Timed Up and Go)</option>
+          <option value="Sentar e levantar (30s)">Sentar e levantar (30s)</option>
+          <option value="Caminhada de 6 minutos">Caminhada de 6 minutos</option>
+          <option value="Alcance funcional">Alcance funcional</option>
+          <option value="Escala de equilíbrio de Berg">Escala de equilíbrio de Berg</option>
+          <option value="Dinamometria de preensão">Dinamometria de preensão</option>
+          <option value="outro">Outro…</option>
+        </select>
+      </div>
+      <div class="config-campo" id="av-func-outro-wrap" style="display:none"><label>Nome do teste</label><input type="text" id="av-func-outro" placeholder="Ex: Teste de Romberg"></div>
+      <div class="modal-grid">
+        <div class="config-campo"><label>Resultado</label><input type="text" id="av-func-resultado" placeholder="Ex: 12,5"></div>
+        <div class="config-campo"><label>Unidade</label>
+          <select id="av-func-unidade">
+            <option value="s">segundos</option>
+            <option value="repetições">repetições</option>
+            <option value="m">metros</option>
+            <option value="cm">centímetros</option>
+            <option value="pontos">pontos</option>
+            <option value="kg">kg</option>
+            <option value="">—</option>
+          </select>
+        </div>
+      </div>
+      <div class="config-campo"><label>Observações (opcional)</label><textarea id="av-func-obs"></textarea></div>
+    </div>
+
+    <div class="config-campo" id="av-prof-wrap" style="display:none"><label>Profissional (opcional)</label><select id="av-profissional"></select></div>
+
+    <div class="modal-acoes">
+      <button class="btn btn-secundario" onclick="fecharModalAvaliacao()">Cancelar</button>
+      <button class="btn btn-primario" onclick="salvarAvaliacao()">Salvar avaliação</button>
+    </div>
+  </div>
+</div>
+<datalist id="lista-articulacoes">
+  <option value="Ombro"></option><option value="Cotovelo"></option><option value="Punho"></option>
+  <option value="Quadril"></option><option value="Joelho"></option><option value="Tornozelo"></option>
+  <option value="Coluna cervical"></option><option value="Coluna lombar"></option>
+</datalist>
+<datalist id="lista-movimentos">
+  <option value="Flexão"></option><option value="Extensão"></option><option value="Abdução"></option>
+  <option value="Adução"></option><option value="Rotação interna"></option><option value="Rotação externa"></option>
+  <option value="Inclinação"></option><option value="Dorsiflexão"></option><option value="Plantiflexão"></option>
+  <option value="Pronação"></option><option value="Supinação"></option>
+</datalist>
+
+<!-- MODAL LISTA DE ESPERA -->
+<div class="overlay" id="modal-espera" onclick="if(event.target===this)fecharModalEspera()">
+  <div class="modal" style="width:520px">
+    <div class="modal-header"><div><div class="modal-titulo">Lista de espera</div><div class="modal-sub">Quem aguarda um horário — chame no WhatsApp quando vagar</div></div><button class="modal-fechar" onclick="fecharModalEspera()">×</button></div>
+    <div id="espera-lista"><div class="loading"><div class="loading-spinner"></div></div></div>
+    <div style="border-top:1px solid var(--cinza-claro);margin:16px 0 12px"></div>
+    <div style="font-size:13px;font-weight:700;color:var(--verde-escuro);margin-bottom:10px">Adicionar à lista</div>
+    <div class="config-campo">
+      <label>Paciente já cadastrado (opcional)</label>
+      <input type="text" id="espera-busca" class="busca-input" placeholder="Buscar por nome, CPF ou WhatsApp…" oninput="buscarPacienteEspera(this.value)" autocomplete="off">
+      <div id="espera-resultados" class="pac-resultados"></div>
+    </div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Nome</label><input type="text" id="espera-nome" placeholder="Ex: Maria Silva"></div>
+      <div class="config-campo"><label>WhatsApp</label><input type="text" id="espera-wpp" placeholder="11999990001"></div>
+    </div>
+    <div class="config-campo"><label>Preferência de horário</label><input type="text" id="espera-pref" placeholder="Ex: manhãs · ter e qui"></div>
+    <div class="modal-grid">
+      <div class="config-campo" id="espera-mod-wrap" style="display:none"><label>Modalidade</label><select id="espera-modalidade"></select></div>
+      <div class="config-campo" id="espera-prof-wrap" style="display:none"><label>Profissional</label><select id="espera-profissional"></select></div>
+    </div>
+    <div class="config-campo"><label>Observação (opcional)</label><input type="text" id="espera-obs" placeholder="Ex: encaixe urgente"></div>
+    <div class="modal-acoes">
+      <button class="btn btn-secundario" onclick="fecharModalEspera()">Fechar</button>
+      <button class="btn btn-primario" onclick="salvarEspera()">Adicionar à lista</button>
     </div>
   </div>
 </div>
@@ -3248,7 +3437,7 @@ function cardSalao(c, cor) {
       <span class="salao-card-hora">${hora}</span>
       <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
     </div>
-    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${tagNovoRec(c)}</div>
+    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagNovoRec(c)}</div>
     ${(tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id) || tagProfissional(c.profissional_id))?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}${tagProfissional(c.profissional_id)}</div>`:''}
     ${c.queixa?`<div class="salao-card-queixa">${esc(c.queixa)}</div>`:''}
     <div class="salao-card-acoes" onclick="event.stopPropagation()">
@@ -3256,6 +3445,8 @@ function cardSalao(c, cor) {
       <button class="btn-icone" title="Alterar status" onclick="abrirMenuStatus('${c.id}', this)">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg>
       </button>
+      ${c.teleconsulta?`<button class="btn-icone" title="Entrar na sala de vídeo" style="font-size:13px" onclick="entrarTeleconsulta('${c.id}')">📹</button>`:''}
+      ${c.teleconsulta&&wpp?`<button class="btn-icone" title="Enviar link da teleconsulta" style="font-size:13px" onclick="enviarLinkTeleconsulta('${c.id}','${wpp}','${esc((nome||'').split(' ')[0])}','${c.data_hora}')">🔗</button>`:''}
       ${wpp?`<button class="btn-icone" title="WhatsApp" onclick="window.open('https://wa.me/${wpp}','_blank')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></button>`:''}
     </div>
   </div>`;
@@ -3303,7 +3494,7 @@ function renderConsultas(lista) {
       <span class="consulta-hora">${hora}</span>
       <div class="avatar ${CORES[i%CORES.length]}${cancelada?' cancelado':''}">${esc(iniciais)}</div>
       <div class="consulta-info">
-        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${tagNovoRec(c)}</div>
+        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagNovoRec(c)}</div>
         <div class="consulta-queixa">${esc(c.queixa||'—')}</div>
         ${(salasDisponivel && salasAtivas().length)
           ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
@@ -3317,6 +3508,8 @@ function renderConsultas(lista) {
         <button class="btn-icone" title="Alterar status" onclick="abrirMenuStatus('${c.id}', this)">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg>
         </button>
+        ${c.teleconsulta?`<button class="btn-icone" title="Entrar na sala de vídeo" style="font-size:13px" onclick="entrarTeleconsulta('${c.id}')">📹</button>`:''}
+        ${c.teleconsulta&&wpp?`<button class="btn-icone" title="Enviar link da teleconsulta" style="font-size:13px" onclick="enviarLinkTeleconsulta('${c.id}','${wpp}','${esc((nome||'').split(' ')[0])}','${c.data_hora}')">🔗</button>`:''}
         ${wpp?`<button class="btn-icone" title="WhatsApp" onclick="window.open('https://wa.me/${wpp}','_blank')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></button>`:''}
       </div>
     </div>`;
@@ -3884,9 +4077,12 @@ function deletarPaciente() {
   const nomeParaDeletar = pacienteAtual.nome;
   abrirModalConfirm(
     'Excluir paciente?',
-    `Isso vai remover "${nomeParaDeletar}" e TUDO que é dele — consultas, evoluções, pacotes, mensalidades e conversas — permanentemente. Esta ação não pode ser desfeita. Se a intenção é atender um pedido LGPD mantendo o histórico financeiro, use "Eliminar dados pessoais" na ficha.`,
+    `Isso vai remover "${nomeParaDeletar}" e TUDO que é dele — consultas, evoluções, avaliações, exames anexados, pacotes, mensalidades e conversas — permanentemente. Esta ação não pode ser desfeita. Se a intenção é atender um pedido LGPD mantendo o histórico financeiro, use "Eliminar dados pessoais" na ficha.`,
     'Excluir tudo',
     async () => {
+      // Fase 3: exames do Storage saem primeiro (o banco não os apaga). Fail-closed.
+      const ex = await apagarExamesPaciente(idParaDeletar);
+      if (!ex.ok) { toast('Não foi possível apagar os exames anexados (' + (ex.erro || 'erro') + '). Tente de novo.'); return; }
       // Exclusão atômica no banco (RPC cobre todas as tabelas filhas, na ordem certa)
       const { data, error } = await db.rpc('paciente_excluir', { p_paciente_id: idParaDeletar });
       if (error || !data?.ok) { toast('Erro ao excluir: ' + (error?.message || data?.erro || 'tente novamente')); return; }
@@ -3904,14 +4100,21 @@ async function exportarDadosPaciente() {
   const pid = pacienteAtual.id;
   toast('Gerando exportação...');
   try {
-    const [pac, cons, evo, pac2, mens, consent] = await Promise.all([
+    const [pac, cons, evo, pac2, mens, consent, avals] = await Promise.all([
       db.from('pacientes').select('*').eq('id', pid).single(),
       db.from('consultas').select('*').eq('paciente_id', pid).order('data_hora'),
       db.from('evolucoes').select('*').eq('paciente_id', pid).order('criado_em'),
       db.from('pacotes').select('*').eq('paciente_id', pid).order('criado_em'),
       db.from('mensalidades').select('*').eq('paciente_id', pid).order('competencia'),
       db.from('consentimentos').select('*').eq('paciente_id', pid).order('criado_em'),
+      db.from('avaliacoes').select('*').eq('paciente_id', pid).order('criado_em'),
     ]);
+    // exames anexados: só a lista de nomes (os arquivos em si o titular pode pedir à clínica)
+    let exames = [];
+    try {
+      const { data: exd } = await db.storage.from('exames').list(`${clinicaId}/${pid}`, { limit: 1000 });
+      exames = (exd || []).filter(f => f.name && !f.name.startsWith('.')).map(f => nomeArquivoExame(f.name));
+    } catch (e) { /* tolerante */ }
     const dump = {
       exportacao: {
         gerado_em: new Date().toISOString(),
@@ -3921,6 +4124,8 @@ async function exportarDadosPaciente() {
       paciente: pac.data || null,
       consultas: cons.data || [],
       evolucoes: evo.data || [],
+      avaliacoes: avals.data || [],
+      exames_anexados: exames,
       pacotes: pac2.data || [],
       mensalidades: mens.data || [],
       consentimentos: consent.data || [],
@@ -3948,9 +4153,13 @@ function anonimizarPaciente() {
   const nome = pacienteAtual.nome;
   abrirModalConfirm(
     'Eliminar dados pessoais? (LGPD)',
-    `Os dados pessoais e de saúde de "${nome}" serão apagados permanentemente — nome, CPF, contato, anamnese, evoluções e conversas. O histórico financeiro (consultas, pacotes, mensalidades) continua, sem identificação. Dica: exporte os dados antes, se o paciente quiser uma cópia. Esta ação não pode ser desfeita.`,
+    `Os dados pessoais e de saúde de "${nome}" serão apagados permanentemente — nome, CPF, contato, anamnese, evoluções, avaliações, exames anexados e conversas. O histórico financeiro (consultas, pacotes, mensalidades) continua, sem identificação. Dica: exporte os dados antes, se o paciente quiser uma cópia. Esta ação não pode ser desfeita.`,
     'Eliminar dados pessoais',
     async () => {
+      // Fase 3: os arquivos de exames saem primeiro, via Storage API (o banco
+      // não consegue apagá-los). Se falhar, a eliminação NÃO segue (fail-closed).
+      const ex = await apagarExamesPaciente(pid);
+      if (!ex.ok) { toast('Não foi possível apagar os exames anexados (' + (ex.erro || 'erro') + '). Tente de novo.'); return; }
       const { data, error } = await db.rpc('paciente_anonimizar', { p_paciente_id: pid });
       if (error || !data?.ok) { toast('Erro ao eliminar: ' + (error?.message || data?.erro || 'tente novamente')); return; }
       logAcesso(pid, 'anonimizou_dados');
@@ -3981,6 +4190,11 @@ const AUDITORIA_ROTULOS = {
   registrou_evolucao: 'Registrou evolução',
   exportou_dados: 'Exportou os dados (LGPD)',
   anonimizou_dados: 'Eliminou dados pessoais (LGPD)',
+  registrou_avaliacao: 'Registrou avaliação',
+  excluiu_avaliacao: 'Excluiu avaliação',
+  anexou_exame: 'Anexou exame',
+  baixou_exame: 'Abriu/baixou exame',
+  excluiu_exame: 'Excluiu exame',
 };
 async function carregarAuditoriaFicha(pacienteId) {
   const box = document.getElementById('ficha-auditoria-lista');
@@ -4069,13 +4283,15 @@ function fecharFicha() {
 }
 
 function fichaTab(tab, el) {
-  ['dados','consultas','pacotes','evolucao','anamnese'].forEach(t => {
+  ['dados','consultas','pacotes','evolucao','avaliacoes','exames','anamnese'].forEach(t => {
     const e = document.getElementById(`ficha-tab-${t}`);
     if (e) e.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('.ficha-tab').forEach(t => t.classList.remove('ativa'));
   if (el) el.classList.add('ativa');
   if (tab === 'pacotes' && pacienteAtual) carregarPacotesFicha(pacienteAtual.id);
+  if (tab === 'avaliacoes' && pacienteAtual) carregarAvaliacoes(pacienteAtual.id);
+  if (tab === 'exames' && pacienteAtual) carregarExames(pacienteAtual.id);
 }
 
 function fichaEditado() {
@@ -4159,7 +4375,7 @@ async function carregarConsultasFicha(pacienteId) {
     return `<div class="ficha-consulta">
       <div class="ficha-consulta-data">${data}</div>
       <div class="ficha-consulta-info">
-        <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}</div>
+        <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}</div>
         <div class="ficha-consulta-status">${hora} · <span style="color:${stColor[c.status]||'var(--cinza-medio)'}">${stLabel[c.status]||esc(c.status)}</span>${pagInfo}</div>
         ${tags?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px">${tags}</div>`:''}
       </div>
@@ -4193,6 +4409,467 @@ async function salvarEvolucao() {
   } else {
     toast('Erro ao salvar evolução');
   }
+}
+
+// ===== FASE 3 · AVALIAÇÕES (prontuário estruturado de fisio) =====
+const AVAL_TIPOS = {
+  eva:         { rotulo: 'EVA — Dor',          emoji: '📉', sub: 'Escala visual analógica (0 a 10)' },
+  goniometria: { rotulo: 'Goniometria',        emoji: '📐', sub: 'Amplitude de movimento em graus' },
+  postural:    { rotulo: 'Avaliação postural', emoji: '🧍', sub: 'Vistas anterior, lateral e posterior' },
+  funcional:   { rotulo: 'Teste funcional',    emoji: '🏃', sub: 'TUG, Berg, caminhada de 6 minutos…' },
+};
+let avalTipoAtual = null;
+
+function abrirModalAvaliacao(tipo) {
+  if (!AVAL_TIPOS[tipo] || !pacienteAtual) return;
+  avalTipoAtual = tipo;
+  document.getElementById('aval-modal-titulo').textContent = `${AVAL_TIPOS[tipo].emoji} ${AVAL_TIPOS[tipo].rotulo}`;
+  document.getElementById('aval-modal-sub').textContent = `${AVAL_TIPOS[tipo].sub} · ${pacienteAtual.nome}`;
+  Object.keys(AVAL_TIPOS).forEach(t => {
+    const f = document.getElementById(`aval-form-${t}`);
+    if (f) f.style.display = t === tipo ? 'block' : 'none';
+  });
+  // limpa os campos do formulário escolhido
+  if (tipo === 'eva') {
+    document.getElementById('av-eva-valor').value = 5;
+    document.getElementById('av-eva-local').value = '';
+    document.getElementById('av-eva-obs').value = '';
+    atualizarEvaPreview();
+  } else if (tipo === 'goniometria') {
+    document.getElementById('av-gonio-rows').innerHTML = '';
+    addGonioRow();
+    document.getElementById('av-gonio-obs').value = '';
+  } else if (tipo === 'postural') {
+    ['av-post-anterior','av-post-lateral','av-post-posterior','av-post-obs'].forEach(i => document.getElementById(i).value = '');
+  } else if (tipo === 'funcional') {
+    document.getElementById('av-func-teste').value = 'TUG (Timed Up and Go)';
+    document.getElementById('av-func-outro-wrap').style.display = 'none';
+    document.getElementById('av-func-outro').value = '';
+    document.getElementById('av-func-resultado').value = '';
+    document.getElementById('av-func-unidade').value = 's';
+    document.getElementById('av-func-obs').value = '';
+  }
+  // profissional que fez a avaliação (opcional; só aparece se a clínica usa profissionais)
+  const profWrap = document.getElementById('av-prof-wrap');
+  const profSel = document.getElementById('av-profissional');
+  if (profWrap && profSel) {
+    const tem = (typeof profissionaisDisponivel !== 'undefined' && profissionaisDisponivel && profissionaisAtivos().length);
+    profWrap.style.display = tem ? 'block' : 'none';
+    if (tem) profSel.innerHTML = optsProfissional('');
+  }
+  document.getElementById('modal-avaliacao').classList.add('aberto');
+}
+
+function fecharModalAvaliacao() {
+  document.getElementById('modal-avaliacao').classList.remove('aberto');
+  avalTipoAtual = null;
+}
+
+function atualizarEvaPreview() {
+  const v = parseInt(document.getElementById('av-eva-valor').value, 10) || 0;
+  const num = document.getElementById('av-eva-num');
+  num.textContent = v;
+  num.style.color = corEva(v);
+}
+
+function corEva(v) {
+  if (v <= 3) return '#2E7D32';
+  if (v <= 6) return '#B45309';
+  return 'var(--vermelho)';
+}
+
+function addGonioRow() {
+  const box = document.getElementById('av-gonio-rows');
+  const row = document.createElement('div');
+  row.className = 'gonio-row';
+  row.innerHTML = `
+    <input class="g-art" list="lista-articulacoes" placeholder="Joelho">
+    <input class="g-mov" list="lista-movimentos" placeholder="Flexão">
+    <select class="g-lado"><option value="D">D</option><option value="E">E</option><option value="D+E">D+E</option><option value="">—</option></select>
+    <input class="g-ativa" type="number" min="0" max="360" placeholder="°" inputmode="numeric">
+    <input class="g-passiva" type="number" min="0" max="360" placeholder="°" inputmode="numeric">
+    <button type="button" class="gonio-del" title="Remover" onclick="this.parentElement.remove()">×</button>`;
+  box.appendChild(row);
+}
+
+async function salvarAvaliacao() {
+  if (!pacienteAtual || !clinicaId || !avalTipoAtual) return;
+  const tipo = avalTipoAtual;
+  const dados = {};
+  if (tipo === 'eva') {
+    const v = parseInt(document.getElementById('av-eva-valor').value, 10);
+    if (isNaN(v) || v < 0 || v > 10) { toast('Escolha a intensidade da dor (0 a 10)'); return; }
+    dados.valor = v;
+    dados.local = document.getElementById('av-eva-local').value.trim() || null;
+    dados.obs = document.getElementById('av-eva-obs').value.trim() || null;
+  } else if (tipo === 'goniometria') {
+    dados.medidas = [...document.querySelectorAll('#av-gonio-rows .gonio-row')].map(r => {
+      const at = parseInt(r.querySelector('.g-ativa').value, 10);
+      const pa = parseInt(r.querySelector('.g-passiva').value, 10);
+      return {
+        articulacao: r.querySelector('.g-art').value.trim(),
+        movimento: r.querySelector('.g-mov').value.trim(),
+        lado: r.querySelector('.g-lado').value,
+        ativa: isNaN(at) ? null : at,
+        passiva: isNaN(pa) ? null : pa,
+      };
+    }).filter(m => m.articulacao && (m.movimento || m.ativa !== null || m.passiva !== null));
+    if (!dados.medidas.length) { toast('Adicione pelo menos uma medida (articulação + movimento ou graus)'); return; }
+    dados.obs = document.getElementById('av-gonio-obs').value.trim() || null;
+  } else if (tipo === 'postural') {
+    dados.anterior = document.getElementById('av-post-anterior').value.trim() || null;
+    dados.lateral = document.getElementById('av-post-lateral').value.trim() || null;
+    dados.posterior = document.getElementById('av-post-posterior').value.trim() || null;
+    dados.obs = document.getElementById('av-post-obs').value.trim() || null;
+    if (!dados.anterior && !dados.lateral && !dados.posterior && !dados.obs) { toast('Preencha pelo menos uma das vistas'); return; }
+  } else if (tipo === 'funcional') {
+    const sel = document.getElementById('av-func-teste').value;
+    dados.teste = sel === 'outro' ? document.getElementById('av-func-outro').value.trim() : sel;
+    dados.resultado = document.getElementById('av-func-resultado').value.trim();
+    dados.unidade = document.getElementById('av-func-unidade').value;
+    dados.obs = document.getElementById('av-func-obs').value.trim() || null;
+    if (!dados.teste) { toast('Informe o nome do teste'); return; }
+    if (!dados.resultado) { toast('Informe o resultado do teste'); return; }
+  }
+  const profSel = document.getElementById('av-profissional');
+  const profWrap = document.getElementById('av-prof-wrap');
+  const payload = {
+    clinica_id: clinicaId, paciente_id: pacienteAtual.id, tipo, dados,
+    profissional_id: (profWrap && profWrap.style.display !== 'none' && profSel && profSel.value) ? profSel.value : null,
+  };
+  const { error } = await db.from('avaliacoes').insert(payload);
+  if (error) { toast('Erro ao salvar a avaliação. Tente novamente.'); return; }
+  fecharModalAvaliacao();
+  toast('Avaliação registrada ✓');
+  logAcesso(pacienteAtual.id, 'registrou_avaliacao', tipo);
+  carregarAvaliacoes(pacienteAtual.id);
+}
+
+async function carregarAvaliacoes(pacienteId) {
+  const el = document.getElementById('ficha-lista-avaliacoes');
+  if (!el) return;
+  const { data, error } = await db.from('avaliacoes').select('*').eq('paciente_id', pacienteId).order('criado_em', { ascending: false });
+  if (error) { el.innerHTML = '<div class="empty" style="padding:16px">Não foi possível carregar as avaliações.</div>'; return; }
+  const lista = data || [];
+  // gráfico de evolução da dor (EVA) — aparece a partir de 2 medições
+  const evas = lista.filter(a => a.tipo === 'eva' && a.dados && a.dados.valor != null).slice().reverse().slice(-10);
+  const gsec = document.getElementById('aval-grafico-secao');
+  if (gsec) {
+    if (evas.length >= 2) { gsec.style.display = 'block'; document.getElementById('aval-grafico-eva').innerHTML = svgGraficoEVA(evas); }
+    else gsec.style.display = 'none';
+  }
+  if (!lista.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px">Nenhuma avaliação ainda. Use os botões acima — o histórico clínico estruturado do paciente fica aqui.</div>';
+    return;
+  }
+  el.innerHTML = lista.map(renderAvaliacaoItem).join('');
+}
+
+function renderAvaliacaoItem(a) {
+  const t = AVAL_TIPOS[a.tipo] || { rotulo: a.tipo, emoji: '📋' };
+  const dt = new Date(a.criado_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric', timeZone: TZ });
+  const d = a.dados || {};
+  let corpo = '';
+  if (a.tipo === 'eva') {
+    corpo = `<span class="aval-eva-num" style="color:${corEva(d.valor)}">${d.valor}</span><span style="color:var(--cinza-medio);font-size:12px">/10</span>` +
+      `${d.local ? ` · <strong>${esc(d.local)}</strong>` : ''}${d.obs ? `<div style="margin-top:3px">${esc(d.obs)}</div>` : ''}`;
+  } else if (a.tipo === 'goniometria') {
+    const linhas = (d.medidas || []).map(m =>
+      `<tr><td>${esc(m.articulacao)}${m.lado ? ` (${esc(m.lado)})` : ''}</td><td>${esc(m.movimento || '—')}</td><td>${m.ativa != null ? m.ativa + '°' : '—'}</td><td>${m.passiva != null ? m.passiva + '°' : '—'}</td></tr>`).join('');
+    corpo = `<table class="aval-tabela"><tr><th>Articulação</th><th>Movimento</th><th>Ativa</th><th>Passiva</th></tr>${linhas}</table>` +
+      (d.obs ? `<div style="margin-top:5px">${esc(d.obs)}</div>` : '');
+  } else if (a.tipo === 'postural') {
+    corpo = [
+      d.anterior ? `<div><strong>Anterior:</strong> ${esc(d.anterior)}</div>` : '',
+      d.lateral ? `<div><strong>Lateral:</strong> ${esc(d.lateral)}</div>` : '',
+      d.posterior ? `<div><strong>Posterior:</strong> ${esc(d.posterior)}</div>` : '',
+      d.obs ? `<div style="margin-top:3px">${esc(d.obs)}</div>` : '',
+    ].join('');
+  } else if (a.tipo === 'funcional') {
+    corpo = `<strong>${esc(d.teste)}</strong>: ${esc(d.resultado)}${d.unidade ? ' ' + esc(d.unidade) : ''}` +
+      (d.obs ? `<div style="margin-top:3px">${esc(d.obs)}</div>` : '');
+  }
+  return `<div class="aval-item">
+    <div class="aval-item-topo">
+      <span>${t.emoji}</span><span class="aval-item-tipo">${esc(t.rotulo)}</span>
+      ${tagProfissional(a.profissional_id)}
+      <span class="aval-item-data">${dt}</span>
+      <button class="btn-icone" title="Excluir avaliação" style="color:var(--vermelho)" onclick="excluirAvaliacao('${a.id}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="13" height="13"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>
+    <div class="aval-corpo">${corpo}</div>
+  </div>`;
+}
+
+function excluirAvaliacao(id) {
+  abrirModalConfirm('Excluir avaliação?', 'Este registro clínico será apagado permanentemente.', 'Excluir', async () => {
+    const { error } = await db.from('avaliacoes').delete().eq('id', id);
+    if (error) { toast('Erro ao excluir'); return; }
+    toast('Avaliação excluída ✓');
+    if (pacienteAtual) { logAcesso(pacienteAtual.id, 'excluiu_avaliacao'); carregarAvaliacoes(pacienteAtual.id); }
+  });
+}
+
+// Gráfico simples (SVG inline) da dor EVA ao longo do tempo — sem libs.
+function svgGraficoEVA(evas) {
+  const W = 320, H = 96, padX = 16, padY = 16;
+  const n = evas.length;
+  const x = i => n === 1 ? W / 2 : padX + i * (W - 2 * padX) / (n - 1);
+  const y = v => H - padY - (v / 10) * (H - 2 * padY);
+  const pts = evas.map((a, i) => ({ cx: x(i), cy: y(a.dados.valor), v: a.dados.valor, d: new Date(a.criado_em) }));
+  const linha = pts.map(p => `${p.cx.toFixed(1)},${p.cy.toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Evolução da dor EVA">
+    <polyline points="${linha}" fill="none" stroke="var(--verde)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.5"/>
+    ${pts.map(p => `<circle cx="${p.cx.toFixed(1)}" cy="${p.cy.toFixed(1)}" r="4" fill="${corEva(p.v)}"/>
+      <text x="${p.cx.toFixed(1)}" y="${(p.cy - 8).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${corEva(p.v)}">${p.v}</text>
+      <text x="${p.cx.toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="8.5" fill="#8A9B90">${String(p.d.getDate()).padStart(2,'0')}/${String(p.d.getMonth()+1).padStart(2,'0')}</text>`).join('')}
+  </svg>`;
+}
+
+// ===== FASE 3 · EXAMES ANEXADOS (Supabase Storage, bucket privado 'exames') =====
+const EXAME_MAX_MB = 10;
+function nomeArquivoExame(name) { return name.replace(/^\d+_/, ''); }
+
+async function carregarExames(pacienteId) {
+  const el = document.getElementById('ficha-lista-exames');
+  if (!el || !clinicaId) return;
+  const { data, error } = await db.storage.from('exames').list(`${clinicaId}/${pacienteId}`, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+  if (error) { el.innerHTML = '<div class="empty" style="padding:16px">Não foi possível carregar os exames.</div>'; return; }
+  const arquivos = (data || []).filter(f => f.name && !f.name.startsWith('.'));
+  if (!arquivos.length) { el.innerHTML = '<div class="empty" style="padding:16px">Nenhum exame anexado ainda.</div>'; return; }
+  el.innerHTML = arquivos.map(f => {
+    const kb = f.metadata && f.metadata.size ? Math.round(f.metadata.size / 1024) : null;
+    const dt = f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR') : '';
+    const ehPdf = /\.pdf$/i.test(f.name);
+    const path = `${clinicaId}/${pacienteId}/${f.name}`;
+    return `<div class="exame-row">
+      <span style="font-size:20px">${ehPdf ? '📄' : '🖼️'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="exame-nome">${esc(nomeArquivoExame(f.name))}</div>
+        <div class="exame-sub">${dt}${kb ? ` · ${kb} KB` : ''}</div>
+      </div>
+      <button class="btn-icone" title="Abrir / baixar" onclick="abrirExame('${path}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+      </button>
+      <button class="btn-icone" title="Excluir exame" style="color:var(--vermelho)" onclick="excluirExame('${path}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+async function enviarExame() {
+  if (!pacienteAtual || !clinicaId) return;
+  const input = document.getElementById('exame-file');
+  const file = input && input.files && input.files[0];
+  if (!file) { toast('Escolha um arquivo primeiro'); return; }
+  if (file.size > EXAME_MAX_MB * 1024 * 1024) { toast(`Arquivo muito grande (máx. ${EXAME_MAX_MB} MB)`); return; }
+  const tiposOk = ['application/pdf','image/jpeg','image/png','image/webp','image/heic','image/heif'];
+  if (file.type && !tiposOk.includes(file.type)) { toast('Só PDF ou imagem (JPG, PNG, WebP, HEIC)'); return; }
+  const btn = document.getElementById('exame-enviar-btn');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  const seguro = file.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '-').slice(-80);
+  const path = `${clinicaId}/${pacienteAtual.id}/${Date.now()}_${seguro}`;
+  const { error } = await db.storage.from('exames').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+  btn.disabled = false; btn.textContent = 'Enviar exame';
+  if (error) { toast('Erro ao enviar: ' + (error.message || 'tente novamente')); return; }
+  input.value = '';
+  toast('Exame anexado ✓');
+  logAcesso(pacienteAtual.id, 'anexou_exame', seguro.slice(0, 60));
+  carregarExames(pacienteAtual.id);
+}
+
+async function abrirExame(path) {
+  const { data, error } = await db.storage.from('exames').createSignedUrl(path, 300);
+  if (error || !data || !data.signedUrl) { toast('Erro ao abrir o exame'); return; }
+  window.open(data.signedUrl, '_blank');
+  if (pacienteAtual) logAcesso(pacienteAtual.id, 'baixou_exame');
+}
+
+function excluirExame(path) {
+  const nome = nomeArquivoExame(path.split('/').pop() || '');
+  abrirModalConfirm('Excluir exame?', `O arquivo "${nome}" será apagado permanentemente.`, 'Excluir', async () => {
+    const { error } = await db.storage.from('exames').remove([path]);
+    if (error) { toast('Erro ao excluir o exame'); return; }
+    toast('Exame excluído ✓');
+    if (pacienteAtual) { logAcesso(pacienteAtual.id, 'excluiu_exame'); carregarExames(pacienteAtual.id); }
+  });
+}
+
+// LGPD: apaga TODOS os exames do paciente via Storage API. Fail-closed —
+// a eliminação/exclusão do paciente só segue se isto der certo (o banco não
+// consegue apagar arquivos do Storage; ver migration da Fase 3).
+async function apagarExamesPaciente(pacienteId) {
+  try {
+    const { data, error } = await db.storage.from('exames').list(`${clinicaId}/${pacienteId}`, { limit: 1000 });
+    if (error) return { ok: false, erro: error.message };
+    const paths = (data || []).filter(f => f.name && !f.name.startsWith('.')).map(f => `${clinicaId}/${pacienteId}/${f.name}`);
+    if (!paths.length) return { ok: true };
+    const { error: e2 } = await db.storage.from('exames').remove(paths);
+    if (e2) return { ok: false, erro: e2.message };
+    return { ok: true };
+  } catch (e) { return { ok: false, erro: String((e && e.message) || e) }; }
+}
+
+// ===== FASE 3 · TELECONSULTA =====
+// Sala de vídeo no Jitsi Meet (gratuito, sem conta, criptografado) com nome
+// derivado do id da consulta — impossível de adivinhar sem acesso à clínica.
+function teleSala(consultaId) { return 'NastaDesk-' + String(consultaId).replace(/-/g, '').slice(0, 20); }
+function teleLink(consultaId) { return 'https://meet.jit.si/' + teleSala(consultaId); }
+function entrarTeleconsulta(consultaId) { window.open(teleLink(consultaId), '_blank'); }
+function enviarLinkTeleconsulta(consultaId, wpp, nome, dataHora) {
+  if (!wpp) { toast('Paciente sem WhatsApp cadastrado'); return; }
+  let quando = '';
+  try { quando = ` de ${new Date(dataHora).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', timeZone: TZ })} às ${horaSP(dataHora)}`; } catch (e) {}
+  const msg = `Olá${nome ? ', ' + nome : ''}! 👋 Sua consulta${quando} será por vídeo (teleconsulta). Na hora, é só abrir este link — não precisa instalar nada: ${teleLink(consultaId)}`;
+  window.open(`https://wa.me/${wpp}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ===== FASE 3 · LISTA DE ESPERA =====
+let esperaLista = [];
+let esperaPacienteId = null;
+let agendandoEsperaId = null;
+
+function abrirModalEspera() {
+  esperaPacienteId = null;
+  const em = document.getElementById('espera-modalidade');
+  if (em) {
+    const tem = (typeof modalidadesDisponivel !== 'undefined' && modalidadesDisponivel && modalidadesAtivas().length);
+    document.getElementById('espera-mod-wrap').style.display = tem ? 'block' : 'none';
+    if (tem) em.innerHTML = optsModalidade('');
+  }
+  const ep = document.getElementById('espera-profissional');
+  if (ep) {
+    const tem = (typeof profissionaisDisponivel !== 'undefined' && profissionaisDisponivel && profissionaisAtivos().length);
+    document.getElementById('espera-prof-wrap').style.display = tem ? 'block' : 'none';
+    if (tem) ep.innerHTML = optsProfissional('');
+  }
+  document.getElementById('modal-espera').classList.add('aberto');
+  carregarEspera();
+}
+
+function fecharModalEspera() { document.getElementById('modal-espera').classList.remove('aberto'); }
+
+async function carregarEspera() {
+  const el = document.getElementById('espera-lista');
+  if (!el || !clinicaId) return;
+  const { data, error } = await db.from('lista_espera').select('*, pacientes(nome, whatsapp)')
+    .eq('clinica_id', clinicaId).eq('status', 'aguardando').order('criado_em', { ascending: true });
+  if (error) { el.innerHTML = '<div class="empty" style="padding:14px">Não foi possível carregar a lista.</div>'; return; }
+  esperaLista = data || [];
+  atualizarEsperaBadge(esperaLista.length);
+  if (!esperaLista.length) {
+    el.innerHTML = '<div class="empty" style="padding:14px">Ninguém na lista de espera. Quando a agenda estiver cheia, adicione aqui quem pedir horário — e chame no WhatsApp assim que vagar.</div>';
+    return;
+  }
+  el.innerHTML = esperaLista.map(e => {
+    const nome = (e.pacientes && e.pacientes.nome) || e.nome || '—';
+    const wpp = ((e.pacientes && e.pacientes.whatsapp) || e.whatsapp || '').replace(/\D/g, '');
+    const dias = Math.floor((Date.now() - new Date(e.criado_em).getTime()) / 86400000);
+    const espera = dias <= 0 ? 'desde hoje' : dias === 1 ? 'há 1 dia' : `há ${dias} dias`;
+    const tags = `${tagModalidade(e.modalidade_id)}${tagProfissional(e.profissional_id)}`;
+    return `<div class="espera-item">
+      <div class="espera-nome">${esc(nome)}${e.paciente_id ? '' : ' <span style="font-size:10.5px;font-weight:600;color:var(--cinza-medio)">(sem cadastro)</span>'}</div>
+      <div class="espera-sub">Aguardando ${espera}${e.preferencia ? ` · prefere: ${esc(e.preferencia)}` : ''}${e.observacao ? ` · ${esc(e.observacao)}` : ''}</div>
+      ${tags ? `<div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap">${tags}</div>` : ''}
+      <div class="espera-acoes">
+        <button class="btn btn-primario" style="padding:6px 13px;font-size:12px" onclick="agendarDaEspera('${e.id}')">Agendar</button>
+        ${wpp ? `<button class="btn btn-secundario" style="padding:6px 13px;font-size:12px" onclick="window.open('https://wa.me/55${wpp}','_blank')">WhatsApp</button>` : ''}
+        <button class="btn btn-secundario" style="padding:6px 13px;font-size:12px;color:var(--vermelho)" onclick="removerEspera('${e.id}')">Remover</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function atualizarEsperaBadge(n) {
+  const b = document.getElementById('espera-count-badge');
+  if (!b || !clinicaId) return;
+  if (n === undefined) {
+    db.from('lista_espera').select('id', { count: 'exact', head: true }).eq('clinica_id', clinicaId).eq('status', 'aguardando')
+      .then(({ count }) => { b.textContent = count || 0; b.style.display = count ? 'inline-flex' : 'none'; }, () => {});
+    return;
+  }
+  b.textContent = n;
+  b.style.display = n ? 'inline-flex' : 'none';
+}
+
+function buscarPacienteEspera(termo) {
+  const el = document.getElementById('espera-resultados');
+  const t = (termo || '').toLowerCase().trim();
+  const tDig = t.replace(/\D/g, '');
+  esperaPacienteId = null;
+  if (!t) { el.innerHTML = ''; return; }
+  const matches = todosOsPacientes.filter(p => {
+    if ((p.nome || '').toLowerCase().includes(t)) return true;
+    if (tDig && (p.cpf || '').replace(/\D/g, '').includes(tDig)) return true;
+    if (tDig && (p.whatsapp || '').replace(/\D/g, '').includes(tDig)) return true;
+    return false;
+  }).slice(0, 6);
+  el.innerHTML = matches.map(p => `
+    <div class="pac-res-item" onclick="setPacienteEspera('${p.id}')">
+      <div class="pac-res-nome">${esc(p.nome)}</div>
+      <div class="pac-res-sub">${p.whatsapp ? esc(p.whatsapp) : 'sem WhatsApp'}</div>
+    </div>`).join('');
+}
+
+function setPacienteEspera(id) {
+  const p = todosOsPacientes.find(x => x.id === id);
+  if (!p) return;
+  esperaPacienteId = id;
+  document.getElementById('espera-busca').value = p.nome;
+  document.getElementById('espera-nome').value = p.nome || '';
+  document.getElementById('espera-wpp').value = p.whatsapp || '';
+  document.getElementById('espera-resultados').innerHTML = '';
+}
+
+async function salvarEspera() {
+  if (!clinicaId) return;
+  const nome = document.getElementById('espera-nome').value.trim();
+  const wpp = document.getElementById('espera-wpp').value.trim();
+  if (!esperaPacienteId && !nome) { toast('Selecione um paciente ou digite o nome'); return; }
+  const payload = {
+    clinica_id: clinicaId,
+    paciente_id: esperaPacienteId,
+    nome: nome || null,
+    whatsapp: wpp || null,
+    preferencia: document.getElementById('espera-pref').value.trim() || null,
+    observacao: document.getElementById('espera-obs').value.trim() || null,
+    modalidade_id: (document.getElementById('espera-modalidade') && document.getElementById('espera-mod-wrap').style.display !== 'none' && document.getElementById('espera-modalidade').value) || null,
+    profissional_id: (document.getElementById('espera-profissional') && document.getElementById('espera-prof-wrap').style.display !== 'none' && document.getElementById('espera-profissional').value) || null,
+  };
+  const { error } = await db.from('lista_espera').insert(payload);
+  if (error) { toast('Erro ao adicionar à lista. Tente novamente.'); return; }
+  toast('Adicionado à lista de espera ✓');
+  ['espera-busca','espera-nome','espera-wpp','espera-pref','espera-obs'].forEach(i => { const e = document.getElementById(i); if (e) e.value = ''; });
+  esperaPacienteId = null;
+  carregarEspera();
+}
+
+function removerEspera(id) {
+  abrirModalConfirm('Remover da lista de espera?', 'A pessoa sai da lista (nada mais é apagado).', 'Remover', async () => {
+    const { error } = await db.from('lista_espera').update({ status: 'removido' }).eq('id', id);
+    if (error) { toast('Erro ao remover'); return; }
+    toast('Removido da lista ✓');
+    carregarEspera();
+  });
+}
+
+function agendarDaEspera(id) {
+  const e = esperaLista.find(x => x.id === id);
+  if (!e) return;
+  fecharModalEspera();
+  if (!e.paciente_id) {
+    // ainda sem cadastro: cria o paciente primeiro (a pessoa continua na lista)
+    toast('Cadastre o paciente para agendar — a pessoa continua na lista de espera');
+    abrirModalPaciente(e.nome || '');
+    return;
+  }
+  abrirModal();
+  setPacienteConsulta(e.paciente_id);
+  const nm = document.getElementById('novo-modalidade'); if (nm && e.modalidade_id) nm.value = e.modalidade_id;
+  const np = document.getElementById('novo-profissional'); if (np && e.profissional_id) np.value = e.profissional_id;
+  agendandoEsperaId = id; // ao salvar a consulta, a pessoa sai da lista automaticamente
 }
 
 function abrirWppFicha() {
@@ -5602,11 +6279,13 @@ async function salvarConsulta() {
   // Offset fixo de São Paulo (-03:00) para evitar conversão errada de fuso
   const dataHoraISO = `${data}T${hora}:00-03:00`;
   const pacoteIdUsado = agendarPacoteId;
+  const esperaIdUsado = agendandoEsperaId; // veio da lista de espera? (fecharModal limpa o global)
   const payloadConsulta = {
     clinica_id: clinicaId, paciente_id: pacienteId, data_hora: dataHoraISO,
     queixa: queixa || null, status: 'agendado', origem: 'manual',
     valor, pagamento_status: usandoPacote ? 'pacote' : 'pendente',
-    pacote_id: usandoPacote ? pacoteIdUsado : null
+    pacote_id: usandoPacote ? pacoteIdUsado : null,
+    teleconsulta: !!document.getElementById('novo-teleconsulta')?.checked
   };
   if (salasDisponivel) payloadConsulta.sala_id = document.getElementById('novo-sala')?.value || null;
   if (modalidadesDisponivel) payloadConsulta.modalidade_id = document.getElementById('novo-modalidade')?.value || null;
@@ -5618,6 +6297,10 @@ async function salvarConsulta() {
     document.getElementById('novo-valor').value = '';
     await db.from('alertas').insert({clinica_id:clinicaId, tipo:'novo_agendamento', mensagem:`Nova consulta agendada: ${nome}`});
     if (pacoteIdUsado) await verificarPacoteAcabando(pacoteIdUsado, nome);
+    if (esperaIdUsado) { // saiu da lista de espera
+      db.from('lista_espera').update({ status: 'agendado' }).eq('id', esperaIdUsado)
+        .then(() => atualizarEsperaBadge(), () => {});
+    }
     recarregarSecaoAtual(); carregarAlertas(); carregarPacientes();
   } else toast('Erro ao agendar. Tente novamente.');
 }
@@ -5667,7 +6350,7 @@ function irPara(sec) {
   document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('ativo'));
   const mnav = document.getElementById(`mnav-${sec}`);
   if (mnav) mnav.classList.add('ativo');
-  if (sec === 'agendamentos') renderGradeSemanal();
+  if (sec === 'agendamentos') { renderGradeSemanal(); atualizarEsperaBadge(); }
   if (sec === 'relatorio') carregarRelatorio();
   if (sec === 'perfil') carregarPerfil();
   if (sec === 'financeiro') refreshFinanceiro();
@@ -5750,7 +6433,7 @@ async function renderGradeSemanal() {
         html += consultasDia.map(c => `<div class="lista-agend-item" onclick="abrirFicha('${c.paciente_id}')">
             <span class="lista-agend-hora">${horaSP(c.data_hora)}</span>
             <div class="lista-agend-info">
-              <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}</div>
+              <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}</div>
               <div class="lista-agend-queixa">${esc(c.queixa||'—')}</div>
               ${c.sala_id ? `<div class="sala-tag" style="margin-top:5px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : ''}
               ${tagProfissional(c.profissional_id)?`<div style="margin-top:5px">${tagProfissional(c.profissional_id)}</div>`:''}
@@ -5826,7 +6509,7 @@ async function renderGradeSemanal() {
         const tituloSala = c.sala_id ? ` — ${esc(nomeSala(c.sala_id))}` : '';
         const tituloProf = prof ? ` — ${esc(prof.nome)}` : '';
         const dotProf = prof ? `<span class="mod-dot" style="background:${prof.cor};margin-right:3px"></span>` : '';
-        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${dotProf}${esc(nome)}</div>`;
+        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf}${c.teleconsulta?' · 📹 teleconsulta':''} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${dotProf}${c.teleconsulta?'📹 ':''}${esc(nome)}</div>`;
       }
       html += '</div>';
     }
@@ -5861,11 +6544,14 @@ function abrirModal() {
   const novoProf = document.getElementById('novo-profissional');
   if (novoProf) novoProf.innerHTML = optsProfissional('');
   document.getElementById('novo-profissional-wrap').style.display = (profissionaisDisponivel && profissionaisAtivos().length) ? 'block' : 'none';
+  const novoTele = document.getElementById('novo-teleconsulta');
+  if (novoTele) novoTele.checked = false;
   document.getElementById('modal').classList.add('aberto');
 }
 function fecharModal() {
   document.getElementById('modal').classList.remove('aberto');
   agendarPacoteId = null;
+  agendandoEsperaId = null;
   document.getElementById('novo-pacote-hint').style.display = 'none';
 }
 function fecharModalClick(e) { if(e.target===document.getElementById('modal')) fecharModal(); }

@@ -121,6 +121,32 @@ textarea#evo-texto:focus { border-color: var(--verde-medio); background: white; 
 .hist-item { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 7px 0; border-bottom: 1px dashed var(--cinza-claro); }
 .hist-item:last-child { border-bottom: none; }
 
+/* Fase 3: teleconsulta, avaliações e exames */
+.tele-badge { display: inline-flex; align-items: center; gap: 3px; background: #EAF2FF; color: #2563EB; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+.aval-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.aval-chip { border: 1.5px solid var(--cinza-claro); background: white; border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 600; color: var(--cinza-medio); transition: all .15s; }
+.aval-chip:hover, .aval-chip.ativa { border-color: var(--verde-medio); color: var(--verde); background: var(--verde-suave); }
+.aval-form input, .aval-form select, .aval-form textarea { width: 100%; padding: 9px 11px; border: 1.5px solid var(--cinza-claro); border-radius: var(--raio-p); font-size: 13px; background: var(--creme); outline: none; margin-bottom: 8px; }
+.aval-form input:focus, .aval-form select:focus, .aval-form textarea:focus { border-color: var(--verde-medio); background: white; }
+.aval-form label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--cinza-medio); margin-bottom: 4px; }
+.aval-form textarea { min-height: 54px; resize: vertical; }
+.gonio-row2 { display: grid; grid-template-columns: 1.2fr 1fr 56px 48px 48px 22px; gap: 5px; margin-bottom: 6px; align-items: center; }
+.gonio-row2 input, .gonio-row2 select { margin-bottom: 0; padding: 7px 7px; font-size: 12px; }
+.gonio-del { background: none; border: none; color: var(--vermelho); cursor: pointer; font-size: 15px; padding: 0; line-height: 1; }
+.aval-item { border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 11px 13px; margin-bottom: 9px; }
+.aval-item-topo { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; flex-wrap: wrap; }
+.aval-item-tipo { font-size: 12.5px; font-weight: 700; color: var(--verde-escuro); }
+.aval-item-data { font-size: 11px; color: var(--cinza-medio); margin-left: auto; white-space: nowrap; }
+.aval-corpo { font-size: 12.5px; line-height: 1.55; }
+.aval-eva-num { font-size: 22px; font-weight: 800; line-height: 1; }
+.aval-tabela { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 4px; }
+.aval-tabela th { text-align: left; color: var(--cinza-medio); font-weight: 700; padding: 3px 5px; border-bottom: 1px solid var(--cinza-claro); font-size: 10px; text-transform: uppercase; }
+.aval-tabela td { padding: 4px 5px; border-bottom: 1px solid var(--cinza-claro); }
+.range-eva { width: 100%; accent-color: var(--verde); cursor: pointer; margin-bottom: 4px; }
+.exame-row { display: flex; align-items: center; gap: 9px; border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 9px 11px; margin-bottom: 7px; }
+.exame-nome { font-size: 12.5px; font-weight: 600; word-break: break-all; flex: 1; }
+.btn-mini-verde { border: 1.5px solid var(--verde-claro); background: var(--verde-suave); color: var(--verde); border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 700; }
+
 /* Toast */
 #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--cinza-escuro); color: white; font-size: 13.5px; font-weight: 500; padding: 12px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 999; box-shadow: var(--sombra-alta); max-width: 92vw; text-align: center; }
 #toast.visivel { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -215,8 +241,35 @@ textarea#evo-texto:focus { border-color: var(--verde-medio); background: white; 
       <h3>Evoluções</h3>
       <div id="ficha-evolucoes"></div>
     </div>
+    <div class="ficha-bloco">
+      <h3>Avaliações (prontuário estruturado)</h3>
+      <div class="aval-chips">
+        <button class="aval-chip" data-tipo="eva" onclick="toggleAvalForm('eva')">📉 EVA — Dor</button>
+        <button class="aval-chip" data-tipo="goniometria" onclick="toggleAvalForm('goniometria')">📐 Goniometria</button>
+        <button class="aval-chip" data-tipo="postural" onclick="toggleAvalForm('postural')">🧍 Postural</button>
+        <button class="aval-chip" data-tipo="funcional" onclick="toggleAvalForm('funcional')">🏃 Teste funcional</button>
+      </div>
+      <div class="aval-form" id="aval-form-area" style="display:none"></div>
+      <div id="aval-grafico" style="display:none;margin:6px 0 10px"></div>
+      <div id="ficha-avaliacoes"></div>
+    </div>
+    <div class="ficha-bloco">
+      <h3>Exames anexados</h3>
+      <div style="font-size:11.5px;color:var(--cinza-medio);margin-bottom:8px">Só leitura — quem anexa/remove é a recepção ou o dono da clínica.</div>
+      <div id="ficha-exames"></div>
+    </div>
   </div>
 </div>
+<datalist id="lista-articulacoes">
+  <option value="Ombro"></option><option value="Cotovelo"></option><option value="Punho"></option>
+  <option value="Quadril"></option><option value="Joelho"></option><option value="Tornozelo"></option>
+  <option value="Coluna cervical"></option><option value="Coluna lombar"></option>
+</datalist>
+<datalist id="lista-movimentos">
+  <option value="Flexão"></option><option value="Extensão"></option><option value="Abdução"></option>
+  <option value="Adução"></option><option value="Rotação interna"></option><option value="Rotação externa"></option>
+  <option value="Inclinação"></option><option value="Dorsiflexão"></option><option value="Plantiflexão"></option>
+</datalist>
 
 <div id="toast"></div>
 
@@ -342,7 +395,7 @@ function irAba(aba) {
 async function carregarHoje() {
   const hojeStr = dataLocalISO(new Date());
   const { data } = await db.from('consultas')
-    .select('id, data_hora, status, queixa, paciente_id, pacientes(id, nome, whatsapp, total_consultas), modalidades(nome, cor), salas(nome)')
+    .select('id, data_hora, status, queixa, teleconsulta, paciente_id, pacientes(id, nome, whatsapp, total_consultas), modalidades(nome, cor), salas(nome)')
     .eq('profissional_id', meuProfId)
     .gte('data_hora', diaInicioISO(hojeStr)).lte('data_hora', diaFimISO(hojeStr))
     .order('data_hora');
@@ -355,23 +408,31 @@ function htmlConsulta(c, comAcoes) {
   const mod = c.modalidades ? `<span class="tag-mod"><span class="dot" style="background:${esc(c.modalidades.cor || '#17A076')}"></span>${esc(c.modalidades.nome)}</span>` : '';
   const sala = c.salas && c.salas.nome ? `<span>· ${esc(c.salas.nome)}</span>` : '';
   const nome = c.pacientes ? c.pacientes.nome : 'Paciente';
-  const acoes = comAcoes && st !== 'atendido' && st !== 'cancelado' ? `
+  const teleBtn = c.teleconsulta && st !== 'cancelado'
+    ? `<button class="btn-mini-verde" onclick="entrarTeleconsulta('${c.id}')">📹 Entrar na sala</button>` : '';
+  const acoes = (comAcoes && st !== 'atendido' && st !== 'cancelado') ? `
     <div class="consulta-acoes">
       ${st !== 'confirmado' ? `<button class="btn-mini" onclick="mudarStatus('${c.id}','confirmado')">Confirmar</button>` : ''}
       ${st !== 'aguardando' ? `<button class="btn-mini" onclick="mudarStatus('${c.id}','aguardando')">Chegou</button>` : ''}
       <button class="btn-mini destaque" onclick="mudarStatus('${c.id}','atendido')">Atendido ✓</button>
       <button class="btn-mini perigo" onclick="cancelarConsulta('${c.id}')">Cancelar</button>
-    </div>` : '';
+      ${teleBtn}
+    </div>` : (teleBtn ? `<div class="consulta-acoes">${teleBtn}</div>` : '');
   const queixa = c.queixa ? `<div class="consulta-sub" style="margin-top:3px">Queixa: ${esc(c.queixa)}</div>` : '';
   return `<div class="consulta">
     <div class="consulta-hora">${horaSP(c.data_hora)}</div>
     <div class="consulta-info">
       <div class="consulta-nome" onclick="abrirFicha('${c.paciente_id}')">${esc(nome)}</div>
-      <div class="consulta-sub">${mod}${sala}<span class="status-pill st-${esc(st)}">${STATUS_LABEL[st] || esc(st)}</span></div>
+      <div class="consulta-sub">${mod}${sala}<span class="status-pill st-${esc(st)}">${STATUS_LABEL[st] || esc(st)}</span>${c.teleconsulta ? '<span class="tele-badge">📹 vídeo</span>' : ''}</div>
       ${queixa}
       ${acoes}
     </div>
   </div>`;
+}
+
+// Fase 3: teleconsulta — sala Jitsi derivada do id da consulta (mesma regra do painel).
+function entrarTeleconsulta(consultaId) {
+  window.open('https://meet.jit.si/NastaDesk-' + String(consultaId).replace(/-/g, '').slice(0, 20), '_blank');
 }
 
 function renderHoje() {
@@ -388,7 +449,7 @@ async function carregarProximos() {
   const fim = new Date(hoje); fim.setDate(fim.getDate() + 14);
   const amanha = new Date(hoje); amanha.setDate(amanha.getDate() + 1);
   const { data } = await db.from('consultas')
-    .select('id, data_hora, status, paciente_id, pacientes(id, nome), modalidades(nome, cor), salas(nome)')
+    .select('id, data_hora, status, teleconsulta, paciente_id, pacientes(id, nome), modalidades(nome, cor), salas(nome)')
     .eq('profissional_id', meuProfId)
     .gte('data_hora', diaInicioISO(dataLocalISO(amanha)))
     .lte('data_hora', diaFimISO(dataLocalISO(fim)))
@@ -483,6 +544,9 @@ async function abrirFicha(pacienteId) {
   logAcesso(p.id, 'visualizou_ficha', 'portal do profissional');
   carregarHistorico(p.id);
   carregarEvolucoes(p.id);
+  fecharAvalForm();
+  carregarAvaliacoes(p.id);
+  carregarExames(p.id);
 }
 
 function fecharFicha() {
@@ -532,6 +596,239 @@ async function salvarEvolucao() {
   toast('Evolução salva ✓');
   logAcesso(pacienteAtual.id, 'registrou_evolucao', 'portal do profissional');
   carregarEvolucoes(pacienteAtual.id);
+}
+
+// ===== Fase 3 · Avaliações (prontuário estruturado) =====
+// O RLS permite ao profissional LER e REGISTRAR avaliações só dos pacientes
+// dele — sem editar nem apagar (histórico clínico é imutável pelo portal).
+const AVAL_TIPOS = {
+  eva:         { rotulo: 'EVA — Dor',          emoji: '📉' },
+  goniometria: { rotulo: 'Goniometria',        emoji: '📐' },
+  postural:    { rotulo: 'Avaliação postural', emoji: '🧍' },
+  funcional:   { rotulo: 'Teste funcional',    emoji: '🏃' },
+};
+let avalTipoAberto = null;
+
+function fecharAvalForm() {
+  avalTipoAberto = null;
+  const area = document.getElementById('aval-form-area');
+  if (area) { area.style.display = 'none'; area.innerHTML = ''; }
+  document.querySelectorAll('.aval-chip').forEach(b => b.classList.remove('ativa'));
+}
+
+function toggleAvalForm(tipo) {
+  if (avalTipoAberto === tipo) { fecharAvalForm(); return; }
+  avalTipoAberto = tipo;
+  document.querySelectorAll('.aval-chip').forEach(b => b.classList.toggle('ativa', b.dataset.tipo === tipo));
+  const area = document.getElementById('aval-form-area');
+  let html = '';
+  if (tipo === 'eva') {
+    html = `
+      <label>Intensidade da dor agora: <span id="av2-eva-num" style="font-size:14px">5</span>/10</label>
+      <input type="range" class="range-eva" id="av2-eva-valor" min="0" max="10" step="1" value="5"
+        oninput="document.getElementById('av2-eva-num').textContent=this.value;document.getElementById('av2-eva-num').style.color=corEva(parseInt(this.value,10))">
+      <label>Local da dor</label>
+      <input type="text" id="av2-eva-local" placeholder="Ex: lombar, joelho direito">
+      <label>Observações (opcional)</label>
+      <textarea id="av2-eva-obs"></textarea>`;
+  } else if (tipo === 'goniometria') {
+    html = `
+      <div id="av2-gonio-rows"></div>
+      <button type="button" class="btn-mini" style="width:100%;margin-bottom:8px" onclick="addGonioRowPortal()">+ Adicionar medida</button>
+      <label>Observações (opcional)</label>
+      <textarea id="av2-gonio-obs"></textarea>`;
+  } else if (tipo === 'postural') {
+    html = `
+      <label>Vista anterior</label><textarea id="av2-post-anterior"></textarea>
+      <label>Vista lateral</label><textarea id="av2-post-lateral"></textarea>
+      <label>Vista posterior</label><textarea id="av2-post-posterior"></textarea>
+      <label>Observações (opcional)</label><textarea id="av2-post-obs"></textarea>`;
+  } else if (tipo === 'funcional') {
+    html = `
+      <label>Teste</label>
+      <select id="av2-func-teste" onchange="document.getElementById('av2-func-outro').style.display = this.value==='outro' ? 'block' : 'none'">
+        <option value="TUG (Timed Up and Go)">TUG (Timed Up and Go)</option>
+        <option value="Sentar e levantar (30s)">Sentar e levantar (30s)</option>
+        <option value="Caminhada de 6 minutos">Caminhada de 6 minutos</option>
+        <option value="Alcance funcional">Alcance funcional</option>
+        <option value="Escala de equilíbrio de Berg">Escala de equilíbrio de Berg</option>
+        <option value="Dinamometria de preensão">Dinamometria de preensão</option>
+        <option value="outro">Outro…</option>
+      </select>
+      <input type="text" id="av2-func-outro" placeholder="Nome do teste" style="display:none">
+      <label>Resultado</label><input type="text" id="av2-func-resultado" placeholder="Ex: 12,5">
+      <label>Unidade</label>
+      <select id="av2-func-unidade">
+        <option value="s">segundos</option><option value="repetições">repetições</option>
+        <option value="m">metros</option><option value="cm">centímetros</option>
+        <option value="pontos">pontos</option><option value="kg">kg</option><option value="">—</option>
+      </select>
+      <label>Observações (opcional)</label><textarea id="av2-func-obs"></textarea>`;
+  }
+  area.innerHTML = html + `<button class="btn btn-primario" id="av2-salvar" style="width:100%;margin-top:4px" onclick="salvarAvaliacao()">Salvar avaliação</button>`;
+  area.style.display = 'block';
+  if (tipo === 'goniometria') addGonioRowPortal();
+}
+
+function addGonioRowPortal() {
+  const box = document.getElementById('av2-gonio-rows');
+  if (!box) return;
+  const row = document.createElement('div');
+  row.className = 'gonio-row2';
+  row.innerHTML = `
+    <input class="g-art" list="lista-articulacoes" placeholder="Joelho">
+    <input class="g-mov" list="lista-movimentos" placeholder="Flexão">
+    <select class="g-lado"><option value="D">D</option><option value="E">E</option><option value="D+E">D+E</option><option value="">—</option></select>
+    <input class="g-ativa" type="number" min="0" max="360" placeholder="°" inputmode="numeric">
+    <input class="g-passiva" type="number" min="0" max="360" placeholder="°" inputmode="numeric">
+    <button type="button" class="gonio-del" title="Remover" onclick="this.parentElement.remove()">×</button>`;
+  box.appendChild(row);
+}
+
+function corEva(v) {
+  if (v <= 3) return '#2E7D32';
+  if (v <= 6) return '#B45309';
+  return 'var(--vermelho)';
+}
+
+async function salvarAvaliacao() {
+  if (!pacienteAtual || !clinicaId || !avalTipoAberto) return;
+  const tipo = avalTipoAberto;
+  const dados = {};
+  if (tipo === 'eva') {
+    const v = parseInt(document.getElementById('av2-eva-valor').value, 10);
+    if (isNaN(v) || v < 0 || v > 10) { toast('Escolha a intensidade (0 a 10)'); return; }
+    dados.valor = v;
+    dados.local = document.getElementById('av2-eva-local').value.trim() || null;
+    dados.obs = document.getElementById('av2-eva-obs').value.trim() || null;
+  } else if (tipo === 'goniometria') {
+    dados.medidas = [...document.querySelectorAll('#av2-gonio-rows .gonio-row2')].map(r => {
+      const at = parseInt(r.querySelector('.g-ativa').value, 10);
+      const pa = parseInt(r.querySelector('.g-passiva').value, 10);
+      return {
+        articulacao: r.querySelector('.g-art').value.trim(),
+        movimento: r.querySelector('.g-mov').value.trim(),
+        lado: r.querySelector('.g-lado').value,
+        ativa: isNaN(at) ? null : at,
+        passiva: isNaN(pa) ? null : pa,
+      };
+    }).filter(m => m.articulacao && (m.movimento || m.ativa !== null || m.passiva !== null));
+    if (!dados.medidas.length) { toast('Adicione pelo menos uma medida'); return; }
+    dados.obs = document.getElementById('av2-gonio-obs').value.trim() || null;
+  } else if (tipo === 'postural') {
+    dados.anterior = document.getElementById('av2-post-anterior').value.trim() || null;
+    dados.lateral = document.getElementById('av2-post-lateral').value.trim() || null;
+    dados.posterior = document.getElementById('av2-post-posterior').value.trim() || null;
+    dados.obs = document.getElementById('av2-post-obs').value.trim() || null;
+    if (!dados.anterior && !dados.lateral && !dados.posterior && !dados.obs) { toast('Preencha pelo menos uma das vistas'); return; }
+  } else if (tipo === 'funcional') {
+    const sel = document.getElementById('av2-func-teste').value;
+    dados.teste = sel === 'outro' ? document.getElementById('av2-func-outro').value.trim() : sel;
+    dados.resultado = document.getElementById('av2-func-resultado').value.trim();
+    dados.unidade = document.getElementById('av2-func-unidade').value;
+    dados.obs = document.getElementById('av2-func-obs').value.trim() || null;
+    if (!dados.teste) { toast('Informe o nome do teste'); return; }
+    if (!dados.resultado) { toast('Informe o resultado'); return; }
+  }
+  const btn = document.getElementById('av2-salvar');
+  if (btn) btn.disabled = true;
+  const { error } = await db.from('avaliacoes').insert({
+    clinica_id: clinicaId, paciente_id: pacienteAtual.id,
+    profissional_id: meuProfId, tipo, dados,
+  });
+  if (btn) btn.disabled = false;
+  if (error) { toast('Não foi possível salvar a avaliação'); return; }
+  toast('Avaliação registrada ✓');
+  logAcesso(pacienteAtual.id, 'registrou_avaliacao', 'portal do profissional · ' + tipo);
+  fecharAvalForm();
+  carregarAvaliacoes(pacienteAtual.id);
+}
+
+async function carregarAvaliacoes(pacienteId) {
+  const el = document.getElementById('ficha-avaliacoes');
+  if (!el) return;
+  const { data, error } = await db.from('avaliacoes').select('*')
+    .eq('paciente_id', pacienteId).order('criado_em', { ascending: false });
+  if (error) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Não foi possível carregar.</div>'; return; }
+  const lista = data || [];
+  // gráfico da dor (EVA) a partir de 2 medições
+  const g = document.getElementById('aval-grafico');
+  const evas = lista.filter(a => a.tipo === 'eva' && a.dados && a.dados.valor != null).slice().reverse().slice(-10);
+  if (g) {
+    if (evas.length >= 2) { g.style.display = 'block'; g.innerHTML = svgGraficoEVA(evas); }
+    else g.style.display = 'none';
+  }
+  if (!lista.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhuma avaliação ainda. Registre a primeira com os botões acima.</div>'; return; }
+  el.innerHTML = lista.map(a => {
+    const t = AVAL_TIPOS[a.tipo] || { rotulo: a.tipo, emoji: '📋' };
+    const dt = new Date(a.criado_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric', timeZone: TZ });
+    const d = a.dados || {};
+    let corpo = '';
+    if (a.tipo === 'eva') {
+      corpo = `<span class="aval-eva-num" style="color:${corEva(d.valor)}">${d.valor}</span><span style="color:var(--cinza-medio);font-size:12px">/10</span>` +
+        `${d.local ? ` · <strong>${esc(d.local)}</strong>` : ''}${d.obs ? `<div style="margin-top:3px">${esc(d.obs)}</div>` : ''}`;
+    } else if (a.tipo === 'goniometria') {
+      const linhas = (d.medidas || []).map(m =>
+        `<tr><td>${esc(m.articulacao)}${m.lado ? ` (${esc(m.lado)})` : ''}</td><td>${esc(m.movimento || '—')}</td><td>${m.ativa != null ? m.ativa + '°' : '—'}</td><td>${m.passiva != null ? m.passiva + '°' : '—'}</td></tr>`).join('');
+      corpo = `<table class="aval-tabela"><tr><th>Articulação</th><th>Movimento</th><th>Ativa</th><th>Passiva</th></tr>${linhas}</table>` +
+        (d.obs ? `<div style="margin-top:5px">${esc(d.obs)}</div>` : '');
+    } else if (a.tipo === 'postural') {
+      corpo = [
+        d.anterior ? `<div><strong>Anterior:</strong> ${esc(d.anterior)}</div>` : '',
+        d.lateral ? `<div><strong>Lateral:</strong> ${esc(d.lateral)}</div>` : '',
+        d.posterior ? `<div><strong>Posterior:</strong> ${esc(d.posterior)}</div>` : '',
+        d.obs ? `<div style="margin-top:3px">${esc(d.obs)}</div>` : '',
+      ].join('');
+    } else if (a.tipo === 'funcional') {
+      corpo = `<strong>${esc(d.teste)}</strong>: ${esc(d.resultado)}${d.unidade ? ' ' + esc(d.unidade) : ''}` +
+        (d.obs ? `<div style="margin-top:3px">${esc(d.obs)}</div>` : '');
+    }
+    return `<div class="aval-item">
+      <div class="aval-item-topo"><span>${t.emoji}</span><span class="aval-item-tipo">${esc(t.rotulo)}</span><span class="aval-item-data">${dt}</span></div>
+      <div class="aval-corpo">${corpo}</div>
+    </div>`;
+  }).join('');
+}
+
+function svgGraficoEVA(evas) {
+  const W = 320, H = 90, padX = 16, padY = 16;
+  const n = evas.length;
+  const x = i => n === 1 ? W / 2 : padX + i * (W - 2 * padX) / (n - 1);
+  const y = v => H - padY - (v / 10) * (H - 2 * padY);
+  const pts = evas.map((a, i) => ({ cx: x(i), cy: y(a.dados.valor), v: a.dados.valor, d: new Date(a.criado_em) }));
+  const linha = pts.map(p => `${p.cx.toFixed(1)},${p.cy.toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Evolução da dor EVA">
+    <polyline points="${linha}" fill="none" stroke="var(--verde)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.5"/>
+    ${pts.map(p => `<circle cx="${p.cx.toFixed(1)}" cy="${p.cy.toFixed(1)}" r="4" fill="${corEva(p.v)}"/>
+      <text x="${p.cx.toFixed(1)}" y="${(p.cy - 8).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${corEva(p.v)}">${p.v}</text>
+      <text x="${p.cx.toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="8.5" fill="#8A9B90">${String(p.d.getDate()).padStart(2,'0')}/${String(p.d.getMonth()+1).padStart(2,'0')}</text>`).join('')}
+  </svg>`;
+}
+
+// ===== Fase 3 · Exames anexados (só leitura — RLS: SELECT dos pacientes dele) =====
+async function carregarExames(pacienteId) {
+  const el = document.getElementById('ficha-exames');
+  if (!el || !clinicaId) return;
+  const { data, error } = await db.storage.from('exames').list(`${clinicaId}/${pacienteId}`, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+  if (error) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Não foi possível carregar os exames.</div>'; return; }
+  const arquivos = (data || []).filter(f => f.name && !f.name.startsWith('.'));
+  if (!arquivos.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhum exame anexado.</div>'; return; }
+  el.innerHTML = arquivos.map(f => {
+    const dt = f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR') : '';
+    const path = `${clinicaId}/${pacienteId}/${f.name}`;
+    return `<div class="exame-row">
+      <span style="font-size:17px">${/\.pdf$/i.test(f.name) ? '📄' : '🖼️'}</span>
+      <div class="exame-nome">${esc(f.name.replace(/^\d+_/, ''))}<div style="font-size:10.5px;font-weight:400;color:var(--cinza-medio)">${dt}</div></div>
+      <button class="btn-mini-verde" onclick="abrirExame('${path}')">Abrir</button>
+    </div>`;
+  }).join('');
+}
+
+async function abrirExame(path) {
+  const { data, error } = await db.storage.from('exames').createSignedUrl(path, 300);
+  if (error || !data || !data.signedUrl) { toast('Não foi possível abrir o exame'); return; }
+  window.open(data.signedUrl, '_blank');
+  if (pacienteAtual) logAcesso(pacienteAtual.id, 'baixou_exame', 'portal do profissional');
 }
 
 // Sessão expirada / logout em outra aba → volta para o login.
