@@ -158,6 +158,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .exame-sub { font-size: 11px; color: var(--cinza-medio); }
 .tele-badge { display: inline-flex; align-items: center; gap: 3px; background: #EAF2FF; color: #2563EB; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
 .fixo-badge { display: inline-flex; align-items: center; gap: 3px; background: #E9F7EF; color: #0F7A4F; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.exp-badge { display: inline-flex; align-items: center; gap: 3px; background: #FFF4E0; color: #B4690E; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
 .dia-chip { border: 1.5px solid var(--cinza-claro); background: white; color: var(--cinza-medio); font-size: 12.5px; font-weight: 700; padding: 6px 11px; border-radius: 20px; cursor: pointer; transition: all .12s; }
 .dia-chip.ativo { border-color: var(--verde); background: var(--verde); color: white; }
 .espera-item { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 11px 13px; margin-bottom: 8px; }
@@ -2069,6 +2070,16 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <label>Paciente</label>
       <input type="text" id="novo-busca-paciente" class="busca-input" placeholder="Buscar por nome, CPF ou WhatsApp..." oninput="buscarPacienteConsulta(this.value)" autocomplete="off">
       <div id="novo-pac-resultados" class="pac-resultados"></div>
+      <button type="button" id="novo-exp-link" onclick="ativarModoExperimental()" style="background:none;border:none;padding:6px 0 0;font-size:12.5px;font-weight:700;color:#B4690E;cursor:pointer;text-align:left">⭐ É aula experimental? Agende sem cadastro completo</button>
+    </div>
+    <div class="config-campo" id="novo-exp-wrap" style="display:none">
+      <label>⭐ Aula experimental — cadastro rápido</label>
+      <div style="padding:11px 13px;background:#FFF9EF;border:1px solid #F3DFC0;border-radius:10px">
+        <input type="text" id="novo-exp-nome" class="busca-input" maxlength="120" placeholder="Nome de quem vai experimentar" autocomplete="off">
+        <input type="text" id="novo-exp-wpp" class="busca-input" maxlength="20" placeholder="WhatsApp (opcional)" autocomplete="off" style="margin-top:8px">
+        <div style="font-size:11.5px;color:var(--cinza-medio);margin-top:8px;line-height:1.5">Sem burocracia: criamos um cadastro simples só com nome e WhatsApp, e a consulta entra na agenda com a etiqueta <b style="color:#B4690E">⭐ experimental</b>. Se a pessoa fechar, é só completar a ficha depois. Deixando o valor em branco, a aula entra <b>isenta (R$ 0)</b> — preencha o valor só se for cobrada.</div>
+        <button type="button" onclick="desativarModoExperimental()" style="background:none;border:none;padding:8px 0 0;font-size:12px;font-weight:700;color:var(--verde);cursor:pointer">← Voltar para buscar paciente cadastrado</button>
+      </div>
     </div>
     <div class="config-campo" id="novo-pac-selecionado-wrap" style="display:none">
       <label>Paciente</label>
@@ -2460,6 +2471,17 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="modal-grid">
       <div class="config-campo"><label>Nova data</label><input type="date" id="rem-data"></div>
       <div class="config-campo"><label>Novo horário</label><input type="time" id="rem-hora"></div>
+    </div>
+    <div id="rem-serie-wrap" style="display:none;margin:2px 0 8px;padding:11px 13px;background:#F5F7FA;border-radius:10px">
+      <div style="font-size:12.5px;font-weight:700;color:var(--cinza-escuro);margin-bottom:8px">🔁 Esta consulta faz parte de um horário fixo. Remarcar o quê?</div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--cinza-escuro);cursor:pointer;margin-bottom:7px">
+        <input type="radio" name="rem-escopo" value="uma" checked style="margin-top:2px;accent-color:var(--verde)">
+        <span><b>Só esta consulta</b><br><span style="font-size:11.5px;color:var(--cinza-medio)">As outras semanas continuam no horário de sempre.</span></span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--cinza-escuro);cursor:pointer">
+        <input type="radio" name="rem-escopo" value="futuras" style="margin-top:2px;accent-color:var(--verde)">
+        <span><b>Esta e as próximas da série</b> — corrigir o horário fixo<br><span style="font-size:11.5px;color:var(--cinza-medio)">Errou o horário ao criar? Todas as consultas futuras se movem juntas para o novo dia/horário. As que já passaram não mudam.</span></span>
+      </label>
     </div>
     <div class="modal-acoes">
       <button class="btn btn-secundario" onclick="fecharModalRemarcar()">Cancelar</button>
@@ -3527,6 +3549,9 @@ function tagNovoRec(c) {
 function tagFixo(c) {
   return c && c.serie_id ? '<span class="fixo-badge" title="Horário fixo (agendamento recorrente)">🔁 fixo</span>' : '';
 }
+function tagExp(c) {
+  return c && c.experimental ? '<span class="exp-badge" title="Aula/consulta experimental">⭐ experimental</span>' : '';
+}
 
 async function carregarConsultas() {
   if (!clinicaId) return;
@@ -3622,7 +3647,7 @@ function cardSalao(c, cor) {
       <span class="salao-card-hora">${hora}</span>
       <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
     </div>
-    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagNovoRec(c)}</div>
+    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}${tagNovoRec(c)}</div>
     ${(tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id) || tagProfissional(c.profissional_id))?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}${tagProfissional(c.profissional_id)}</div>`:''}
     ${c.queixa?`<div class="salao-card-queixa">${esc(c.queixa)}</div>`:''}
     <div class="salao-card-acoes" onclick="event.stopPropagation()">
@@ -3680,7 +3705,7 @@ function renderConsultas(lista) {
       <span class="consulta-hora">${hora}</span>
       <div class="avatar ${CORES[i%CORES.length]}${cancelada?' cancelado':''}">${esc(iniciais)}</div>
       <div class="consulta-info">
-        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagNovoRec(c)}</div>
+        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}${tagNovoRec(c)}</div>
         <div class="consulta-queixa">${esc(c.queixa||'—')}</div>
         ${(salasDisponivel && salasAtivas().length)
           ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
@@ -3898,20 +3923,30 @@ function recarregarSecaoAtual() {
 
 // ===== REMARCAR =====
 let remarcarId = null;
+let remarcarConsulta = null; // dados da consulta escolhida (p/ saber se é de horário fixo)
 
 async function abrirModalRemarcar(consultaId) {
   remarcarId = consultaId;
-  const { data: c } = await db.from('consultas').select('data_hora, pacientes(nome)').eq('id', consultaId).single();
+  const { data: c } = await db.from('consultas').select('data_hora, serie_id, pacientes(nome)').eq('id', consultaId).single();
   if (!c) return;
+  remarcarConsulta = c;
   document.getElementById('rem-sub').textContent = `${c.pacientes?.nome || 'Paciente'} — atualmente ${new Date(c.data_hora).toLocaleDateString('pt-BR',{timeZone:TZ})} às ${horaSP(c.data_hora)}`;
   document.getElementById('rem-data').value = dataSP(c.data_hora);
   document.getElementById('rem-hora').value = horaSP(c.data_hora);
+  // Consulta de horário fixo → oferece corrigir só esta ou a série toda
+  const serieWrap = document.getElementById('rem-serie-wrap');
+  if (serieWrap) {
+    serieWrap.style.display = c.serie_id ? 'block' : 'none';
+    const rUma = document.querySelector('input[name="rem-escopo"][value="uma"]');
+    if (rUma) rUma.checked = true;
+  }
   document.getElementById('modal-remarcar').classList.add('aberto');
 }
 
 function fecharModalRemarcar() {
   document.getElementById('modal-remarcar').classList.remove('aberto');
   remarcarId = null;
+  remarcarConsulta = null;
 }
 
 async function confirmarRemarcar() {
@@ -3919,10 +3954,39 @@ async function confirmarRemarcar() {
   const data = document.getElementById('rem-data').value;
   const hora = document.getElementById('rem-hora').value;
   if (!data || !hora) { toast('Preencha a nova data e horário'); return; }
-  const { error } = await db.from('consultas').update({ data_hora: `${data}T${hora}:00-03:00`, status: 'agendado' }).eq('id', remarcarId);
+  const novaISO = `${data}T${hora}:00-03:00`;
+  const escopo = (remarcarConsulta && remarcarConsulta.serie_id &&
+    document.querySelector('input[name="rem-escopo"]:checked')?.value) || 'uma';
+  if (escopo === 'futuras') return await remarcarSerieFuturas(novaISO);
+  const { error } = await db.from('consultas').update({ data_hora: novaISO, status: 'agendado' }).eq('id', remarcarId);
   if (error) { toast('Erro ao remarcar'); return; }
   fecharModalRemarcar();
   toast('Consulta remarcada ✓');
+  recarregarSecaoAtual();
+}
+
+// Corrige o horário fixo inteiro: move esta e todas as consultas FUTURAS da série
+// pelo mesmo deslocamento (ex.: qua 9h → qua 10h move a série toda +1h; também
+// funciona para trocar o dia da semana). Nunca mexe nas que já passaram nem nas canceladas.
+async function remarcarSerieFuturas(novaISO) {
+  const c = remarcarConsulta;
+  if (!c) return;
+  const delta = new Date(novaISO).getTime() - new Date(c.data_hora).getTime();
+  if (!delta) { fecharModalRemarcar(); toast('O horário escolhido é o mesmo — nada mudou'); return; }
+  const { data: futuras, error: errBusca } = await db.from('consultas')
+    .select('id, data_hora')
+    .eq('clinica_id', clinicaId).eq('serie_id', c.serie_id)
+    .gte('data_hora', c.data_hora).neq('status', 'cancelado');
+  if (errBusca || !futuras || !futuras.length) { toast('Erro ao buscar as consultas da série'); return; }
+  let movidas = 0, falhas = 0;
+  for (const f of futuras) {
+    const novoHorario = new Date(new Date(f.data_hora).getTime() + delta).toISOString();
+    const { error } = await db.from('consultas').update({ data_hora: novoHorario, status: 'agendado' }).eq('id', f.id);
+    if (error) falhas++; else movidas++;
+  }
+  fecharModalRemarcar();
+  if (falhas) toast(`${movidas} consultas remarcadas — ${falhas} não puderam ser movidas`);
+  else toast(`Horário fixo corrigido ✓ ${movidas} consulta${movidas !== 1 ? 's' : ''} remarcada${movidas !== 1 ? 's' : ''}`);
   recarregarSecaoAtual();
 }
 
@@ -4591,7 +4655,7 @@ async function carregarConsultasFicha(pacienteId) {
     return `<div class="ficha-consulta">
       <div class="ficha-consulta-data">${data}</div>
       <div class="ficha-consulta-info">
-        <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}</div>
+        <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}</div>
         <div class="ficha-consulta-status">${hora} · <span style="color:${stColor[c.status]||'var(--cinza-medio)'}">${stLabel[c.status]||esc(c.status)}</span>${pagInfo}</div>
         ${tags?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px">${tags}</div>`:''}
       </div>
@@ -6488,13 +6552,31 @@ async function salvarConsulta() {
   const hora = document.getElementById('novo-hora').value;
   const queixa = document.getElementById('novo-queixa').value.trim();
   const valorInput = parseFloat(document.getElementById('novo-valor').value);
-  if (!consultaPacienteId) { toast('Busque e selecione o paciente'); return; }
-  if (!data || !hora) { toast('Preencha a data e o horário'); return; }
-  const pacienteId = consultaPacienteId;
-  const pac = todosOsPacientes.find(x => x.id === pacienteId);
-  const nome = pac?.nome || 'Paciente';
   const usandoPacote = !!agendarPacoteId;
-  const valor = usandoPacote ? 0 : (!isNaN(valorInput) && valorInput >= 0 ? valorInput : (clinicaAtual?.valor_consulta_padrao ?? null));
+  // Aula experimental (cadastro rápido): só no agendamento avulso — pacote/espera exigem paciente
+  const experimental = consultaExperimental && !usandoPacote && !agendandoEsperaId;
+  const expNome = experimental ? document.getElementById('novo-exp-nome').value.trim() : '';
+  if (experimental && !expNome) { toast('Digite o nome de quem vai fazer a aula experimental'); return; }
+  if (!experimental && !consultaPacienteId) { toast('Busque e selecione o paciente'); return; }
+  if (!data || !hora) { toast('Preencha a data e o horário'); return; }
+  let pacienteId = consultaPacienteId;
+  let nome = 'Paciente';
+  if (experimental) {
+    // Cadastro rápido: só nome + WhatsApp; a ficha pode ser completada depois
+    const expWpp = document.getElementById('novo-exp-wpp').value.trim();
+    const { data: novoPac, error: errPac } = await db.from('pacientes')
+      .insert({ clinica_id: clinicaId, nome: expNome, whatsapp: expWpp,
+        observacoes: 'Criado pelo agendamento de aula experimental (cadastro rápido).' })
+      .select('id, nome').single();
+    if (errPac || !novoPac) { toast('Não deu para criar o cadastro rápido. Tente de novo.'); return; }
+    pacienteId = novoPac.id;
+    nome = novoPac.nome;
+  } else {
+    const pac = todosOsPacientes.find(x => x.id === pacienteId);
+    nome = pac?.nome || 'Paciente';
+  }
+  // Experimental sem valor preenchido entra isenta (R$ 0) — não fabrica pendência no financeiro
+  const valor = usandoPacote ? 0 : (!isNaN(valorInput) && valorInput >= 0 ? valorInput : (experimental ? 0 : (clinicaAtual?.valor_consulta_padrao ?? null)));
   // Offset fixo de São Paulo (-03:00) para evitar conversão errada de fuso
   const dataHoraISO = `${data}T${hora}:00-03:00`;
   const pacoteIdUsado = agendarPacoteId;
@@ -6502,22 +6584,23 @@ async function salvarConsulta() {
   const payloadConsulta = {
     clinica_id: clinicaId, paciente_id: pacienteId, data_hora: dataHoraISO,
     queixa: queixa || null, status: 'agendado', origem: 'manual',
-    valor, pagamento_status: usandoPacote ? 'pacote' : 'pendente',
+    valor, pagamento_status: usandoPacote ? 'pacote' : (experimental && !valor ? 'isento' : 'pendente'),
     pacote_id: usandoPacote ? pacoteIdUsado : null,
-    teleconsulta: !!document.getElementById('novo-teleconsulta')?.checked
+    teleconsulta: !!document.getElementById('novo-teleconsulta')?.checked,
+    experimental
   };
   if (salasDisponivel) payloadConsulta.sala_id = document.getElementById('novo-sala')?.value || null;
   if (modalidadesDisponivel) payloadConsulta.modalidade_id = document.getElementById('novo-modalidade')?.value || null;
   if (profissionaisDisponivel) payloadConsulta.profissional_id = document.getElementById('novo-profissional')?.value || null;
-  // Horário fixo (recorrente): só nos agendamentos avulsos — nunca com pacote/lista de espera
-  const repetir = !!document.getElementById('novo-repetir')?.checked && !usandoPacote && !esperaIdUsado;
+  // Horário fixo (recorrente): só nos agendamentos avulsos — nunca com pacote/lista de espera/experimental
+  const repetir = !!document.getElementById('novo-repetir')?.checked && !usandoPacote && !esperaIdUsado && !experimental;
   if (repetir) return await salvarConsultaRecorrente(payloadConsulta, hora, nome);
   const { error } = await db.from('consultas').insert(payloadConsulta);
   if (!error) {
-    fecharModal(); toast(usandoPacote ? 'Sessão do pacote agendada ✓' : 'Consulta agendada ✓');
+    fecharModal(); toast(usandoPacote ? 'Sessão do pacote agendada ✓' : (experimental ? '⭐ Aula experimental agendada ✓' : 'Consulta agendada ✓'));
     document.getElementById('novo-queixa').value = '';
     document.getElementById('novo-valor').value = '';
-    await db.from('alertas').insert({clinica_id:clinicaId, tipo:'novo_agendamento', mensagem:`Nova consulta agendada: ${nome}`});
+    await db.from('alertas').insert({clinica_id:clinicaId, tipo:'novo_agendamento', mensagem: experimental ? `Aula experimental agendada: ${nome}` : `Nova consulta agendada: ${nome}`});
     if (pacoteIdUsado) await verificarPacoteAcabando(pacoteIdUsado, nome);
     if (esperaIdUsado) { // saiu da lista de espera
       db.from('lista_espera').update({ status: 'agendado' }).eq('id', esperaIdUsado)
@@ -6695,7 +6778,7 @@ async function renderGradeSemanal() {
         html += consultasDia.map(c => `<div class="lista-agend-item" onclick="abrirFicha('${c.paciente_id}')">
             <span class="lista-agend-hora">${horaSP(c.data_hora)}</span>
             <div class="lista-agend-info">
-              <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}</div>
+              <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}</div>
               <div class="lista-agend-queixa">${esc(c.queixa||'—')}</div>
               ${c.sala_id ? `<div class="sala-tag" style="margin-top:5px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : ''}
               ${tagProfissional(c.profissional_id)?`<div style="margin-top:5px">${tagProfissional(c.profissional_id)}</div>`:''}
@@ -6771,7 +6854,7 @@ async function renderGradeSemanal() {
         const tituloSala = c.sala_id ? ` — ${esc(nomeSala(c.sala_id))}` : '';
         const tituloProf = prof ? ` — ${esc(prof.nome)}` : '';
         const dotProf = prof ? `<span class="mod-dot" style="background:${prof.cor};margin-right:3px"></span>` : '';
-        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf}${c.teleconsulta?' · 📹 teleconsulta':''}${c.serie_id?' · 🔁 horário fixo':''} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${dotProf}${c.teleconsulta?'📹 ':''}${c.serie_id?'🔁 ':''}${esc(nome)}</div>`;
+        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf}${c.teleconsulta?' · 📹 teleconsulta':''}${c.serie_id?' · 🔁 horário fixo':''}${c.experimental?' · ⭐ experimental':''} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${dotProf}${c.teleconsulta?'📹 ':''}${c.serie_id?'🔁 ':''}${c.experimental?'⭐ ':''}${esc(nome)}</div>`;
       }
       html += '</div>';
     }
@@ -6910,6 +6993,10 @@ function abrirModal() {
   document.getElementById('novo-pac-resultados').innerHTML = '';
   document.getElementById('novo-pac-selecionado-wrap').style.display = 'none';
   document.getElementById('novo-pac-busca-wrap').style.display = 'block';
+  consultaExperimental = false;
+  document.getElementById('novo-exp-wrap').style.display = 'none';
+  document.getElementById('novo-exp-nome').value = '';
+  document.getElementById('novo-exp-wpp').value = '';
   const valorEl = document.getElementById('novo-valor');
   if (clinicaAtual?.valor_consulta_padrao && !valorEl.value) valorEl.placeholder = `Padrão: ${fmtBRL(clinicaAtual.valor_consulta_padrao)}`;
   popularSelectSalas(document.getElementById('novo-sala'), '');
@@ -7313,6 +7400,7 @@ function buscarPacienteConsulta(termo) {
       <div class="pac-res-sub">${p.cpf ? 'CPF ' + formatarCPF(p.cpf) + ' · ' : ''}${p.whatsapp ? esc(p.whatsapp) : 'sem WhatsApp'}</div>
     </div>`).join('');
   html += `<div class="pac-res-novo" onclick="novoPacienteDaConsulta()">+ Cadastrar novo paciente</div>`;
+  html += `<div class="pac-res-novo" style="color:#B4690E" onclick="ativarModoExperimental()">⭐ Agendar aula experimental (sem cadastro completo)</div>`;
   el.innerHTML = html;
 }
 
@@ -7345,6 +7433,28 @@ function novoPacienteDaConsulta() {
   pacienteParaConsulta = true;
   fecharModal();
   abrirModalPaciente(/^\d/.test(termo) ? '' : termo);
+}
+
+// ===== AULA EXPERIMENTAL (agendar sem cadastro completo) =====
+let consultaExperimental = false;
+function ativarModoExperimental() {
+  if (agendarPacoteId || agendandoEsperaId) { toast('Sessão de pacote e lista de espera usam paciente já cadastrado'); return; }
+  consultaExperimental = true;
+  consultaPacienteId = null;
+  const termo = document.getElementById('novo-busca-paciente').value.trim();
+  const nomeEl = document.getElementById('novo-exp-nome');
+  if (termo && !/^\d/.test(termo) && !nomeEl.value) nomeEl.value = termo; // aproveita o nome já digitado
+  document.getElementById('novo-pac-busca-wrap').style.display = 'none';
+  document.getElementById('novo-pac-selecionado-wrap').style.display = 'none';
+  document.getElementById('novo-exp-wrap').style.display = 'block';
+  esconderRecorrencia(); // aula experimental é agendamento único
+  nomeEl.focus();
+}
+function desativarModoExperimental() {
+  consultaExperimental = false;
+  document.getElementById('novo-exp-wrap').style.display = 'none';
+  document.getElementById('novo-pac-busca-wrap').style.display = 'block';
+  resetRecorrencia(true);
 }
 
 // ===== PLANOS E TRAVAS POR PLANO =====
