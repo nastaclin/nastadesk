@@ -2106,11 +2106,17 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div style="font-size:12px;font-weight:700;color:var(--cinza-escuro);margin-bottom:7px">Em quais dias da semana?</div>
         <div id="novo-dias-semana" style="display:flex;flex-wrap:wrap;gap:6px"></div>
         <div style="font-size:12px;font-weight:700;color:var(--cinza-escuro);margin:13px 0 6px">Repetir por quanto tempo?</div>
-        <select id="novo-repetir-semanas" onchange="atualizarPreviewRecorrencia()" style="width:100%;padding:9px 11px;border:1.5px solid var(--cinza-claro);border-radius:9px;font-size:13.5px;background:white">
+        <select id="novo-repetir-semanas" onchange="onMudouModoRepeticao()" style="width:100%;padding:9px 11px;border:1.5px solid var(--cinza-claro);border-radius:9px;font-size:13.5px;background:white">
           <option value="4">4 semanas (1 mês)</option>
           <option value="8" selected>8 semanas (2 meses)</option>
           <option value="12">12 semanas (3 meses)</option>
+          <option value="24">24 semanas (6 meses)</option>
+          <option value="data">Até uma data específica…</option>
         </select>
+        <div id="novo-repetir-ate-wrap" style="display:none;margin-top:8px">
+          <label style="font-size:12px;font-weight:700;color:var(--cinza-escuro)">Repetir até (inclusive)</label>
+          <input type="date" id="novo-repetir-ate" onchange="atualizarPreviewRecorrencia()" style="width:100%;margin-top:5px;padding:9px 11px;border:1.5px solid var(--cinza-claro);border-radius:9px;font-size:13.5px;background:white">
+        </div>
         <div id="novo-recorrencia-preview" style="font-size:12px;color:#0F7A4F;margin-top:11px;font-weight:600;line-height:1.5"></div>
       </div>
     </div>
@@ -6783,7 +6789,7 @@ function abrirModalSlot(data, hora) {
 
 // ===== AGENDAMENTO RECORRENTE (horário fixo) =====
 const DIAS_SEMANA_LABEL = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const RECORRENCIA_MAX = 90; // teto de segurança de consultas geradas de uma vez
+const RECORRENCIA_MAX = 200; // teto de segurança de consultas geradas de uma vez
 let recorrenciaDias = new Set();
 
 // Reset (chamado ao abrir o modal). show=true reexibe a opção; usada por fluxos
@@ -6798,9 +6804,34 @@ function resetRecorrencia(show) {
   if (wrap) wrap.style.display = show === false ? 'none' : 'block';
   const sem = document.getElementById('novo-repetir-semanas');
   if (sem) sem.value = '8';
+  const ateWrap = document.getElementById('novo-repetir-ate-wrap');
+  if (ateWrap) ateWrap.style.display = 'none';
+  const ate = document.getElementById('novo-repetir-ate');
+  if (ate) ate.value = '';
 }
 // Fluxos de agendamento único (pacote, lista de espera) não permitem repetição.
 function esconderRecorrencia() { resetRecorrencia(false); }
+
+// Alterna entre "por N semanas" e "até uma data específica".
+function onMudouModoRepeticao() {
+  const modo = document.getElementById('novo-repetir-semanas').value;
+  const wrap = document.getElementById('novo-repetir-ate-wrap');
+  const ate = document.getElementById('novo-repetir-ate');
+  const dv = document.getElementById('novo-data').value;
+  if (modo === 'data') {
+    if (wrap) wrap.style.display = 'block';
+    if (ate) {
+      if (dv) ate.min = dv;                       // não deixa escolher antes da 1ª consulta
+      if (!ate.value && dv) {                     // sugere +8 semanas como ponto de partida
+        const d = new Date(dv + 'T12:00:00'); d.setDate(d.getDate() + 8 * 7);
+        ate.value = dataLocalISO(d);
+      }
+    }
+  } else if (wrap) {
+    wrap.style.display = 'none';
+  }
+  atualizarPreviewRecorrencia();
+}
 
 function toggleRecorrencia() {
   const on = document.getElementById('novo-repetir').checked;
@@ -6835,26 +6866,39 @@ function onMudouDataHoraNova() {
 // datas anteriores à data inicial escolhida.
 function ocorrenciasRecorrencia() {
   const dv = document.getElementById('novo-data').value;
-  const semanas = parseInt(document.getElementById('novo-repetir-semanas')?.value, 10) || 8;
+  const modo = document.getElementById('novo-repetir-semanas')?.value || '8';
   if (!dv || recorrenciaDias.size === 0) return [];
   const inicio = new Date(dv + 'T12:00:00');
-  const fim = new Date(inicio); fim.setDate(fim.getDate() + semanas * 7 - 1);
+  let fim;
+  if (modo === 'data') {
+    const ate = document.getElementById('novo-repetir-ate')?.value;
+    if (!ate) return [];
+    fim = new Date(ate + 'T12:00:00');
+    if (fim < inicio) return []; // data final antes da inicial → nada a criar
+  } else {
+    const semanas = parseInt(modo, 10) || 8;
+    fim = new Date(inicio); fim.setDate(fim.getDate() + semanas * 7 - 1);
+  }
   const datas = [];
   for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
     if (recorrenciaDias.has(d.getDay())) datas.push(dataLocalISO(d));
-    if (datas.length >= RECORRENCIA_MAX) break;
+    if (datas.length >= RECORRENCIA_MAX) break; // teto de segurança
   }
   return datas;
 }
 function atualizarPreviewRecorrencia() {
   const el = document.getElementById('novo-recorrencia-preview');
   if (!el) return;
+  const modo = document.getElementById('novo-repetir-semanas')?.value || '8';
+  if (recorrenciaDias.size === 0) { el.textContent = 'Selecione pelo menos um dia da semana.'; return; }
+  if (modo === 'data' && !document.getElementById('novo-repetir-ate')?.value) { el.textContent = 'Escolha a data final da repetição.'; return; }
   const datas = ocorrenciasRecorrencia();
-  if (!datas.length) { el.textContent = 'Selecione pelo menos um dia da semana.'; return; }
+  if (!datas.length) { el.textContent = 'Escolha uma data final posterior à data da consulta.'; return; }
   const hora = document.getElementById('novo-hora').value || '09:00';
   const dias = [...recorrenciaDias].sort((a, b) => a - b).map(i => DIAS_SEMANA_LABEL[i]).join(', ');
   const fmt = s => s.split('-').reverse().slice(0, 2).join('/');
-  el.textContent = `Serão criadas ${datas.length} consultas: ${dias} às ${hora}, de ${fmt(datas[0])} a ${fmt(datas[datas.length - 1])}.`;
+  const teto = datas.length >= RECORRENCIA_MAX ? ` (máximo de ${RECORRENCIA_MAX} por vez — repita depois para continuar)` : '';
+  el.textContent = `Serão criadas ${datas.length} consultas: ${dias} às ${hora}, de ${fmt(datas[0])} a ${fmt(datas[datas.length - 1])}${teto}.`;
 }
 
 // ===== MODAL =====
