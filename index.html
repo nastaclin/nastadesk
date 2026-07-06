@@ -123,6 +123,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .ficha-salvar { display: none; }
 .ficha-salvar.visivel { display: block; }
 .ficha-consulta { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--cinza-claro); }
+.ficha-consulta-excluir { flex-shrink: 0; background: none; border: 1px solid var(--cinza-claro); border-radius: 8px; padding: 5px 8px; font-size: 13px; cursor: pointer; opacity: .65; transition: all .15s; }
+.ficha-consulta-excluir:hover { opacity: 1; border-color: var(--vermelho); background: #FDECEC; }
 .ficha-consulta:last-child { border-bottom: none; }
 .ficha-consulta-data { font-size: 13px; font-weight: 600; color: var(--verde); min-width: 86px; }
 .ficha-consulta-info { flex: 1; }
@@ -2555,6 +2557,19 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
   </div>
 </div>
 
+<!-- MODAL AÇÕES DA CONSULTA (clique na grade semanal / lista de agendamentos) -->
+<div class="overlay" id="modal-consulta-acoes" onclick="if(event.target===this)fecharModalConsultaAcoes()">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><div><div class="modal-titulo" id="ca-titulo">Consulta</div><div class="modal-sub" id="ca-sub">—</div></div><button class="modal-fechar" onclick="fecharModalConsultaAcoes()">×</button></div>
+    <div id="ca-detalhe" style="font-size:13px;color:var(--cinza-medio);margin-bottom:16px;line-height:1.6"></div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button class="btn btn-secundario" onclick="caVerFicha()">👤 Ver ficha do paciente</button>
+      <button class="btn btn-secundario" onclick="caRemarcar()">📅 Remarcar consulta</button>
+      <button class="btn btn-secundario" style="color:var(--vermelho)" onclick="caExcluir()">🗑 Excluir consulta</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL EXCLUIR SÉRIE (horário fixo / recorrente) -->
 <div class="overlay" id="modal-serie" onclick="if(event.target===this)fecharModalSerie()">
   <div class="modal" style="max-width:400px">
@@ -3874,7 +3889,9 @@ async function atualizarStatus(id, status) {
 }
 
 let serieExcluirCtx = null; // { id, serie_id, data_hora } da consulta escolhida
-async function excluirConsulta(id) {
+let aposExcluirConsulta = null; // callback opcional pós-exclusão (ex.: recarregar a ficha)
+async function excluirConsulta(id, aposExcluir) {
+  aposExcluirConsulta = aposExcluir || null;
   const { data: c } = await db.from('consultas').select('id, serie_id, data_hora').eq('id', id).maybeSingle();
   if (c && c.serie_id) { // faz parte de um horário fixo → oferece excluir só esta ou a série
     serieExcluirCtx = c;
@@ -3886,6 +3903,7 @@ async function excluirConsulta(id) {
     if (error) { toast('Erro ao excluir consulta'); return; }
     toast('Consulta excluída ✓');
     recarregarSecaoAtual();
+    if (aposExcluirConsulta) { aposExcluirConsulta(); aposExcluirConsulta = null; }
   });
 }
 function fecharModalSerie() {
@@ -3909,6 +3927,50 @@ async function confirmarExcluirSerie(escopo) {
   }
   serieExcluirCtx = null;
   recarregarSecaoAtual();
+  if (aposExcluirConsulta) { aposExcluirConsulta(); aposExcluirConsulta = null; }
+}
+
+// ===== AÇÕES DA CONSULTA (grade semanal / lista de agendamentos) =====
+let consultaAcoesCtx = null; // consulta clicada
+function abrirAcoesConsulta(consultaId) {
+  const c = consultasSemana.find(x => x.id === consultaId);
+  if (!c) return;
+  consultaAcoesCtx = c;
+  const stLabel = { agendado:'Agendado', confirmado:'Confirmado', aguardando:'Aguardando', atendido:'Atendido', cancelado:'Cancelado', remarcado:'Remarcado' };
+  document.getElementById('ca-titulo').textContent = c.pacientes?.nome || 'Paciente';
+  document.getElementById('ca-sub').textContent =
+    `${new Date(c.data_hora).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: TZ })} às ${horaSP(c.data_hora)}`;
+  const linhas = [];
+  linhas.push(`Status: <b>${stLabel[c.status] || esc(c.status || '')}</b>`);
+  if (c.queixa) linhas.push(esc(c.queixa));
+  const etiquetas = `${c.teleconsulta ? '<span class="tele-badge" style="margin-left:0">📹 vídeo</span> ' : ''}${tagFixo(c)}${tagExp(c)}`;
+  if (etiquetas.trim()) linhas.push(etiquetas);
+  document.getElementById('ca-detalhe').innerHTML = linhas.join('<br>');
+  document.getElementById('modal-consulta-acoes').classList.add('aberto');
+}
+function fecharModalConsultaAcoes() {
+  document.getElementById('modal-consulta-acoes').classList.remove('aberto');
+  consultaAcoesCtx = null;
+}
+function caVerFicha() {
+  const c = consultaAcoesCtx;
+  fecharModalConsultaAcoes();
+  if (c) abrirFicha(c.paciente_id);
+}
+function caRemarcar() {
+  const c = consultaAcoesCtx;
+  fecharModalConsultaAcoes();
+  if (c) abrirModalRemarcar(c.id);
+}
+function caExcluir() {
+  const c = consultaAcoesCtx;
+  fecharModalConsultaAcoes();
+  if (c) excluirConsulta(c.id);
+}
+
+// Excluir a partir da ficha do paciente: recarrega a lista de consultas da ficha depois
+function excluirConsultaFicha(consultaId) {
+  excluirConsulta(consultaId, () => { if (pacienteAtual) carregarConsultasFicha(pacienteAtual.id); });
 }
 
 function recarregarSecaoAtual() {
@@ -4659,6 +4721,7 @@ async function carregarConsultasFicha(pacienteId) {
         <div class="ficha-consulta-status">${hora} · <span style="color:${stColor[c.status]||'var(--cinza-medio)'}">${stLabel[c.status]||esc(c.status)}</span>${pagInfo}</div>
         ${tags?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px">${tags}</div>`:''}
       </div>
+      <button type="button" class="ficha-consulta-excluir" title="Excluir consulta" onclick="excluirConsultaFicha('${c.id}')">🗑</button>
     </div>`;
   }).join('');
 }
@@ -6775,7 +6838,7 @@ async function renderGradeSemanal() {
       if (!consultasDia.length) {
         html += `<div style="font-size:13px;color:var(--cinza-medio);padding:8px 0">Nenhum agendamento</div>`;
       } else {
-        html += consultasDia.map(c => `<div class="lista-agend-item" onclick="abrirFicha('${c.paciente_id}')">
+        html += consultasDia.map(c => `<div class="lista-agend-item" onclick="abrirAcoesConsulta('${c.id}')">
             <span class="lista-agend-hora">${horaSP(c.data_hora)}</span>
             <div class="lista-agend-info">
               <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}</div>
@@ -6854,7 +6917,7 @@ async function renderGradeSemanal() {
         const tituloSala = c.sala_id ? ` — ${esc(nomeSala(c.sala_id))}` : '';
         const tituloProf = prof ? ` — ${esc(prof.nome)}` : '';
         const dotProf = prof ? `<span class="mod-dot" style="background:${prof.cor};margin-right:3px"></span>` : '';
-        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf}${c.teleconsulta?' · 📹 teleconsulta':''}${c.serie_id?' · 🔁 horário fixo':''}${c.experimental?' · ⭐ experimental':''} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirFicha('${c.paciente_id}')">${dotProf}${c.teleconsulta?'📹 ':''}${c.serie_id?'🔁 ':''}${c.experimental?'⭐ ':''}${esc(nome)}</div>`;
+        html += `<div class="agend-pill ${c.status}" ${estiloBorda} title="${esc(c.pacientes?.nome||'')}${tituloSala}${tituloProf}${c.teleconsulta?' · 📹 teleconsulta':''}${c.serie_id?' · 🔁 horário fixo':''}${c.experimental?' · ⭐ experimental':''} — ${esc(c.queixa||'')}" onclick="event.stopPropagation();abrirAcoesConsulta('${c.id}')">${dotProf}${c.teleconsulta?'📹 ':''}${c.serie_id?'🔁 ':''}${c.experimental?'⭐ ':''}${esc(nome)}</div>`;
       }
       html += '</div>';
     }
