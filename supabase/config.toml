@@ -24,6 +24,10 @@ verify_jwt = false
 [functions.agendar-publico]
 verify_jwt = false
 
+# Feed ICS da agenda (Google Agenda/Outlook assinam sem login) — seguro pelo ics_token na URL
+[functions.agenda-ics]
+verify_jwt = false
+
 # Criação de login de funcionário — exige login do dono (JWT); trava por plano no código
 [functions.equipe-criar]
 verify_jwt = true

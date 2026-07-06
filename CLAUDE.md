@@ -33,7 +33,7 @@ Esta seção fixa (entre os marcadores 🔒) NÃO deve ser alterada.
 
 # NastaDesk — Contexto da ferramenta
 
-> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-07-05**.
+> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-07-06**.
 
 > ⭐ **COMO O DONO GOSTA DE TRABALHAR (ler sempre, vale para qualquer chat):**
 > - **Pode deixar as melhorias APARENTES para os clientes.** A intenção é que eles
@@ -116,6 +116,7 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | `agendar-publico` | Porteiro anti-robô do agendamento online. Recebe o booking + token do hCaptcha, verifica o token no servidor (secret em `admin_config`) e, se válido, delega à RPC `agendar_online` — repassando também a **versão do consentimento LGPD + IP** para registro. `verify_jwt=false`. |
 | `equipe-criar` | Cria o login de um funcionário da clínica. Só o **dono** chama (valida o JWT → `clinicas.user_id`), **trava por plano** (Profissional+), cria o usuário de auth (service_role, `user_metadata.tipo='membro'`) e vincula em `clinica_membros`. Para papel `profissional`, **exige e valida** o `profissional_id` (tem que ser da própria clínica) — é o vínculo que define o que a pessoa vê no portal. `verify_jwt=true`. **v2 (com essa validação de vínculo) deployada em produção em 2026-07-05.** |
 | `equipe-remover` | Exclui o login de um funcionário. Só o **dono** chama; remove o vínculo em `clinica_membros` e apaga o usuário de auth (libera o email). `verify_jwt=true`. |
+| `agenda-ics` | Feed de calendário **ICS** para assinar a agenda da clínica no Google Agenda/Outlook/Apple Calendar (só leitura, 1 via). Sem login (`verify_jwt=false`); o segredo é o `clinicas.ics_token` na URL (regenerável em Configurações → Agenda; o link antigo morre). Janela −7d/+60d, sem canceladas. |
 | `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. |
 
 ## 4. Funcionalidades do app (nastadesk)
@@ -209,6 +210,26 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   modal de consulta já preenchido e, ao salvar, **tira da fila sozinho**) e
   **Remover** (só marca `status='removido'` — nada é apagado). Tabela
   **`lista_espera`** (RLS: dono/recepção; profissional sem acesso).
+- **Controle de estoque** *(Extras, 2026-07-06)* — seção **Estoque** na nav (dono +
+  recepção; profissional não vê): itens com categoria/unidade/estoque mínimo,
+  **Entrada/Saída com motivo** (o saldo é mantido por **trigger no banco** — o front
+  só insere movimentos, preservando o histórico), etiqueta **"⚠ repor"** + badge na
+  nav quando abaixo do mínimo, busca/filtro e arquivar (soft — nada apagado).
+  Tabelas `estoque_itens` + `estoque_movimentos`.
+- **NPS por WhatsApp** *(Extras, 2026-07-06)* — card no Relatório: **enviar pesquisa
+  em 1 clique** (wa.me com mensagem editável; o envio é registrado antes de abrir o
+  WhatsApp), registrar a **nota 0–10 + comentário** quando o paciente responde, e
+  **score NPS do mês** (promotores − detratores) com breakdown. Tabela
+  `nps_respostas` (LGPD: anonimizar/excluir paciente limpam o NPS dele).
+- **Integração Google Agenda / Outlook** *(Extras, 2026-07-06)* — (a) botão **📅** em
+  cada consulta (Agenda do dia e salões): adicionar no **Google Agenda**, **Outlook**
+  ou **baixar .ics**; (b) **feed de assinatura ICS** (Configurações → Agenda): cola a
+  URL no calendário e a agenda inteira sincroniza sozinha (edge `agenda-ics`, segredo
+  `ics_token` regenerável).
+- **Relatório exportável** *(Extras, 2026-07-06)* — no Relatório mensal: **⬇ CSV**
+  (consultas do mês com paciente/status/modalidade/profissional/valor/pagamento +
+  total recebido; abre no Excel/Planilhas) e **🖨 Imprimir/PDF** (CSS de impressão
+  dedicado — imprime só o relatório, sem menus).
 - **Pacotes de sessões** — venda/controle de pacotes de sessões.
 - **Financeiro** — **(a) por consulta** (inalterado): valor por consulta, registro
   de pagamento (Pix, cartão, dinheiro…), recibo em PDF, faturamento do mês;
@@ -258,13 +279,21 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | **Profissional** | **R$ 197** | Inclui o **chatbot de WhatsApp com IA** + **vários profissionais e logins de equipe** (recepção/profissional). |
 | **Premium** | **R$ 347** | Tudo do Profissional (tier mais alto). |
 
-### Regra de acesso (paywall + cortesia)
+### Regra de acesso (trial + paywall + cortesia) — atualizada 2026-07-06
 
-- Ao se cadastrar, a clínica **NÃO entra de graça automaticamente** (paywall no
-  cadastro).
-- O "porteiro" de acesso é o campo **`clinicas.ativo`**. Só com `ativo = true` a
-  clínica usa o sistema.
-- O acesso é liberado de duas formas:
+- **Trial self-service (decisão do dono, 2026-07-06):** ao se cadastrar, a clínica
+  ganha automaticamente **7 dias grátis no plano Premium** (`ativo=true`,
+  `cortesia=true`, `cortesia_expira_em = now()+7d`, no gatilho de signup). O app
+  mostra banner com os dias restantes; o cadastro anuncia "7 dias grátis, sem cartão".
+- **Corte automático:** o job **pg_cron `nastadesk-cortesia-expira`** (de hora em
+  hora) roda `encerrar_cortesias_vencidas()`: cortesia/trial com `cortesia_expira_em`
+  no passado → `ativo=false` + `cortesia=false` (vira paywall "Seu teste grátis
+  terminou"). **GUARDA: nunca corta clínica com assinatura `ativa`/`em_atraso`**
+  (quem pagou não cai, mesmo com flag de cortesia sobrando). Cortesia **sem data**
+  (null) nunca é cortada.
+- O "porteiro" de acesso continua sendo o campo **`clinicas.ativo`**. Só com
+  `ativo = true` a clínica usa o sistema.
+- O acesso também é liberado de duas formas:
   - **Cortesia** — o admin concede acesso grátis controlado (pode ter data de
     expiração, `cortesia_expira_em`). Feito pelo painel admin.
   - **Assinatura paga** — via **Cakto** (botões "Assinar/Upgrade" abrem o checkout
@@ -335,6 +364,14 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-07-06** — **EXTRAS (fecha os "Restam" da 10.5) · Integração Google Agenda/Outlook (feed ICS) + NPS por WhatsApp + Controle de estoque + Relatórios exportáveis + TRIAL self-service de 7 dias com corte automático. Migration + edge `agenda-ics` EM PRODUÇÃO; front na branch `claude/claude-md-tasks-b07n15` dos 2 repos (falta merge na `main`).**
+  A pedido do dono ("pode fazer essa parte dos Extras"). **Decisões do dono nesta data:** trial de **7 dias** no plano **Premium**; corte automático de cortesia vencida **valendo as datas já marcadas** — ⚠️ **B&D (vence 06/07) e AC Fisioterapia (14/07) serão suspensas pelo cron se não assinarem** (para reverter: conceder cortesia de novo pelo painel admin).
+  🐛 **Bug corrigido de brinde:** a migration `20260704160000` reescreveu `criar_clinica_no_signup` e **perdeu o `ativo=false` do paywall** — desde 04/07 clínica nova entrava **de graça para sempre** (default da coluna é true). Agora o cadastro dá um **trial controlado** (ativo+cortesia+7d+premium).
+  **(1) DB — migration `20260706150000_extras_trial_estoque_nps_ics.sql` APLICADA em produção** (testada antes com ROLLBACK/asserts contra os dados reais): tabelas **`estoque_itens` + `estoque_movimentos`** (saldo mantido por **trigger** `estoque_aplicar_movimento` — o front só INSERE movimentos; RLS dono+recepção ALL, profissional nada); tabela **`nps_respostas`** (nota 0–10 com CHECK, null = aguardando resposta; RLS dono+recepção); coluna **`clinicas.ics_token`** (uuid unique, backfill nas 3 clínicas); **`paciente_anonimizar`/`paciente_excluir` estendidas** p/ limpar o NPS do paciente (LGPD); **gatilho de signup com trial**; função **`encerrar_cortesias_vencidas()`** (revoke de anon/authenticated; **guarda de assinatura ativa/em_atraso**) + **job pg_cron `nastadesk-cortesia-expira`** (minuto 7 de cada hora). Checks do ROLLBACK: saldo 10−3=7 via trigger; RLS (dono vê, usuário aleatório vê 0); signup simulado em auth.users criou clínica premium/7d/consentimento LGPD; corte derruba trial vencido; **guarda NÃO corta quem tem assinatura ativa**. Advisors de segurança **sem regressão**.
+  **(2) Edge `agenda-ics` (v1, deployada, `verify_jwt=false`, no config.toml)** — feed **ICS (RFC 5545)** da agenda p/ assinar no Google Agenda/Outlook/Apple: janela −7/+60 dias, sem canceladas, evento com paciente/modalidade/profissional/sala/status, teleconsulta com link Jitsi, duração = `intervalo_consulta`. Segurança: token uuid na URL (mesmo modelo do "endereço secreto" do Google), 404 p/ token inválido/clínica inativa, 405 p/ não-GET, escaping + line folding RFC. **Validada com curl em produção** (404/405/ICS real ok).
+  **(3) Front (`index.html`)** — **Estoque:** nova seção na nav (ícone caixa + badge de reposição), cards Itens/Repor, lista com busca e filtro "só em alerta", modal de item (categoria com sugestões, unidade, mínimo, qtd inicial vira movimento "Estoque inicial"), modais de Entrada/Saída com motivo + últimos 8 movimentos, saída maior que o saldo pede confirmação, **arquivar é soft** (ativo=false, histórico fica); papel profissional não vê (nav + RLS). **NPS:** card no Relatório com score do mês (promotores−detratores, colorido), breakdown 😍😐😞, modal "Enviar pesquisa" (lista pacientes com WhatsApp, msg editável com {nome}, **registra o envio ANTES de abrir o wa.me**), pendentes com select 0–10 + comentário + descartar, respostas do mês listadas. **Relatório exportável:** botões **⬇ CSV** (consultas do mês com joins, escaping correto de aspas/vírgulas, total recebido no rodapé, BOM p/ Excel) e **🖨 Imprimir/PDF** (`@media print` esconde navegação/botões e imprime só a seção ativa). **Agenda externa:** botão **📅** em cada consulta (agenda do dia + salões) abre menu Google Agenda / Outlook / baixar .ics (evento com duração da clínica, link Jitsi se teleconsulta) + atalho "Sincronizar tudo automaticamente"; card **"Integração com Google Agenda/Outlook"** em Configurações → Agenda (URL do feed, copiar, instruções por app, aviso de privacidade do link e **Gerar novo código secreto** — atualiza `ics_token` e mata o link antigo). **Trial:** banner fixo com dias restantes + "Assinar agora" (verde; âmbar a ≤2 dias; some p/ quem tem assinatura), paywall com caso novo **"Seu teste grátis terminou"** (dados continuam salvos), toast pós-onboarding com os dias, selo "✨ 7 dias grátis com tudo liberado — sem cartão" no cadastro.
+  **Validado:** `node --check` + **35/35 testes de navegador** (Playwright, Supabase mockado, rede externa bloqueada): banner/paywall/selo do trial, estoque (lista, alerta, badge, insert com clinica_id, qtd inicial→movimento, validação bloqueia sem rede, saída), NPS (filtra sem-WhatsApp/inativos, registra envio antes do wa.me, score 25 no cenário 2/1/1, pendente com select), agenda externa (URLs Google/Outlook corretas com 60min + Jitsi, menu 📅, feed com token, regenerar troca token e atualiza o link), CSV (nome, escaping, total), gate por papel (profissional sem Estoque) — **zero erro de JS**.
+  ***Falta:*** merge do front na `main` (Vercel) — migration e edge já estão em produção e são aditivas ao front atual. *Lembretes:* (a) o corte de cortesia **já está ativo** — B&D/AC caem quando a data passar (decisão do dono); (b) trial usa a mesma mecânica de cortesia — cortesia manual **sem data** segue eterna; (c) melhoria futura possível: NPS automático via bot (hoje o envio é 1-clique e o registro da nota é manual — não mexi no `whatsapp-webhook` de produção por segurança).
 - **2026-07-05** — **FASE 3 (parte 1) · Prontuário estruturado de fisio + Anexos de exames + Teleconsulta + Lista de espera. Migration APLICADA em produção; front na branch `claude/phase-3-jjk0dk` dos 2 repos (falta merge na `main`).**
   A pedido do dono ("Agora vamos fazer a fase 3"). Entregues os itens viáveis da Fase 3; os 2 que dependem de decisão/cadastro do dono (assinatura digital ICP-Brasil e TISS) ficam documentados na seção 10.5.
   **(1) DB — migration `20260705200000_fase3_prontuario_teleconsulta_espera.sql` APLICADA em produção**, depois de **testar contra os dados reais com ROLLBACK** (22 checks com JWT simulado): tabela **`avaliacoes`** (tipo eva/goniometria/postural/funcional + `dados` JSONB; RLS espelhando `evolucoes` — dono ALL, recepção ALL, profissional SELECT/INSERT só dos pacientes dele, sem UPDATE/DELETE); tabela **`lista_espera`** (paciente cadastrado OU nome avulso; status aguardando/agendado/removido; RLS dono+recepção; profissional sem acesso); coluna **`consultas.teleconsulta`** (boolean default false); **bucket privado `exames`** no Storage (10 MB, pdf/jpg/png/webp/heic) com **policies por papel em `storage.objects`** (dono/recepção ALL por clínica; profissional SELECT só dos pacientes dele; caminho `clinica_id/paciente_id/…`, comparação por texto sem cast); **`paciente_anonimizar`/`paciente_excluir` estendidas** para limpar também `avaliacoes` e `lista_espera`. Isolamento validado: dono A não vê nada da clínica B (e vice-versa), usuário aleatório vê 0, profissional vê só o do paciente dele, insert p/ paciente de outro → 42501, delete como profissional → 0 linhas. Índices em todas as FKs novas; advisors de segurança **sem regressão** (os `multiple_permissive_policies` novos são o mesmo padrão intencional dono+membros das outras 15 tabelas).
@@ -571,7 +608,7 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 - [ ] **Assinatura digital (ICP-Brasil)** das evoluções/prontuário — ⏸️ **depende de decisão do dono:** exige **certificado digital ICP-Brasil pago** (e-CPF A1/A3 do profissional, ~R$ 100–300/ano cada) + integração com serviço de assinatura. Sem o certificado não há o que integrar. Quando o dono quiser: avaliar assinatura via plataforma (ex.: gov.br assinador é grátis p/ pessoa física, mas manual) ou API paga. *Alternativa leve já existente: trilha de auditoria LGPD registra quem/quando registrou cada evolução/avaliação.*
 - [x] **Teleconsulta** — FEITO 2026-07-05. Checkbox no agendamento + badge 📹 nas agendas + **Entrar na sala** / **Enviar link ao paciente** (wa.me). Sala **Jitsi Meet** (grátis, sem conta, sem servidor) com nome não-adivinhável derivado do id da consulta. Também no Portal do Profissional. Coluna `consultas.teleconsulta` aditiva.
 - [ ] **Convênios / TISS** — faturamento de guias/XML (hoje só há o campo "convênio"). **Entrega dedicada e grande** (padrão TISS/ANS, versões por convênio, credenciamento da clínica) — só vale começar quando alguma clínica cliente pedir de verdade.
-- [~] **Extras** — **lista/fila de espera FEITA 2026-07-05** (botão na tela Agendamentos com contador; agendar da fila remove sozinho; nada apagado — soft delete). **Satisfação** já existia (pergunta no pagamento + gráfico no relatório). Restam: integração Google Agenda/Outlook, NPS por WhatsApp, estoque, relatórios/BI exportáveis, trial self-service no cadastro.
+- [x] **Extras** — ✅ **CONCLUÍDO 2026-07-06** (detalhes no Histórico): **integração Google Agenda/Outlook** (botão 📅 por consulta + feed ICS assinável via edge `agenda-ics`), **NPS por WhatsApp** (envio 1-clique + registro da nota + score no Relatório), **controle de estoque** (seção própria, saldo por trigger, alerta de reposição), **relatórios exportáveis** (CSV + Imprimir/PDF) e **trial self-service de 7 dias Premium no cadastro** (com corte automático via pg_cron + guarda p/ assinantes). Já feitos antes: lista de espera (2026-07-05) e Satisfação (pergunta no pagamento). *Sobra opcional:* NPS automático pelo bot (hoje o registro da nota é manual).
 
 ### 10.6 Evidências técnicas da auditoria (para não reinvestigar)
 

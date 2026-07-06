@@ -808,6 +808,17 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .imp-tabela th, .imp-tabela td { text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--cinza-claro); white-space: nowrap; }
 .imp-tabela th { background: #f5f8f6; position: sticky; top: 0; font-weight: 600; color: var(--cinza-escuro); }
 .imp-tabela tr:last-child td { border-bottom: none; }
+/* Impressão do relatório (Imprimir/PDF): só o conteúdo da seção ativa */
+@media print {
+  .sidebar, .mobile-nav, .menu-mais, .menu-mais-overlay, .topbar-acoes,
+  .toast, .overlay, #banner-pagamento, #banner-trial, .btn, .btn-icone, select, input { display: none !important; }
+  .app-wrap { display: block !important; }
+  .main { margin: 0 !important; padding: 0 !important; }
+  .sec { display: none !important; }
+  .sec.ativa { display: block !important; }
+  .card, .metrica-card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+  body { background: white !important; }
+}
 </style>
 </head>
 <body>
@@ -857,6 +868,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <!-- CADASTRO -->
     <div class="auth-form-wrap" id="form-cadastro" style="display:none">
       <div class="auth-form-titulo">Criar conta</div>
+      <div style="margin:6px 0 2px;display:inline-block;background:#E7F6EE;color:#0B6E4F;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px">✨ 7 dias grátis com tudo liberado — sem cartão de crédito</div>
       <div class="auth-form-sub">Configure sua clínica em minutos</div>
       <div class="auth-erro" id="cadastro-erro"></div>
       <div class="auth-sucesso" id="cadastro-sucesso"></div>
@@ -1043,6 +1055,10 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       </div>
       <div class="nav-item" data-sec="financeiro" onclick="irPara('financeiro')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Financeiro
+      </div>
+      <div class="nav-item" data-sec="estoque" onclick="irPara('estoque')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>Estoque
+        <span class="nav-badge" id="est-badge" style="display:none;background:#E9A23B">0</span>
       </div>
       <div class="nav-item" data-sec="relatorio" onclick="irPara('relatorio')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Relatório
@@ -1389,6 +1405,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="topbar">
         <div class="topbar-titulo"><h1>Relatório Mensal</h1><p id="rel-periodo">—</p></div>
         <div class="topbar-acoes">
+          <button class="btn btn-secundario" style="padding:8px 13px;font-size:12.5px" onclick="exportarRelatorioCSV()" title="Baixa as consultas do mês em CSV (abre no Excel/Google Planilhas)">⬇ CSV</button>
+          <button class="btn btn-secundario" style="padding:8px 13px;font-size:12.5px" onclick="imprimirRelatorio()" title="Imprimir ou salvar em PDF">🖨 Imprimir / PDF</button>
           <div class="mes-nav">
             <button class="mes-nav-btn" onclick="navRel(-1)">‹</button>
             <span class="mes-nav-label" id="rel-mes-label">—</span>
@@ -1439,7 +1457,56 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           <div id="rel-formas"><div class="loading"><div class="loading-spinner"></div></div></div>
         </div>
       </div>
+      <div class="card" style="padding:22px;margin-bottom:16px" id="card-nps">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          <div>
+            <div class="card-titulo">NPS — Recomendação por WhatsApp</div>
+            <div class="card-sub">Pergunte "de 0 a 10, quanto você nos recomendaria?" e registre a resposta aqui.</div>
+          </div>
+          <button class="btn btn-primario" style="padding:8px 14px;font-size:13px" onclick="abrirModalNPS()">Enviar pesquisa</button>
+        </div>
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+          <div style="text-align:center;min-width:110px">
+            <div style="font-size:34px;font-weight:800;line-height:1" id="nps-score">—</div>
+            <div class="fin-sub" id="nps-score-label">NPS do mês</div>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span>😍 Promotores (9–10)</span><b id="nps-prom">0</b></div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span>😐 Neutros (7–8)</span><b id="nps-neu">0</b></div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px"><span>😞 Detratores (0–6)</span><b id="nps-det">0</b></div>
+          </div>
+        </div>
+        <div id="nps-pendentes" style="margin-top:14px"></div>
+        <div id="nps-lista" style="margin-top:6px"></div>
+      </div>
       <div class="card"><div class="resumo-box"><div class="card-titulo" style="margin-bottom:10px">Resumo do mês</div><div class="resumo-texto" id="rel-resumo">Carregando...</div></div></div>
+    </section>
+
+    <!-- ESTOQUE -->
+    <section id="sec-estoque" class="sec">
+      <div class="topbar">
+        <div class="topbar-titulo"><h1>Estoque</h1><p>Materiais e insumos da clínica — entradas, saídas e alerta de reposição</p></div>
+        <div class="topbar-acoes">
+          <button class="btn btn-primario" onclick="abrirModalItemEstoque()">+ Novo item</button>
+        </div>
+      </div>
+      <div class="metricas" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="metrica-card verde">
+          <div class="metrica-topo"><div class="metrica-label">Itens ativos</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div></div>
+          <div class="metrica-valor" id="est-total">—</div><span class="metrica-badge badge-verde">cadastrados</span>
+        </div>
+        <div class="metrica-card laranja">
+          <div class="metrica-topo"><div class="metrica-label">Repor (abaixo do mínimo)</div><div class="metrica-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/></svg></div></div>
+          <div class="metrica-valor" id="est-alerta">—</div><span class="metrica-badge badge-amarelo">itens em alerta</span>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:16px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--cinza-claro)">
+          <input type="text" id="est-busca" placeholder="Buscar item ou categoria…" oninput="renderEstoque()" style="flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--cinza-claro);border-radius:10px;font-size:13.5px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--cinza-medio);cursor:pointer"><input type="checkbox" id="est-so-alerta" onchange="renderEstoque()"> só em alerta</label>
+        </div>
+        <div id="est-lista"><div class="loading" style="padding:30px"><div class="loading-spinner"></div></div></div>
+      </div>
     </section>
 
     <!-- CONFIGURAÇÕES -->
@@ -1529,6 +1596,23 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           <div class="card-titulo" style="margin:20px 0 16px;font-size:13px">Horários por dia</div>
           <div id="cfg-dias-horarios"></div>
           <button class="btn btn-primario" style="margin-top:8px" onclick="salvarHorarios()">Salvar horários</button>
+        </div>
+        <div class="card" style="padding:28px;margin-top:16px">
+          <div class="card-titulo" style="margin-bottom:6px">📅 Integração com Google Agenda / Outlook</div>
+          <div class="card-sub" style="margin-bottom:16px">Assine o link abaixo no seu calendário e as consultas do NastaDesk aparecem lá <b>sozinhas</b> (e se atualizam quando a agenda muda). Funciona no Google Agenda, Outlook e Apple Calendar.</div>
+          <div class="link-box">
+            <span class="link-box-url" id="ics-link" style="word-break:break-all">—</span>
+            <button class="btn btn-secundario" style="padding:7px 12px" onclick="copiarLinkICS()">Copiar</button>
+          </div>
+          <div style="font-size:12.5px;color:var(--cinza-medio);line-height:1.7;margin-top:14px">
+            <b>Google Agenda:</b> Configurações → Adicionar agenda → <i>Com um URL</i> → cole o link.<br>
+            <b>Outlook:</b> Adicionar calendário → <i>Assinar da Web</i> → cole o link.<br>
+            <b>iPhone/Mac:</b> Ajustes → Calendário → Contas → Adicionar assinatura de calendário.
+          </div>
+          <div style="font-size:12px;color:var(--cinza-medio);margin-top:12px;padding:10px 12px;background:#FFF9EF;border-radius:10px;line-height:1.6">
+            🔒 O link contém um código secreto da sua clínica — quem tiver o link vê a sua agenda (nomes e horários). Não compartilhe. Se vazar, gere um novo código: o link antigo para de funcionar na hora.
+          </div>
+          <button class="btn btn-secundario" style="margin-top:12px" onclick="regenerarTokenICS()">Gerar novo código secreto</button>
         </div>
       </div>
 
@@ -2239,6 +2323,53 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 </div>
 
 <!-- MODAL DESPESA (contas a pagar) -->
+<!-- MODAL PESQUISA NPS -->
+<div class="overlay" id="modal-nps" onclick="if(event.target===this)fecharModalNPS()">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><div><div class="modal-titulo">Enviar pesquisa NPS</div><div class="modal-sub">Abre o WhatsApp com a pergunta pronta. Quando a pessoa responder, registre a nota na lista do Relatório.</div></div><button class="modal-fechar" onclick="fecharModalNPS()">×</button></div>
+    <div class="config-campo"><label>Mensagem</label><textarea id="nps-msg" rows="3"></textarea></div>
+    <div class="config-campo"><label>Buscar paciente</label><input type="text" id="nps-busca" placeholder="Nome do paciente…" oninput="renderNPSPacientes()"></div>
+    <div id="nps-pacientes" style="max-height:290px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- MODAL ITEM DE ESTOQUE (novo/editar) -->
+<div class="overlay" id="modal-est-item" onclick="if(event.target===this)fecharModalItemEstoque()">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-titulo" id="est-item-titulo">Novo item</div><div class="modal-sub">Material ou insumo da clínica</div></div><button class="modal-fechar" onclick="fecharModalItemEstoque()">×</button></div>
+    <div class="config-campo"><label>Nome do item</label><input type="text" id="est-item-nome" maxlength="80" placeholder="Ex: Luva de procedimento M, faixa elástica, álcool 70%…"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="config-campo"><label>Categoria</label><input type="text" id="est-item-categoria" maxlength="40" list="est-categorias" placeholder="Ex: Materiais"><datalist id="est-categorias"><option value="Materiais"><option value="Higiene/EPI"><option value="Escritório"><option value="Limpeza"><option value="Equipamentos"></datalist></div>
+      <div class="config-campo"><label>Unidade</label><input type="text" id="est-item-unidade" maxlength="12" placeholder="un, cx, par, L…" value="un"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="config-campo" id="est-item-qtd-wrap"><label>Quantidade inicial</label><input type="number" id="est-item-qtd" min="0" step="any" placeholder="0"></div>
+      <div class="config-campo"><label>Estoque mínimo (alerta)</label><input type="number" id="est-item-minimo" min="0" step="any" placeholder="0"></div>
+    </div>
+    <div class="config-campo"><label>Observação (opcional)</label><input type="text" id="est-item-obs" maxlength="160" placeholder="Marca, fornecedor, onde compra…"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secundario" onclick="fecharModalItemEstoque()">Cancelar</button>
+      <button class="btn btn-primario" id="est-item-salvar" onclick="salvarItemEstoque()">Salvar item</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MOVIMENTO DE ESTOQUE (entrada/saída) -->
+<div class="overlay" id="modal-est-mov" onclick="if(event.target===this)fecharModalMovEstoque()">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-titulo" id="est-mov-titulo">Entrada</div><div class="modal-sub" id="est-mov-sub">—</div></div><button class="modal-fechar" onclick="fecharModalMovEstoque()">×</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="config-campo"><label>Quantidade</label><input type="number" id="est-mov-qtd" min="0" step="any" placeholder="0"></div>
+      <div class="config-campo"><label>Motivo (opcional)</label><input type="text" id="est-mov-motivo" maxlength="80" placeholder="Compra, uso em atendimento, perda…"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secundario" onclick="fecharModalMovEstoque()">Cancelar</button>
+      <button class="btn btn-primario" id="est-mov-salvar" onclick="salvarMovEstoque()">Registrar</button>
+    </div>
+    <div id="est-mov-hist" style="margin-top:16px"></div>
+  </div>
+</div>
+
 <div class="overlay" id="modal-despesa" onclick="if(event.target===this)fecharModalDespesa()">
   <div class="modal">
     <div class="modal-header"><div><div class="modal-titulo" id="desp-titulo">Nova despesa</div><div class="modal-sub">Conta a pagar da clínica</div></div><button class="modal-fechar" onclick="fecharModalDespesa()">×</button></div>
@@ -2435,6 +2566,9 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 11-4.5-7.794M21 5l-9 9-3-3"/></svg>Conversas
     <span id="conv-badge-mais" style="display:none;background:#25D366;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;margin-left:auto"></span>
   </div>
+  <div class="menu-mais-item" data-sec="estoque" onclick="fecharMenuMais();irPara('estoque')">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>Estoque
+  </div>
   <div class="menu-mais-item" data-sec="relatorio" onclick="fecharMenuMais();irPara('relatorio')">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Relatório
   </div>
@@ -2602,7 +2736,13 @@ async function onbConcluir() {
     await carregarProfissionais();
     await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
     atualizarBadgeLembretes();
-    toast('Bem-vindo ao NastaDesk! 🎉');
+    if (clinicaAtual.cortesia && clinicaAtual.cortesia_expira_em) {
+      const diasTrial = Math.max(1, Math.ceil((new Date(clinicaAtual.cortesia_expira_em) - Date.now()) / 864e5));
+      toast(`Bem-vindo ao NastaDesk! 🎉 Você tem ${diasTrial} dias grátis com tudo liberado.`);
+      mostrarBannerTrial();
+    } else {
+      toast('Bem-vindo ao NastaDesk! 🎉');
+    }
   } else {
     await verificarAssinatura(); // exibe a seleção de plano (paywall)
   }
@@ -2961,6 +3101,7 @@ async function carregarDados(user) {
   atualizarBadgeLembretes();
   carregarConversas();
   atualizarStatusWhatsapp();
+  if (meuPapel !== 'profissional') carregarEstoque(); // badge de reposição na nav
 
   // Realtime — apenas eventos da própria clínica
   if (clinicaId) {
@@ -3447,6 +3588,7 @@ function cardSalao(c, cor) {
       </button>
       ${c.teleconsulta?`<button class="btn-icone" title="Entrar na sala de vídeo" style="font-size:13px" onclick="entrarTeleconsulta('${c.id}')">📹</button>`:''}
       ${c.teleconsulta&&wpp?`<button class="btn-icone" title="Enviar link da teleconsulta" style="font-size:13px" onclick="enviarLinkTeleconsulta('${c.id}','${wpp}','${esc((nome||'').split(' ')[0])}','${c.data_hora}')">🔗</button>`:''}
+      <button class="btn-icone" title="Adicionar ao Google Agenda / Outlook" style="font-size:13px" onclick="abrirMenuAgendaExt('${c.id}', this)">📅</button>
       ${wpp?`<button class="btn-icone" title="WhatsApp" onclick="window.open('https://wa.me/${wpp}','_blank')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></button>`:''}
     </div>
   </div>`;
@@ -3510,6 +3652,7 @@ function renderConsultas(lista) {
         </button>
         ${c.teleconsulta?`<button class="btn-icone" title="Entrar na sala de vídeo" style="font-size:13px" onclick="entrarTeleconsulta('${c.id}')">📹</button>`:''}
         ${c.teleconsulta&&wpp?`<button class="btn-icone" title="Enviar link da teleconsulta" style="font-size:13px" onclick="enviarLinkTeleconsulta('${c.id}','${wpp}','${esc((nome||'').split(' ')[0])}','${c.data_hora}')">🔗</button>`:''}
+        <button class="btn-icone" title="Adicionar ao Google Agenda / Outlook" style="font-size:13px" onclick="abrirMenuAgendaExt('${c.id}', this)">📅</button>
         ${wpp?`<button class="btn-icone" title="WhatsApp" onclick="window.open('https://wa.me/${wpp}','_blank')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></button>`:''}
       </div>
     </div>`;
@@ -5621,6 +5764,7 @@ function navRel(dir) {
 
 async function carregarRelatorio() {
   if (!clinicaId) return;
+  carregarNPS(); // card NPS (não bloqueia o resto do relatório)
   const ano = relData.getFullYear(), mes = relData.getMonth();
   document.getElementById('rel-mes-label').textContent = `${MESES[mes]} ${ano}`;
   document.getElementById('rel-periodo').textContent = `${MESES[mes]} ${ano}`;
@@ -5889,6 +6033,7 @@ function cfgTab(nome, el) {
     if (tabEl) tabEl.classList.add('ativa');
   }
   if (nome === 'whatsapp') atualizarStatusWhatsapp();
+  if (nome === 'agenda') atualizarLinkICS();
   if (nome === 'modalidades') renderModalidadesConfig();
   if (nome === 'profissionais') { renderProfissionaisConfig(); carregarEquipe(); }
 }
@@ -6352,6 +6497,7 @@ function irPara(sec) {
   if (mnav) mnav.classList.add('ativo');
   if (sec === 'agendamentos') { renderGradeSemanal(); atualizarEsperaBadge(); }
   if (sec === 'relatorio') carregarRelatorio();
+  if (sec === 'estoque') carregarEstoque();
   if (sec === 'perfil') carregarPerfil();
   if (sec === 'financeiro') refreshFinanceiro();
   if (sec === 'lembretes') carregarLembretes();
@@ -7044,7 +7190,7 @@ const PAPEL_LABEL = { dono: 'Dono', recepcao: 'Recepção', profissional: 'Profi
 // (os gates de plano continuam valendo).
 const SECOES_OCULTAS_POR_PAPEL = {
   recepcao: ['planos', 'configuracoes', 'perfil'],
-  profissional: ['planos', 'configuracoes', 'perfil', 'financeiro', 'relatorio', 'conversas'],
+  profissional: ['planos', 'configuracoes', 'perfil', 'financeiro', 'relatorio', 'conversas', 'estoque'],
 };
 function gatearPorPapel() {
   if (meuPapel === 'dono') return;
@@ -7055,6 +7201,442 @@ function gatearPorPapel() {
     document.querySelectorAll(`.menu-mais-item[data-sec="${sec}"]`).forEach(e => e.style.display = 'none');
   });
   if (typeof secAtiva !== 'undefined' && ocultar.includes(secAtiva)) irPara('agenda');
+}
+
+// ===== INTEGRAÇÃO DE AGENDA (Google Agenda / Outlook / .ics) =====
+function buscarConsultaCache(id) {
+  return (typeof consultasHojeAll !== 'undefined' && consultasHojeAll.find(c => c.id === id))
+      || (typeof consultasSemana !== 'undefined' && consultasSemana.find(c => c.id === id))
+      || null;
+}
+
+function dadosEventoConsulta(c) {
+  const ini = new Date(c.data_hora);
+  const durMin = Number(clinicaAtual?.intervalo_consulta) > 0 ? Number(clinicaAtual.intervalo_consulta) : 60;
+  const fim = new Date(ini.getTime() + durMin * 60000);
+  const nome = c.pacientes?.nome || 'Paciente';
+  const titulo = (c.teleconsulta ? '📹 ' : '') + 'Consulta: ' + nome;
+  const detalhes = [];
+  if (c.teleconsulta) detalhes.push('Sala de vídeo: ' + teleLink(c.id));
+  if (c.queixa) detalhes.push('Motivo: ' + c.queixa);
+  detalhes.push('Agendado pelo NastaDesk');
+  const local = c.teleconsulta ? 'Teleconsulta (vídeo)' : (clinicaAtual?.endereco || clinicaAtual?.nome || '');
+  const fmt = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  return { titulo, detalhes: detalhes.join('\n'), local, iniISO: ini.toISOString(), fimISO: fim.toISOString(), iniZ: fmt(ini), fimZ: fmt(fim) };
+}
+
+function abrirMenuAgendaExt(consultaId, btn) {
+  const c = buscarConsultaCache(consultaId);
+  if (!c) { toast('Consulta não encontrada — recarregue a página'); return; }
+  document.querySelectorAll('.menu-status').forEach(m => m.remove());
+  const menu = document.createElement('div');
+  menu.className = 'menu-status';
+  menu.innerHTML = `
+    <div class="menu-status-item" onclick="abrirGoogleAgenda('${consultaId}');this.closest('.menu-status').remove()">
+      <div class="menu-status-dot" style="background:#4285F4"></div>Google Agenda
+    </div>
+    <div class="menu-status-item" onclick="abrirOutlookAgenda('${consultaId}');this.closest('.menu-status').remove()">
+      <div class="menu-status-dot" style="background:#0F6CBD"></div>Outlook
+    </div>
+    <div class="menu-status-item" onclick="baixarICSConsulta('${consultaId}');this.closest('.menu-status').remove()">
+      <div class="menu-status-dot" style="background:var(--cinza-medio)"></div>Baixar .ics (Apple/outros)
+    </div>
+    <div class="menu-status-sep"></div>
+    <div class="menu-status-item" onclick="cfgTabIrPara('agenda');this.closest('.menu-status').remove()" style="font-size:11.5px;color:var(--cinza-medio)">
+      Sincronizar tudo automaticamente…
+    </div>`;
+  const rect = btn.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.left = Math.min(rect.left, window.innerWidth - 240) + 'px';
+  menu.style.top = (rect.bottom + 170 > window.innerHeight ? rect.top - 170 : rect.bottom + 4) + 'px';
+  document.body.appendChild(menu);
+  setTimeout(() => document.addEventListener('click', function f(e) {
+    if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', f); }
+  }), 0);
+}
+
+function abrirGoogleAgenda(consultaId) {
+  const c = buscarConsultaCache(consultaId); if (!c) return;
+  const ev = dadosEventoConsulta(c);
+  window.open('https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent(ev.titulo)
+    + '&dates=' + ev.iniZ + '/' + ev.fimZ
+    + '&details=' + encodeURIComponent(ev.detalhes)
+    + '&location=' + encodeURIComponent(ev.local), '_blank');
+}
+
+function abrirOutlookAgenda(consultaId) {
+  const c = buscarConsultaCache(consultaId); if (!c) return;
+  const ev = dadosEventoConsulta(c);
+  window.open('https://outlook.live.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent'
+    + '&subject=' + encodeURIComponent(ev.titulo)
+    + '&startdt=' + encodeURIComponent(ev.iniISO)
+    + '&enddt=' + encodeURIComponent(ev.fimISO)
+    + '&body=' + encodeURIComponent(ev.detalhes)
+    + '&location=' + encodeURIComponent(ev.local), '_blank');
+}
+
+function baixarICSConsulta(consultaId) {
+  const c = buscarConsultaCache(consultaId); if (!c) return;
+  const ev = dadosEventoConsulta(c);
+  const escICS = s => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Nastaclin//NastaDesk//PT-BR', 'BEGIN:VEVENT',
+    'UID:' + c.id + '@nastadesk', 'DTSTAMP:' + ev.iniZ, 'DTSTART:' + ev.iniZ, 'DTEND:' + ev.fimZ,
+    'SUMMARY:' + escICS(ev.titulo), 'DESCRIPTION:' + escICS(ev.detalhes), 'LOCATION:' + escICS(ev.local),
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'consulta.ics';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// Feed de assinatura (Configurações → Agenda): a agenda inteira, sempre atualizada
+function urlFeedICS() {
+  return clinicaAtual?.ics_token ? `${SUPA_URL}/functions/v1/agenda-ics?token=${clinicaAtual.ics_token}` : null;
+}
+
+function atualizarLinkICS() {
+  const el = document.getElementById('ics-link');
+  if (el) el.textContent = urlFeedICS() || 'Recarregue a página para gerar o link';
+}
+
+function copiarLinkICS() {
+  const url = urlFeedICS();
+  if (!url) { toast('Link ainda não disponível — recarregue a página'); return; }
+  navigator.clipboard.writeText(url).then(() => toast('Link copiado ✓ Cole no seu calendário'));
+}
+
+async function regenerarTokenICS() {
+  if (!confirm('Gerar um novo código secreto? O link antigo para de funcionar na hora — você precisa assinar o novo link no seu calendário.')) return;
+  const novo = crypto.randomUUID();
+  const { error } = await db.from('clinicas').update({ ics_token: novo }).eq('id', clinicaId);
+  if (error) { toast('Não foi possível gerar: ' + (error.message || '')); return; }
+  if (clinicaAtual) clinicaAtual.ics_token = novo;
+  atualizarLinkICS();
+  toast('Novo código gerado ✓ O link antigo foi invalidado');
+}
+
+// ===== RELATÓRIO EXPORTÁVEL (CSV + imprimir/PDF) =====
+async function exportarRelatorioCSV() {
+  if (!clinicaId) return;
+  const ano = relData.getFullYear(), mes = relData.getMonth();
+  const inicio = new Date(ano, mes, 1), fim = new Date(ano, mes + 1, 0, 23, 59, 59);
+  const { data, error } = await db.from('consultas')
+    .select('*, pacientes(nome), modalidades(nome), profissionais(nome), salas(nome)')
+    .eq('clinica_id', clinicaId)
+    .gte('data_hora', inicio.toISOString()).lte('data_hora', fim.toISOString())
+    .order('data_hora', { ascending: true });
+  if (error || !data) { toast('Não foi possível exportar'); return; }
+  const cel = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  const linhas = [
+    ['Data', 'Hora', 'Paciente', 'Status', 'Origem', 'Modalidade', 'Profissional', 'Sala', 'Teleconsulta', 'Valor (R$)', 'Pagamento', 'Forma'].join(';'),
+    ...data.map(c => {
+      const d = new Date(c.data_hora);
+      return [
+        d.toLocaleDateString('pt-BR'), horaSP(c.data_hora),
+        c.pacientes?.nome || '', c.status || '', c.origem || '',
+        c.modalidades?.nome || '', c.profissionais?.nome || '', c.salas?.nome || '',
+        c.teleconsulta ? 'sim' : '',
+        c.valor != null ? String(Number(c.valor)).replace('.', ',') : '',
+        c.pagamento_status || '', FORMA_LABEL[c.forma_pagamento] || c.forma_pagamento || '',
+      ].map(cel).join(';');
+    }),
+  ];
+  const recebido = data.filter(c => c.pagamento_status === 'pago').reduce((s, c) => s + (Number(c.valor) || 0), 0);
+  linhas.push('', [cel('TOTAL RECEBIDO NO MÊS'), '', '', '', '', '', '', '', '', cel(String(recebido).replace('.', ',')), '', ''].join(';'));
+  baixarCSV(`relatorio-consultas-${ano}-${String(mes + 1).padStart(2, '0')}.csv`, linhas.join('\n'));
+  toast('Relatório exportado ✓ (abre no Excel/Google Planilhas)');
+}
+
+function imprimirRelatorio() { window.print(); }
+
+// ===== NPS por WhatsApp (envio 1-clique + registro manual da nota) =====
+let npsRegistros = [];
+
+function npsMsgPadrao() {
+  const nomeClinica = (typeof clinicaAtual !== 'undefined' && clinicaAtual?.nome) ? clinicaAtual.nome : 'nossa clínica';
+  return `Olá, {nome}! 😊 Aqui é da ${nomeClinica}. De 0 a 10, quanto você recomendaria a gente para um amigo ou familiar? Pode responder só com o número por aqui mesmo. Obrigado por nos ajudar a melhorar! 💚`;
+}
+
+async function carregarNPS() {
+  if (!clinicaId) return;
+  const ano = relData.getFullYear(), mes = relData.getMonth();
+  const inicio = new Date(ano, mes, 1), fim = new Date(ano, mes + 1, 0, 23, 59, 59);
+  // Respondidas do mês do relatório + TODAS as pendentes (sem nota ainda)
+  const [{ data: resp }, { data: pend }] = await Promise.all([
+    db.from('nps_respostas').select('*').eq('clinica_id', clinicaId).not('nota', 'is', null)
+      .gte('respondido_em', inicio.toISOString()).lte('respondido_em', fim.toISOString())
+      .order('respondido_em', { ascending: false }),
+    db.from('nps_respostas').select('*').eq('clinica_id', clinicaId).is('nota', null)
+      .order('enviado_em', { ascending: false }).limit(30),
+  ]);
+  npsRegistros = { resp: resp || [], pend: pend || [] };
+  renderNPS();
+}
+
+function renderNPS() {
+  const { resp, pend } = npsRegistros;
+  const prom = resp.filter(r => r.nota >= 9).length;
+  const det = resp.filter(r => r.nota <= 6).length;
+  const neu = resp.length - prom - det;
+  const score = resp.length ? Math.round(((prom - det) / resp.length) * 100) : null;
+  const elScore = document.getElementById('nps-score');
+  elScore.textContent = score === null ? '—' : score;
+  elScore.style.color = score === null ? 'var(--cinza-medio)' : score >= 50 ? 'var(--verde)' : score >= 0 ? '#B87700' : 'var(--vermelho)';
+  document.getElementById('nps-score-label').textContent = resp.length ? `${resp.length} resposta${resp.length > 1 ? 's' : ''} no mês` : 'sem respostas no mês';
+  document.getElementById('nps-prom').textContent = prom;
+  document.getElementById('nps-neu').textContent = neu;
+  document.getElementById('nps-det').textContent = det;
+
+  const elP = document.getElementById('nps-pendentes');
+  elP.innerHTML = !pend.length ? '' :
+    `<div class="card-sub" style="margin:8px 0 6px">Aguardando resposta — quando o paciente responder no WhatsApp, registre a nota:</div>` +
+    pend.map(r => `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px dashed var(--cinza-claro)">
+      <span style="flex:1;font-size:13px;font-weight:600">${esc(r.nome || 'Paciente')}</span>
+      <span class="fin-sub">enviada ${new Date(r.enviado_em).toLocaleDateString('pt-BR')}</span>
+      <select id="nps-nota-${r.id}" style="padding:5px 8px;border:1px solid var(--cinza-claro);border-radius:8px;font-size:12.5px">
+        <option value="">nota…</option>${Array.from({length:11},(_,n)=>`<option value="${n}">${n}</option>`).join('')}
+      </select>
+      <button class="btn btn-secundario" style="padding:5px 10px;font-size:12px" onclick="registrarNotaNPS('${r.id}')">Salvar</button>
+      <button class="btn-icone" title="Descartar (não respondeu)" onclick="descartarNPS('${r.id}')">×</button>
+    </div>`).join('');
+
+  const elL = document.getElementById('nps-lista');
+  elL.innerHTML = !resp.length ? '' :
+    `<div class="card-sub" style="margin:10px 0 6px">Respostas do mês</div>` +
+    resp.slice(0, 12).map(r => {
+      const cor = r.nota >= 9 ? 'var(--verde)' : r.nota >= 7 ? '#B87700' : 'var(--vermelho)';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--cinza-claro);font-size:13px">
+        <span style="font-weight:800;color:${cor};min-width:22px;text-align:center">${r.nota}</span>
+        <span style="flex:1">${esc(r.nome || 'Paciente')}</span>
+        ${r.comentario ? `<span class="fin-sub" style="flex:2">“${esc(r.comentario)}”</span>` : ''}
+        <span class="fin-sub">${new Date(r.respondido_em).toLocaleDateString('pt-BR')}</span>
+      </div>`;
+    }).join('');
+}
+
+function abrirModalNPS() {
+  document.getElementById('nps-msg').value = npsMsgPadrao();
+  document.getElementById('nps-busca').value = '';
+  renderNPSPacientes();
+  document.getElementById('modal-nps').classList.add('visivel');
+}
+function fecharModalNPS() { document.getElementById('modal-nps').classList.remove('visivel'); }
+
+function renderNPSPacientes() {
+  const el = document.getElementById('nps-pacientes');
+  const busca = (document.getElementById('nps-busca').value || '').trim().toLowerCase();
+  const lista = (typeof pacientes !== 'undefined' ? pacientes : [])
+    .filter(p => p.whatsapp && p.status !== 'inativo')
+    .filter(p => !busca || (p.nome || '').toLowerCase().includes(busca))
+    .slice(0, 40);
+  el.innerHTML = lista.length ? lista.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--cinza-claro)">
+      <span style="flex:1;font-size:13.5px;font-weight:600">${esc(p.nome)}</span>
+      <button class="btn btn-primario" style="padding:6px 12px;font-size:12px;background:#25D366;border-color:#25D366" onclick="enviarNPS('${p.id}')">Enviar no WhatsApp</button>
+    </div>`).join('')
+    : '<div class="empty" style="padding:18px">Nenhum paciente com WhatsApp encontrado.</div>';
+}
+
+async function enviarNPS(pacienteId) {
+  const p = (typeof pacientes !== 'undefined' ? pacientes : []).find(x => x.id === pacienteId);
+  if (!p || !p.whatsapp) return;
+  const msg = (document.getElementById('nps-msg').value || npsMsgPadrao()).replace(/\{nome\}/g, (p.nome || '').split(' ')[0]);
+  // Registra o envio ANTES de abrir o WhatsApp (fica em "aguardando resposta")
+  const { error } = await db.from('nps_respostas').insert({ clinica_id: clinicaId, paciente_id: p.id, nome: p.nome });
+  if (error) { toast('Não foi possível registrar o envio: ' + (error.message || '')); return; }
+  window.open(`https://wa.me/55${String(p.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+  toast('Pesquisa registrada — anote a nota quando a pessoa responder');
+  carregarNPS();
+}
+
+async function registrarNotaNPS(id) {
+  const sel = document.getElementById(`nps-nota-${id}`);
+  const nota = sel && sel.value !== '' ? Number(sel.value) : null;
+  if (nota === null) { toast('Escolha a nota (0 a 10) que o paciente respondeu'); return; }
+  const comentario = prompt('Comentário do paciente (opcional):') || null;
+  const { error } = await db.from('nps_respostas')
+    .update({ nota, comentario, respondido_em: new Date().toISOString() })
+    .eq('id', id).eq('clinica_id', clinicaId);
+  if (error) { toast('Não foi possível salvar a nota'); return; }
+  toast('Resposta registrada ✓');
+  carregarNPS();
+}
+
+async function descartarNPS(id) {
+  if (!confirm('Descartar esta pesquisa? (a pessoa não respondeu)')) return;
+  const { error } = await db.from('nps_respostas').delete().eq('id', id).eq('clinica_id', clinicaId).is('nota', null);
+  if (error) { toast('Não foi possível descartar'); return; }
+  carregarNPS();
+}
+
+// ===== ESTOQUE (dono + recepção; profissional não vê) =====
+let estoqueItens = [];
+let estItemEditando = null;
+let estMovCtx = null; // { itemId, tipo }
+
+async function carregarEstoque() {
+  if (!clinicaId) return;
+  const { data } = await db.from('estoque_itens').select('*')
+    .eq('clinica_id', clinicaId).eq('ativo', true).order('nome', { ascending: true });
+  estoqueItens = data || [];
+  renderEstoque();
+  atualizarBadgeEstoque();
+}
+
+function itemEmAlerta(i) { return Number(i.quantidade) <= Number(i.quantidade_minima) && Number(i.quantidade_minima) > 0; }
+
+function atualizarBadgeEstoque() {
+  const n = estoqueItens.filter(itemEmAlerta).length;
+  const b = document.getElementById('est-badge');
+  if (b) { b.textContent = n; b.style.display = n > 0 ? '' : 'none'; }
+}
+
+function renderEstoque() {
+  const el = document.getElementById('est-lista');
+  if (!el) return;
+  const busca = (document.getElementById('est-busca')?.value || '').trim().toLowerCase();
+  const soAlerta = !!document.getElementById('est-so-alerta')?.checked;
+  document.getElementById('est-total').textContent = estoqueItens.length;
+  document.getElementById('est-alerta').textContent = estoqueItens.filter(itemEmAlerta).length;
+  let lista = estoqueItens;
+  if (busca) lista = lista.filter(i => (i.nome + ' ' + (i.categoria||'')).toLowerCase().includes(busca));
+  if (soAlerta) lista = lista.filter(itemEmAlerta);
+  if (!lista.length) {
+    el.innerHTML = `<div class="empty" style="padding:36px">${estoqueItens.length ? 'Nada encontrado com esse filtro.' : 'Nenhum item ainda. Cadastre o primeiro material da clínica no botão “+ Novo item”.'}</div>`;
+    return;
+  }
+  el.innerHTML = lista.map(i => {
+    const alerta = itemEmAlerta(i);
+    const q = Number(i.quantidade);
+    return `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 20px;border-bottom:1px solid var(--cinza-claro);${alerta ? 'background:#FFF9EF' : ''}">
+      <div style="flex:1;min-width:170px">
+        <div style="font-size:14px;font-weight:600;color:var(--cinza-escuro)">${esc(i.nome)} ${alerta ? '<span style="font-size:10.5px;font-weight:700;color:#8A5A00;background:#FDEBC8;border-radius:8px;padding:2px 8px;margin-left:4px">⚠ repor</span>' : ''}</div>
+        <div class="fin-sub">${esc(i.categoria || 'Sem categoria')}${i.observacao ? ' · ' + esc(i.observacao) : ''}</div>
+      </div>
+      <div style="text-align:right;min-width:90px">
+        <div style="font-size:16px;font-weight:700;color:${alerta ? '#B87700' : 'var(--cinza-escuro)'}">${q % 1 === 0 ? q : q.toFixed(2)} <span style="font-size:11px;font-weight:500;color:var(--cinza-medio)">${esc(i.unidade || 'un')}</span></div>
+        <div class="fin-sub">mín. ${Number(i.quantidade_minima)}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secundario" style="padding:6px 11px;font-size:12px" onclick="abrirModalMovEstoque('${i.id}','entrada')">+ Entrada</button>
+        <button class="btn btn-secundario" style="padding:6px 11px;font-size:12px" onclick="abrirModalMovEstoque('${i.id}','saida')">− Saída</button>
+        <button class="btn-icone" title="Editar item" onclick="abrirModalItemEstoque('${i.id}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+        <button class="btn-icone" title="Arquivar item (sai da lista; histórico é mantido)" onclick="arquivarItemEstoque('${i.id}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirModalItemEstoque(id) {
+  estItemEditando = id ? estoqueItens.find(i => i.id === id) || null : null;
+  document.getElementById('est-item-titulo').textContent = estItemEditando ? 'Editar item' : 'Novo item';
+  document.getElementById('est-item-nome').value = estItemEditando?.nome || '';
+  document.getElementById('est-item-categoria').value = estItemEditando?.categoria || '';
+  document.getElementById('est-item-unidade').value = estItemEditando?.unidade || 'un';
+  document.getElementById('est-item-minimo').value = estItemEditando ? Number(estItemEditando.quantidade_minima) : '';
+  document.getElementById('est-item-obs').value = estItemEditando?.observacao || '';
+  document.getElementById('est-item-qtd').value = '';
+  // Editando: a quantidade muda por Entrada/Saída (preserva o histórico), não aqui.
+  document.getElementById('est-item-qtd-wrap').style.display = estItemEditando ? 'none' : '';
+  document.getElementById('modal-est-item').classList.add('visivel');
+}
+function fecharModalItemEstoque() { document.getElementById('modal-est-item').classList.remove('visivel'); estItemEditando = null; }
+
+async function salvarItemEstoque() {
+  const nome = document.getElementById('est-item-nome').value.trim();
+  if (!nome) { toast('Dê um nome ao item'); return; }
+  const payload = {
+    nome,
+    categoria: document.getElementById('est-item-categoria').value.trim() || null,
+    unidade: document.getElementById('est-item-unidade').value.trim() || 'un',
+    quantidade_minima: Number(document.getElementById('est-item-minimo').value) || 0,
+    observacao: document.getElementById('est-item-obs').value.trim() || null,
+  };
+  const btn = document.getElementById('est-item-salvar');
+  btn.disabled = true;
+  try {
+    if (estItemEditando) {
+      const { error } = await db.from('estoque_itens').update(payload).eq('id', estItemEditando.id).eq('clinica_id', clinicaId);
+      if (error) throw error;
+    } else {
+      const { data, error } = await db.from('estoque_itens').insert({ ...payload, clinica_id: clinicaId }).select().single();
+      if (error) throw error;
+      const qtdIni = Number(document.getElementById('est-item-qtd').value) || 0;
+      if (qtdIni > 0) {
+        const { error: e2 } = await db.from('estoque_movimentos').insert({
+          clinica_id: clinicaId, item_id: data.id, tipo: 'entrada', quantidade: qtdIni, motivo: 'Estoque inicial' });
+        if (e2) throw e2;
+      }
+    }
+    fecharModalItemEstoque();
+    toast('Item salvo ✓');
+    await carregarEstoque();
+  } catch (e) {
+    toast('Não foi possível salvar: ' + (e.message || e));
+  } finally { btn.disabled = false; }
+}
+
+async function arquivarItemEstoque(id) {
+  const item = estoqueItens.find(i => i.id === id);
+  if (!item) return;
+  if (!confirm(`Arquivar "${item.nome}"? Ele sai da lista, mas nada é apagado — o histórico de movimentos fica guardado.`)) return;
+  const { error } = await db.from('estoque_itens').update({ ativo: false }).eq('id', id).eq('clinica_id', clinicaId);
+  if (error) { toast('Não foi possível arquivar'); return; }
+  toast('Item arquivado');
+  await carregarEstoque();
+}
+
+async function abrirModalMovEstoque(itemId, tipo) {
+  const item = estoqueItens.find(i => i.id === itemId);
+  if (!item) return;
+  estMovCtx = { itemId, tipo };
+  document.getElementById('est-mov-titulo').textContent = tipo === 'entrada' ? '+ Entrada no estoque' : '− Saída do estoque';
+  document.getElementById('est-mov-sub').textContent = `${item.nome} — saldo atual: ${Number(item.quantidade)} ${item.unidade || 'un'}`;
+  document.getElementById('est-mov-qtd').value = '';
+  document.getElementById('est-mov-motivo').value = '';
+  document.getElementById('modal-est-mov').classList.add('visivel');
+  // Últimos movimentos do item (histórico)
+  const hist = document.getElementById('est-mov-hist');
+  hist.innerHTML = '<div class="loading" style="padding:10px"><div class="loading-spinner"></div></div>';
+  const { data } = await db.from('estoque_movimentos').select('*')
+    .eq('clinica_id', clinicaId).eq('item_id', itemId)
+    .order('criado_em', { ascending: false }).limit(8);
+  const movs = data || [];
+  hist.innerHTML = movs.length
+    ? `<div class="card-sub" style="margin-bottom:8px">Últimos movimentos</div>` + movs.map(m =>
+        `<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px dashed var(--cinza-claro)">
+          <span style="color:${m.tipo === 'entrada' ? 'var(--verde)' : 'var(--vermelho)'};font-weight:700">${m.tipo === 'entrada' ? '+' : '−'}${Number(m.quantidade)}</span>
+          <span style="flex:1;color:var(--cinza-medio)">${esc(m.motivo || (m.tipo === 'entrada' ? 'Entrada' : 'Saída'))}</span>
+          <span style="color:var(--cinza-medio)">${new Date(m.criado_em).toLocaleDateString('pt-BR')}</span>
+        </div>`).join('')
+    : '';
+}
+function fecharModalMovEstoque() { document.getElementById('modal-est-mov').classList.remove('visivel'); estMovCtx = null; }
+
+async function salvarMovEstoque() {
+  if (!estMovCtx) return;
+  const qtd = Number(document.getElementById('est-mov-qtd').value);
+  if (!(qtd > 0)) { toast('Informe uma quantidade maior que zero'); return; }
+  const item = estoqueItens.find(i => i.id === estMovCtx.itemId);
+  if (estMovCtx.tipo === 'saida' && item && qtd > Number(item.quantidade)) {
+    if (!confirm(`Saída de ${qtd} com saldo de ${Number(item.quantidade)} — o saldo vai ficar negativo. Registrar mesmo assim?`)) return;
+  }
+  const btn = document.getElementById('est-mov-salvar');
+  btn.disabled = true;
+  try {
+    const { error } = await db.from('estoque_movimentos').insert({
+      clinica_id: clinicaId, item_id: estMovCtx.itemId, tipo: estMovCtx.tipo,
+      quantidade: qtd, motivo: document.getElementById('est-mov-motivo').value.trim() || null });
+    if (error) throw error;
+    fecharModalMovEstoque();
+    toast('Movimento registrado ✓');
+    await carregarEstoque();
+  } catch (e) {
+    toast('Não foi possível registrar: ' + (e.message || e));
+  } finally { btn.disabled = false; }
 }
 
 // ===== EQUIPE / ACESSOS (só o dono gerencia, plano Profissional+) =====
@@ -7302,7 +7884,29 @@ async function verificarAssinatura() {
 
   removerSelecaoPlano();
   mostrarBannerAtraso(!!assinaturaAtual && assinaturaAtual.status === 'em_atraso');
+  mostrarBannerTrial();
   if (secAtiva === 'planos') carregarPlanos();
+}
+
+// Banner do teste grátis: aparece enquanto a clínica está em trial (cortesia
+// com data de expiração e sem assinatura paga). Some ao assinar.
+function mostrarBannerTrial() {
+  const b = document.getElementById('banner-trial');
+  const emTrial = clinicaAtual && clinicaAtual.ativo === true && clinicaAtual.cortesia === true
+    && clinicaAtual.cortesia_expira_em && !(assinaturaAtual && ['ativa','em_atraso'].includes(assinaturaAtual.status));
+  if (!emTrial) { if (b) b.remove(); return; }
+  const dias = Math.ceil((new Date(clinicaAtual.cortesia_expira_em) - Date.now()) / 864e5);
+  if (dias < 0) { if (b) b.remove(); return; } // venceu — o corte/paywall assume
+  const texto = dias === 0
+    ? '⏳ Seu teste grátis termina <b>hoje</b>! Assine para não perder o acesso — seus dados continuam salvos.'
+    : `✨ Teste grátis: <b>${dias} dia${dias > 1 ? 's' : ''} restante${dias > 1 ? 's' : ''}</b> com tudo liberado.`;
+  const html = `${texto} <a onclick="irPara('planos')" style="color:#0B6E4F;font-weight:700;cursor:pointer;text-decoration:underline">Assinar agora</a>`;
+  if (b) { b.querySelector('span').innerHTML = html; return; }
+  const el = document.createElement('div');
+  el.id = 'banner-trial';
+  el.style.cssText = `position:fixed;top:0;left:0;right:0;z-index:9000;background:${dias <= 2 ? '#FFF4E5' : '#E7F6EE'};color:${dias <= 2 ? '#8A5A00' : '#0B6E4F'};border-bottom:1px solid ${dias <= 2 ? '#F0D9A8' : '#BFE6D2'};padding:9px 16px;font-size:13px;text-align:center;font-weight:500`;
+  el.innerHTML = '<span>' + html + '</span>';
+  document.body.appendChild(el);
 }
 
 function mostrarBannerAtraso(show) {
@@ -7324,8 +7928,14 @@ function mostrarSelecaoPlano() {
   if (document.getElementById('paywall-overlay')) return;
   const temPlanoAntes = !!(clinicaAtual && clinicaAtual.plano);
   const pendente = assinaturaAtual && assinaturaAtual.status === 'pendente';
+  // Trial vencido: nunca pagou e a cortesia/teste tinha data que já passou
+  const trialAcabou = !assinaturaAtual && clinicaAtual && clinicaAtual.cortesia_expira_em
+    && new Date(clinicaAtual.cortesia_expira_em) < new Date();
   let titulo, sub;
-  if (pendente) {
+  if (trialAcabou) {
+    titulo = 'Seu teste grátis terminou';
+    sub = 'Esperamos que tenha gostado do NastaDesk! Todos os seus dados (agenda, pacientes, financeiro) continuam salvos — é só escolher um plano para continuar de onde parou.';
+  } else if (pendente) {
     titulo = 'Estamos confirmando seu pagamento';
     sub = 'Assim que o Mercado Pago confirmar, sua conta é liberada automaticamente — pode deixar esta tela aberta por alguns instantes. Se precisar, escolha um plano novamente abaixo.';
   } else if (temPlanoAntes) {
