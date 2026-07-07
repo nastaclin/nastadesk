@@ -31,7 +31,7 @@ async function mpCancelar(preId: string) {
 
 // Valida a assinatura HMAC do Mercado Pago (header x-signature). Só valida se o secret estiver configurado.
 async function assinaturaValida(req: Request, dataId: string): Promise<boolean> {
-  if (!WEBHOOK_SECRET) return true; // ainda não configurado -> não bloqueia (ativar depois)
+  if (!WEBHOOK_SECRET) return false; // fail-closed: MP aposentado; sem secret configurado, recusa
   const sig = req.headers.get("x-signature") || "";
   const reqId = req.headers.get("x-request-id") || "";
   const parts: Record<string, string> = {};
