@@ -1527,6 +1527,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
         <div class="cfg-tab" data-cfg="salas" onclick="cfgTab('salas',this)">Salas</div>
         <div class="cfg-tab" data-cfg="modalidades" onclick="cfgTab('modalidades',this)">Modalidades</div>
         <div class="cfg-tab" data-cfg="profissionais" onclick="cfgTab('profissionais',this)">Profissionais</div>
+        <div class="cfg-tab" data-cfg="documentos" onclick="cfgTab('documentos',this)">Documentos</div>
       </div>
 
       <!-- ABA MENSAGENS -->
@@ -1687,6 +1688,21 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
           </div>
           <button class="btn btn-primario" id="equipe-btn-criar" onclick="criarAcessoEquipe()">Criar acesso</button>
           <div id="equipe-lista" style="margin-top:22px"></div>
+        </div>
+      </div>
+
+      <!-- ABA DOCUMENTOS (modelos da clínica) -->
+      <div id="cfg-tab-documentos" style="display:none;max-width:580px">
+        <div class="card" style="padding:28px">
+          <div class="card-titulo" style="margin-bottom:6px">Modelos de documentos</div>
+          <div class="card-sub" style="margin-bottom:18px">Guarde aqui os documentos padrão da sua clínica — <strong>regras do estúdio</strong>, <strong>contrato de prestação de serviço</strong>, <strong>consentimento de uso de imagem</strong>… Quando chegar um paciente novo: abra o modelo, imprima (ou envie), o paciente lê e assina, e você anexa a via assinada na <strong>ficha do paciente → aba Docs</strong> — lá o sistema mostra o que cada paciente já assinou e o que está pendente.</div>
+          <input type="file" id="modelo-file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*" style="width:100%;font-size:13px">
+          <button class="btn btn-primario" id="modelo-enviar-btn" onclick="enviarModelo()" style="width:100%;margin-top:10px;padding:10px">Guardar modelo</button>
+          <div style="font-size:11.5px;color:var(--cinza-medio);margin-top:6px">PDF ou imagem, até 10&nbsp;MB. Fica guardado com segurança — só a sua clínica acessa.</div>
+          <div style="margin-top:22px">
+            <div style="font-size:13px;font-weight:700;color:var(--cinza-escuro);margin-bottom:8px">Modelos guardados</div>
+            <div id="lista-modelos"><div class="empty" style="padding:14px">Nenhum modelo guardado ainda.</div></div>
+          </div>
         </div>
       </div>
 
@@ -1863,6 +1879,7 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
     <div class="ficha-tab" onclick="fichaTab('evolucao',this)">Evolução</div>
     <div class="ficha-tab" onclick="fichaTab('avaliacoes',this)">Avaliações</div>
     <div class="ficha-tab" onclick="fichaTab('exames',this)">Exames</div>
+    <div class="ficha-tab" onclick="fichaTab('documentos',this)">Docs</div>
     <div class="ficha-tab" onclick="fichaTab('anamnese',this)">Anamnese</div>
   </div>
   <div class="ficha-corpo">
@@ -2027,6 +2044,33 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
       <div class="ficha-secao">
         <div class="ficha-secao-titulo">Exames anexados</div>
         <div id="ficha-lista-exames"><div class="loading"><div class="loading-spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- TAB: DOCUMENTOS (regras assinadas, contrato, consentimento de imagem…) -->
+    <div id="ficha-tab-documentos" style="display:none">
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Documentos do paciente</div>
+        <div style="font-size:12px;color:var(--cinza-medio);margin-bottom:10px;line-height:1.5">Regras do estúdio, contrato e consentimento de imagem: imprima ou envie o documento (guarde os modelos em <b>Configurações → Documentos</b>), o paciente assina, e você anexa aqui a via assinada (foto ou PDF).</div>
+        <div id="doc-checklist" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Anexar documento assinado</div>
+        <div class="config-campo" style="margin-bottom:10px"><label>Tipo de documento</label>
+          <select id="doc-tipo">
+            <option value="regras">📋 Regras do estúdio / da clínica</option>
+            <option value="contrato">📝 Contrato de prestação de serviço</option>
+            <option value="imagem">📸 Consentimento de uso de imagem</option>
+            <option value="outro">📎 Outro documento</option>
+          </select>
+        </div>
+        <input type="file" id="doc-file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*" style="width:100%;font-size:13px">
+        <button class="btn btn-primario" id="doc-enviar-btn" onclick="enviarDocumento()" style="width:100%;margin-top:10px;padding:10px">Anexar documento</button>
+        <div style="font-size:11.5px;color:var(--cinza-medio);margin-top:6px">PDF ou imagem (JPG, PNG, WebP, HEIC), até 10&nbsp;MB. Fica guardado com segurança — só a sua clínica acessa.</div>
+      </div>
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">Documentos anexados</div>
+        <div id="ficha-lista-documentos"><div class="loading"><div class="loading-spinner"></div></div></div>
       </div>
     </div>
 
@@ -4419,7 +4463,7 @@ function deletarPaciente() {
   const nomeParaDeletar = pacienteAtual.nome;
   abrirModalConfirm(
     'Excluir paciente?',
-    `Isso vai remover "${nomeParaDeletar}" e TUDO que é dele — consultas, evoluções, avaliações, exames anexados, pacotes, mensalidades e conversas — permanentemente. Esta ação não pode ser desfeita. Se a intenção é atender um pedido LGPD mantendo o histórico financeiro, use "Eliminar dados pessoais" na ficha.`,
+    `Isso vai remover "${nomeParaDeletar}" e TUDO que é dele — consultas, evoluções, avaliações, exames e documentos anexados, pacotes, mensalidades e conversas — permanentemente. Esta ação não pode ser desfeita. Se a intenção é atender um pedido LGPD mantendo o histórico financeiro, use "Eliminar dados pessoais" na ficha.`,
     'Excluir tudo',
     async () => {
       // Fase 3: exames do Storage saem primeiro (o banco não os apaga). Fail-closed.
@@ -4451,11 +4495,14 @@ async function exportarDadosPaciente() {
       db.from('consentimentos').select('*').eq('paciente_id', pid).order('criado_em'),
       db.from('avaliacoes').select('*').eq('paciente_id', pid).order('criado_em'),
     ]);
-    // exames anexados: só a lista de nomes (os arquivos em si o titular pode pedir à clínica)
+    // exames/documentos anexados: só a lista de nomes (os arquivos em si o titular pode pedir à clínica)
     let exames = [];
+    let documentos = [];
     try {
       const { data: exd } = await db.storage.from('exames').list(`${clinicaId}/${pid}`, { limit: 1000 });
-      exames = (exd || []).filter(f => f.name && !f.name.startsWith('.')).map(f => nomeArquivoExame(f.name));
+      const arquivos = (exd || []).filter(f => f.name && !f.name.startsWith('.'));
+      exames = arquivos.filter(f => !ehDocumento(f.name)).map(f => nomeArquivoExame(f.name));
+      documentos = arquivos.filter(f => ehDocumento(f.name)).map(f => `${DOC_TIPOS[docTipoDe(f.name)].rotulo}: ${nomeArquivoDoc(f.name)}`);
     } catch (e) { /* tolerante */ }
     const dump = {
       exportacao: {
@@ -4468,6 +4515,7 @@ async function exportarDadosPaciente() {
       evolucoes: evo.data || [],
       avaliacoes: avals.data || [],
       exames_anexados: exames,
+      documentos_anexados: documentos,
       pacotes: pac2.data || [],
       mensalidades: mens.data || [],
       consentimentos: consent.data || [],
@@ -4495,7 +4543,7 @@ function anonimizarPaciente() {
   const nome = pacienteAtual.nome;
   abrirModalConfirm(
     'Eliminar dados pessoais? (LGPD)',
-    `Os dados pessoais e de saúde de "${nome}" serão apagados permanentemente — nome, CPF, contato, anamnese, evoluções, avaliações, exames anexados e conversas. O histórico financeiro (consultas, pacotes, mensalidades) continua, sem identificação. Dica: exporte os dados antes, se o paciente quiser uma cópia. Esta ação não pode ser desfeita.`,
+    `Os dados pessoais e de saúde de "${nome}" serão apagados permanentemente — nome, CPF, contato, anamnese, evoluções, avaliações, exames e documentos anexados e conversas. O histórico financeiro (consultas, pacotes, mensalidades) continua, sem identificação. Dica: exporte os dados antes, se o paciente quiser uma cópia. Esta ação não pode ser desfeita.`,
     'Eliminar dados pessoais',
     async () => {
       // Fase 3: os arquivos de exames saem primeiro, via Storage API (o banco
@@ -4625,7 +4673,7 @@ function fecharFicha() {
 }
 
 function fichaTab(tab, el) {
-  ['dados','consultas','pacotes','evolucao','avaliacoes','exames','anamnese'].forEach(t => {
+  ['dados','consultas','pacotes','evolucao','avaliacoes','exames','documentos','anamnese'].forEach(t => {
     const e = document.getElementById(`ficha-tab-${t}`);
     if (e) e.style.display = t === tab ? 'block' : 'none';
   });
@@ -4634,6 +4682,7 @@ function fichaTab(tab, el) {
   if (tab === 'pacotes' && pacienteAtual) carregarPacotesFicha(pacienteAtual.id);
   if (tab === 'avaliacoes' && pacienteAtual) carregarAvaliacoes(pacienteAtual.id);
   if (tab === 'exames' && pacienteAtual) carregarExames(pacienteAtual.id);
+  if (tab === 'documentos' && pacienteAtual) carregarDocumentos(pacienteAtual.id);
 }
 
 function fichaEditado() {
@@ -4979,7 +5028,7 @@ async function carregarExames(pacienteId) {
   if (!el || !clinicaId) return;
   const { data, error } = await db.storage.from('exames').list(`${clinicaId}/${pacienteId}`, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
   if (error) { el.innerHTML = '<div class="empty" style="padding:16px">Não foi possível carregar os exames.</div>'; return; }
-  const arquivos = (data || []).filter(f => f.name && !f.name.startsWith('.'));
+  const arquivos = (data || []).filter(f => f.name && !f.name.startsWith('.') && !ehDocumento(f.name));
   if (!arquivos.length) { el.innerHTML = '<div class="empty" style="padding:16px">Nenhum exame anexado ainda.</div>'; return; }
   el.innerHTML = arquivos.map(f => {
     const kb = f.metadata && f.metadata.size ? Math.round(f.metadata.size / 1024) : null;
@@ -5040,9 +5089,174 @@ function excluirExame(path) {
   });
 }
 
-// LGPD: apaga TODOS os exames do paciente via Storage API. Fail-closed —
-// a eliminação/exclusão do paciente só segue se isto der certo (o banco não
-// consegue apagar arquivos do Storage; ver migration da Fase 3).
+// ===== DOCUMENTOS DO PACIENTE (regras assinadas, contrato, consentimento de imagem…) =====
+// Mesmo bucket privado 'exames', mesmo prefixo clinica_id/paciente_id/ — os
+// documentos são distinguidos pelo prefixo de nome "doc__<tipo>__". Assim as
+// policies por clínica/papel e a limpeza LGPD (apagarExamesPaciente apaga TUDO
+// do prefixo) continuam valendo sem nenhuma mudança no banco.
+const DOC_TIPOS = {
+  regras:   { rotulo: 'Regras do estúdio',            emoji: '📋' },
+  contrato: { rotulo: 'Contrato de prestação',        emoji: '📝' },
+  imagem:   { rotulo: 'Consentimento de uso de imagem', emoji: '📸' },
+  outro:    { rotulo: 'Outro documento',              emoji: '📎' },
+};
+const DOC_CHECKLIST = ['regras', 'contrato', 'imagem']; // os que aparecem como assinado/pendente
+function ehDocumento(name) { return /^doc__/.test(name || ''); }
+function docTipoDe(name) { const m = (name || '').match(/^doc__([a-z]+)__/); return (m && DOC_TIPOS[m[1]]) ? m[1] : 'outro'; }
+function nomeArquivoDoc(name) { return (name || '').replace(/^doc__[a-z]+__/, '').replace(/^\d+_/, ''); }
+
+async function carregarDocumentos(pacienteId) {
+  const el = document.getElementById('ficha-lista-documentos');
+  const chk = document.getElementById('doc-checklist');
+  if (!el || !clinicaId) return;
+  const { data, error } = await db.storage.from('exames').list(`${clinicaId}/${pacienteId}`, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+  if (error) { el.innerHTML = '<div class="empty" style="padding:16px">Não foi possível carregar os documentos.</div>'; return; }
+  const docs = (data || []).filter(f => f.name && !f.name.startsWith('.') && ehDocumento(f.name));
+  // Checklist: quais dos documentos padrão já têm via assinada anexada
+  if (chk) {
+    const tiposPresentes = new Set(docs.map(f => docTipoDe(f.name)));
+    chk.innerHTML = DOC_CHECKLIST.map(t => {
+      const ok = tiposPresentes.has(t);
+      return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;${ok ? 'background:#E9F7EF;color:#0F7A4F' : 'background:#FFF4E0;color:#B4690E'}">${DOC_TIPOS[t].emoji} ${DOC_TIPOS[t].rotulo}: ${ok ? 'assinado ✓' : 'pendente'}</span>`;
+    }).join('');
+  }
+  if (!docs.length) { el.innerHTML = '<div class="empty" style="padding:16px">Nenhum documento anexado ainda.</div>'; return; }
+  el.innerHTML = docs.map(f => {
+    const kb = f.metadata && f.metadata.size ? Math.round(f.metadata.size / 1024) : null;
+    const dt = f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR') : '';
+    const tipo = docTipoDe(f.name);
+    const path = `${clinicaId}/${pacienteId}/${f.name}`;
+    return `<div class="exame-row">
+      <span style="font-size:20px">${DOC_TIPOS[tipo].emoji}</span>
+      <div style="flex:1;min-width:0">
+        <div class="exame-nome">${esc(nomeArquivoDoc(f.name))}</div>
+        <div class="exame-sub">${esc(DOC_TIPOS[tipo].rotulo)}${dt ? ` · ${dt}` : ''}${kb ? ` · ${kb} KB` : ''}</div>
+      </div>
+      <button class="btn-icone" title="Abrir / baixar" onclick="abrirDocumento('${path}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+      </button>
+      <button class="btn-icone" title="Excluir documento" style="color:var(--vermelho)" onclick="excluirDocumento('${path}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+async function enviarDocumento() {
+  if (!pacienteAtual || !clinicaId) return;
+  const input = document.getElementById('doc-file');
+  const file = input && input.files && input.files[0];
+  if (!file) { toast('Escolha um arquivo primeiro'); return; }
+  if (file.size > EXAME_MAX_MB * 1024 * 1024) { toast(`Arquivo muito grande (máx. ${EXAME_MAX_MB} MB)`); return; }
+  const tiposOk = ['application/pdf','image/jpeg','image/png','image/webp','image/heic','image/heif'];
+  if (file.type && !tiposOk.includes(file.type)) { toast('Só PDF ou imagem (JPG, PNG, WebP, HEIC)'); return; }
+  const tipo = document.getElementById('doc-tipo')?.value || 'outro';
+  const tipoSeguro = DOC_TIPOS[tipo] ? tipo : 'outro';
+  const btn = document.getElementById('doc-enviar-btn');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  const seguro = file.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '-').slice(-80);
+  const path = `${clinicaId}/${pacienteAtual.id}/doc__${tipoSeguro}__${Date.now()}_${seguro}`;
+  const { error } = await db.storage.from('exames').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+  btn.disabled = false; btn.textContent = 'Anexar documento';
+  if (error) { toast('Erro ao enviar: ' + (error.message || 'tente novamente')); return; }
+  input.value = '';
+  toast('Documento anexado ✓');
+  logAcesso(pacienteAtual.id, 'anexou_documento', `${tipoSeguro}: ${seguro.slice(0, 50)}`);
+  carregarDocumentos(pacienteAtual.id);
+}
+
+async function abrirDocumento(path) {
+  const { data, error } = await db.storage.from('exames').createSignedUrl(path, 300);
+  if (error || !data || !data.signedUrl) { toast('Erro ao abrir o documento'); return; }
+  window.open(data.signedUrl, '_blank');
+  if (pacienteAtual) logAcesso(pacienteAtual.id, 'baixou_documento');
+}
+
+function excluirDocumento(path) {
+  const nome = nomeArquivoDoc(path.split('/').pop() || '');
+  abrirModalConfirm('Excluir documento?', `O arquivo "${nome}" será apagado permanentemente.`, 'Excluir', async () => {
+    const { error } = await db.storage.from('exames').remove([path]);
+    if (error) { toast('Erro ao excluir o documento'); return; }
+    toast('Documento excluído ✓');
+    if (pacienteAtual) { logAcesso(pacienteAtual.id, 'excluiu_documento'); carregarDocumentos(pacienteAtual.id); }
+  });
+}
+
+// ===== MODELOS DE DOCUMENTOS DA CLÍNICA (Configurações → Documentos) =====
+// Arquivos base da clínica (regras, contrato, consentimento de imagem…) para
+// imprimir/enviar quando chega paciente novo. Ficam no mesmo bucket privado,
+// no prefixo clinica_id/_modelos/ — fora dos prefixos por paciente, então os
+// fluxos LGPD por paciente nunca os tocam. Policies por clínica já cobrem.
+function nomeArquivoModelo(name) { return (name || '').replace(/^\d+_/, ''); }
+
+async function carregarModelos() {
+  const el = document.getElementById('lista-modelos');
+  if (!el || !clinicaId) return;
+  const { data, error } = await db.storage.from('exames').list(`${clinicaId}/_modelos`, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+  if (error) { el.innerHTML = '<div class="empty" style="padding:14px">Não foi possível carregar os modelos.</div>'; return; }
+  const arquivos = (data || []).filter(f => f.name && !f.name.startsWith('.'));
+  if (!arquivos.length) { el.innerHTML = '<div class="empty" style="padding:14px">Nenhum modelo guardado ainda.</div>'; return; }
+  el.innerHTML = arquivos.map(f => {
+    const kb = f.metadata && f.metadata.size ? Math.round(f.metadata.size / 1024) : null;
+    const dt = f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR') : '';
+    const ehPdf = /\.pdf$/i.test(f.name);
+    const path = `${clinicaId}/_modelos/${f.name}`;
+    return `<div class="exame-row">
+      <span style="font-size:20px">${ehPdf ? '📄' : '🖼️'}</span>
+      <div style="flex:1;min-width:0">
+        <div class="exame-nome">${esc(nomeArquivoModelo(f.name))}</div>
+        <div class="exame-sub">${dt}${kb ? ` · ${kb} KB` : ''}</div>
+      </div>
+      <button class="btn-icone" title="Abrir / imprimir" onclick="abrirModelo('${path}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+      </button>
+      <button class="btn-icone" title="Excluir modelo" style="color:var(--vermelho)" onclick="excluirModelo('${path}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+async function enviarModelo() {
+  if (!clinicaId) return;
+  const input = document.getElementById('modelo-file');
+  const file = input && input.files && input.files[0];
+  if (!file) { toast('Escolha um arquivo primeiro'); return; }
+  if (file.size > EXAME_MAX_MB * 1024 * 1024) { toast(`Arquivo muito grande (máx. ${EXAME_MAX_MB} MB)`); return; }
+  const tiposOk = ['application/pdf','image/jpeg','image/png','image/webp','image/heic','image/heif'];
+  if (file.type && !tiposOk.includes(file.type)) { toast('Só PDF ou imagem (JPG, PNG, WebP, HEIC)'); return; }
+  const btn = document.getElementById('modelo-enviar-btn');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  const seguro = file.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '-').slice(-80);
+  const path = `${clinicaId}/_modelos/${Date.now()}_${seguro}`;
+  const { error } = await db.storage.from('exames').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+  btn.disabled = false; btn.textContent = 'Guardar modelo';
+  if (error) { toast('Erro ao enviar: ' + (error.message || 'tente novamente')); return; }
+  input.value = '';
+  toast('Modelo guardado ✓');
+  carregarModelos();
+}
+
+async function abrirModelo(path) {
+  const { data, error } = await db.storage.from('exames').createSignedUrl(path, 300);
+  if (error || !data || !data.signedUrl) { toast('Erro ao abrir o modelo'); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+function excluirModelo(path) {
+  const nome = nomeArquivoModelo(path.split('/').pop() || '');
+  abrirModalConfirm('Excluir modelo?', `O arquivo "${nome}" será apagado permanentemente. Isso não afeta as vias assinadas já anexadas nas fichas dos pacientes.`, 'Excluir', async () => {
+    const { error } = await db.storage.from('exames').remove([path]);
+    if (error) { toast('Erro ao excluir o modelo'); return; }
+    toast('Modelo excluído ✓');
+    carregarModelos();
+  });
+}
+
+// LGPD: apaga TODOS os exames E documentos do paciente via Storage API (tudo
+// que está no prefixo clinica_id/paciente_id). Fail-closed — a eliminação/
+// exclusão do paciente só segue se isto der certo (o banco não consegue
+// apagar arquivos do Storage; ver migration da Fase 3).
 async function apagarExamesPaciente(pacienteId) {
   try {
     const { data, error } = await db.storage.from('exames').list(`${clinicaId}/${pacienteId}`, { limit: 1000 });
@@ -6223,7 +6437,7 @@ async function enviarLembrete(consultaId, tipo) {
 
 // ===== CONFIGURAÇÕES =====
 function cfgTab(nome, el) {
-  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades','profissionais'].forEach(t => {
+  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades','profissionais','documentos'].forEach(t => {
     const tab = document.getElementById(`cfg-tab-${t}`);
     if (tab) tab.style.display = t===nome ? 'block' : 'none';
   });
@@ -6235,6 +6449,7 @@ function cfgTab(nome, el) {
   }
   if (nome === 'whatsapp') atualizarStatusWhatsapp();
   if (nome === 'agenda') atualizarLinkICS();
+  if (nome === 'documentos') carregarModelos();
   if (nome === 'modalidades') renderModalidadesConfig();
   if (nome === 'profissionais') { renderProfissionaisConfig(); carregarEquipe(); }
 }
