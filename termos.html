@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07523A">
 <title>Termos de Uso — NastaDesk</title>
 <meta name="description" content="Termos de Uso do NastaDesk — software de gestão para clínicas.">
 <meta name="robots" content="index, follow">
@@ -18,8 +19,9 @@
   --cinza-medio: #66706A; --cinza-claro: #E6E8E3;
   --sombra: 0 1px 2px rgba(16,40,32,0.05), 0 8px 24px -14px rgba(16,40,32,0.14);
 }
-body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cinza-escuro); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.6; }
-.topo { background: linear-gradient(165deg, var(--verde) 0%, var(--verde-escuro) 100%); padding: 34px 20px 70px; text-align: center; color: white; position: relative; overflow: hidden; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.6; background: radial-gradient(900px 400px at 90% 120%, rgba(23,160,118,0.06), transparent 70%), var(--creme); background-attachment: fixed; }
+.topo { background: linear-gradient(160deg, #10805C 0%, var(--verde) 45%, var(--verde-escuro) 100%); padding: calc(34px + env(safe-area-inset-top,0px)) 20px 74px; text-align: center; color: white; position: relative; overflow: hidden; border-radius: 0 0 30px 30px; box-shadow: 0 18px 44px -26px rgba(7,82,58,0.65); }
 .topo::before { content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,255,255,0.06); top: -130px; right: -90px; }
 .topo-logo { font-family: 'DM Serif Display', serif; font-size: 16px; opacity: .75; margin-bottom: 12px; position: relative; }
 .topo-nome { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: -0.4px; position: relative; }

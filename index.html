@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>NastaDesk — Gestão de Clínica</title>
 <!-- build: import-export-deploy -->
 <meta name="description" content="Painel de gestão para clínicas de fisioterapia: agenda, pacientes, financeiro, lembretes de WhatsApp e agendamento online.">
@@ -26,12 +26,15 @@
   --verde-suave: #F1FAF6; --creme: #F8F7F3; --cinza-escuro: #1B221E;
   --cinza-medio: #66706A; --cinza-claro: #E6E8E3; --branco: #FFFFFF;
   --laranja: #E87040; --azul: #3B6FD4; --vermelho: #D44545; --amarelo: #E8A820;
-  --sombra: 0 1px 2px rgba(16,40,32,0.05), 0 8px 24px -14px rgba(16,40,32,0.14);
-  --sombra-alta: 0 2px 4px rgba(16,40,32,0.06), 0 16px 40px -16px rgba(16,40,32,0.22);
-  --anel: 0 0 0 3px rgba(23,160,118,0.18);
-  --raio: 16px; --raio-m: 12px; --raio-p: 10px;
+  --sombra: 0 1px 2px rgba(16,40,32,0.04), 0 12px 32px -20px rgba(16,40,32,0.16);
+  --sombra-alta: 0 2px 6px rgba(16,40,32,0.05), 0 24px 60px -24px rgba(16,40,32,0.26);
+  --anel: 0 0 0 3px rgba(23,160,118,0.16);
+  --raio: 18px; --raio-m: 13px; --raio-p: 11px;
+  --borda: rgba(27,34,30,0.08);
+  --safe-topo: env(safe-area-inset-top, 0px);
+  --safe-base: env(safe-area-inset-bottom, 0px);
 }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cinza-escuro); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 ::selection { background: var(--verde-claro); }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -814,9 +817,236 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .imp-tabela th, .imp-tabela td { text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--cinza-claro); white-space: nowrap; }
 .imp-tabela th { background: #f5f8f6; position: sticky; top: 0; font-weight: 600; color: var(--cinza-escuro); }
 .imp-tabela tr:last-child td { border-bottom: none; }
+/* ============================================================
+   ✨ REDESIGN 2026-07 — camada de modernização visual
+   Mobile-first de verdade + polimento no desktop.
+   Só CSS por cascata: nenhuma classe existente foi removida,
+   nenhuma lógica de JS depende do que está aqui.
+   ============================================================ */
+
+/* ---- Guardas de largura (fim do "site de computador" no celular) ---- */
+html, body { overflow-x: clip; }
+.main { min-width: 0; }
+.grid-principal { grid-template-columns: minmax(0,1fr) 330px; }
+.grid-principal > * { min-width: 0; }
+.metricas, .metricas.cinco { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.metricas.cinco { grid-template-columns: repeat(5, minmax(0,1fr)); }
+.card { border-color: var(--borda); }
+/* painel de notificações desliza por transform (offset negativo esticava a página) */
+.notif-painel { right: 0; transform: translateX(105%); transition: transform .28s cubic-bezier(.4,0,.2,1); }
+.notif-painel.aberto { transform: none; }
+
+/* ---- Fundo com profundidade sutil ---- */
+body {
+  background:
+    radial-gradient(1100px 500px at 90% -180px, rgba(23,160,118,0.06), transparent 70%),
+    radial-gradient(900px 460px at -140px 110%, rgba(11,110,79,0.045), transparent 70%),
+    var(--creme);
+  background-attachment: fixed;
+}
+
+/* ---- Tipografia ---- */
+.topbar-titulo h1 { font-size: clamp(22px, 2vw + 12px, 28px); }
+.topbar-titulo p { font-size: 13.5px; }
+
+/* ---- Botões ---- */
+.btn { border-radius: 12px; font-weight: 600; min-height: 38px; }
+.btn-primario { background: linear-gradient(180deg, #10805C, var(--verde)); box-shadow: 0 1px 2px rgba(11,110,79,0.35), 0 8px 20px -10px rgba(11,110,79,0.55); }
+.btn-primario:hover { background: linear-gradient(180deg, #0C6E50, var(--verde-escuro)); }
+.btn:active { transform: scale(.98); }
+.auth-btn { border-radius: 13px; min-height: 48px; font-weight: 600; background: linear-gradient(180deg, #10805C, var(--verde)); }
+.auth-btn:hover { background: linear-gradient(180deg, #0C6E50, var(--verde-escuro)); }
+button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid var(--verde-medio); outline-offset: 2px; }
+.btn-icone { width: 32px; height: 32px; border-radius: 9px; }
+
+/* ---- Sidebar (desktop) ---- */
+.sidebar { box-shadow: inset -1px 0 0 rgba(255,255,255,0.05), 8px 0 40px -30px rgba(7,82,58,0.5); }
+.logo { display: flex; align-items: center; gap: 11px; }
+.logo::before { content: ''; width: 36px; height: 36px; flex: 0 0 auto; border-radius: 11px; background: rgba(255,255,255,0.14) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='24' x='7' font-size='22' font-family='serif' fill='white'%3EN%3C/text%3E%3C/svg%3E") center / 24px no-repeat; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); }
+.nav-item { border-radius: 11px; padding: 10px 13px; }
+.nav-item.ativo { background: rgba(255,255,255,0.16); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 6px 16px -10px rgba(0,0,0,0.35); }
+.nav-item.ativo::before { content: ''; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: #7DEFC0; }
+
+/* ---- Cards e métricas ---- */
+.metrica-card { border-color: var(--borda); }
+.metrica-valor { letter-spacing: -0.5px; }
+.card-header { padding: 16px 20px; }
+
+/* ---- Pills, tabs e chips ---- */
+.status-pill { font-weight: 600; }
+.tab, .cfg-tab, .ficha-tab { font-weight: 600; }
+.tabs, .ficha-tabs { scrollbar-width: none; }
+.tabs::-webkit-scrollbar, .ficha-tabs::-webkit-scrollbar { display: none; }
+
+/* ---- Modais ---- */
+.overlay { background: rgba(10,25,18,0.5); backdrop-filter: blur(3px); }
+.modal { border-radius: 22px; padding: 26px 26px 24px; }
+.modal-fechar { width: 32px; height: 32px; border-radius: 10px; font-size: 17px; }
+
+/* ---- Toast ---- */
+.toast { border-radius: 14px; padding: 13px 18px; background: #10231B; box-shadow: 0 18px 50px -12px rgba(10,25,18,0.55); }
+
+/* ---- Cabeçalho mobile (marca + notificações) ---- */
+.mobile-topbar { display: none; }
+
+/* ---- Barra inferior (app) ---- */
+.mobile-nav { background: rgba(255,255,255,0.94); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--borda); box-shadow: 0 -10px 34px rgba(10,25,18,0.09); }
+.mobile-nav-items { padding: 7px 4px; }
+.mobile-nav-item { gap: 3px; padding: 3px 2px 4px; min-width: 0; }
+.mobile-nav-item svg { width: 22px; height: 22px; padding: 4px 14px; box-sizing: content-box; border-radius: 999px; transition: background .18s, color .18s; }
+.mobile-nav-item.ativo svg { background: var(--verde-claro); }
+.mobile-nav-item span { font-size: 10.5px; font-weight: 600; letter-spacing: .01em; }
+.mnav-badge { top: -1px; right: calc(50% - 22px); }
+.sino-badge-mobile { top: -1px; right: calc(50% - 22px); }
+
+/* ---- Menu "Mais" vira bottom sheet ---- */
+.menu-mais-overlay { background: rgba(10,25,18,0.4); backdrop-filter: blur(2px); opacity: 0; transition: opacity .2s; pointer-events: none; display: block; }
+.menu-mais-overlay.aberto { opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   📱 MOBILE (≤900px) — layout de aplicativo
+   ============================================================ */
+@media (max-width: 900px) {
+  /* inputs com 16px: o iOS não dá mais zoom sozinho (a "tela de computador") */
+  input, select, textarea { font-size: 16px !important; }
+
+  .main { padding: 10px 14px calc(92px + var(--safe-base)); }
+  .grid-principal { grid-template-columns: minmax(0,1fr); }
+
+  /* Cabeçalho do app: marca + sino, fixo no topo */
+  body.app-ativo .mobile-topbar { position: sticky; top: 0; z-index: 130; display: flex; align-items: center; gap: 10px; margin: -10px -14px 12px; padding: calc(10px + var(--safe-topo)) 16px 10px; background: rgba(248,247,243,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--borda); }
+  .mobile-topbar-logo { display: flex; align-items: center; gap: 9px; font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--verde); letter-spacing: -0.3px; }
+  .mobile-topbar-logo::before { content: ''; width: 30px; height: 30px; border-radius: 9px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='24' x='7' font-size='22' font-family='serif' fill='white'%3EN%3C/text%3E%3C/svg%3E"), linear-gradient(160deg, var(--verde-medio), var(--verde)); background-size: 20px, cover; background-position: center, center; background-repeat: no-repeat; box-shadow: 0 4px 10px -4px rgba(11,110,79,0.5); }
+  .mobile-topbar-sub { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--cinza-medio); margin-top: 1px; }
+  .mobile-topbar-sino { margin-left: auto; position: relative; width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--borda); background: white; display: flex; align-items: center; justify-content: center; color: var(--cinza-escuro); box-shadow: var(--sombra); }
+  .mobile-topbar-sino svg { width: 19px; height: 19px; }
+  .mobile-topbar-sino .sino-badge { position: absolute; top: -5px; right: -5px; margin: 0; }
+
+  /* Título da seção + ações que rolam de lado (nada de botões gigantes empilhados) */
+  .topbar { flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 18px; }
+  .topbar-titulo h1 { font-size: 23px; }
+  .topbar-acoes { width: 100%; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+  .topbar-acoes::-webkit-scrollbar { display: none; }
+  .topbar-acoes .btn { flex: 0 0 auto; min-height: 42px; }
+  .topbar-acoes select { flex: 0 0 auto; }
+
+  /* Métricas compactas 2×2 */
+  .metricas, .metricas.cinco { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 18px; }
+  .metrica-card { padding: 14px 15px; border-radius: 15px; }
+  .metrica-topo { margin-bottom: 8px; }
+  .metrica-icon { width: 28px; height: 28px; }
+  .metrica-valor { font-size: 27px; }
+  .metrica-badge { font-size: 10.5px; margin-top: 6px; }
+
+  /* Consulta do dia vira um card de app: nome em cima, etiquetas quebram linha,
+     status + ações numa linha própria (era isso que esticava a página) */
+  .consulta-item { display: grid; grid-template-columns: auto auto minmax(0,1fr); grid-template-areas: "hora avatar info" "pill pill acoes"; gap: 4px 12px; padding: 13px 16px; align-items: center; }
+  .consulta-hora { grid-area: hora; }
+  .consulta-item .avatar { grid-area: avatar; }
+  .consulta-info { grid-area: info; }
+  .consulta-item .status-pill { grid-area: pill; justify-self: start; margin-top: 6px; }
+  .consulta-acoes { grid-area: acoes; justify-self: end; margin-top: 6px; }
+  .consulta-nome { white-space: normal; flex-wrap: wrap; gap: 5px 7px; line-height: 1.35; }
+  .consulta-queixa { white-space: normal; }
+  .consulta-info select.sala-select { max-width: 100%; }
+  .btn-icone { width: 36px; height: 36px; }
+
+  /* Linhas de financeiro e pacientes respiram */
+  .fin-row { flex-wrap: wrap; gap: 8px 12px; padding: 13px 16px; }
+  .fin-info { flex: 1 1 150px; }
+  .fin-valor { min-width: 0; }
+  .paciente-row { padding: 13px 16px; }
+  .consulta-item, .paciente-row, .fin-row { min-height: 56px; }
+  .card-header { padding: 14px 16px; }
+  .pac-mod-filtros { padding: 10px 16px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .pac-mod-filtros::-webkit-scrollbar { display: none; }
+  .fin-segmented { overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .fin-segmented::-webkit-scrollbar { display: none; }
+  .fin-seg-btn { flex: 0 0 auto; min-height: 40px; }
+  .chip { min-height: 36px; }
+  .dia-chip, .forma-pag-btn, .satis-btn { min-height: 40px; }
+  .resumo-box { margin: 14px 16px; }
+
+  /* Ficha do paciente em tela cheia, com respiro do notch */
+  .ficha-painel { width: 100vw; }
+  .ficha-topo { padding: calc(14px + var(--safe-topo)) 18px 14px; }
+  .ficha-acoes { padding: 10px 18px; }
+  .ficha-tabs { padding: 0 18px; }
+  .ficha-tab { padding: 12px 13px; }
+  .ficha-corpo { padding: 18px 18px calc(24px + var(--safe-base)); }
+  .ficha-fechar { width: 38px; height: 38px; border-radius: 11px; }
+
+  /* Notificações em tela cheia */
+  .notif-painel { width: 100vw; }
+  .notif-topo { padding: calc(18px + var(--safe-topo)) 20px 14px; }
+
+  /* Menu "Mais" = bottom sheet de verdade */
+  .menu-mais { left: 10px; right: 10px; bottom: calc(78px + var(--safe-base)); min-width: 0; border-radius: 20px; transform: translateY(14px) scale(.98); transform-origin: bottom center; box-shadow: 0 -6px 40px rgba(10,25,18,0.16), var(--sombra-alta); }
+  .menu-mais.aberto { transform: none; }
+  .menu-mais-item { padding: 14px 20px; min-height: 52px; }
+  .menu-mais-item svg { color: var(--verde); }
+
+  /* Toast acima da barra inferior */
+  .toast { left: 16px; right: 16px; bottom: calc(84px + var(--safe-base)); max-width: none; justify-content: center; text-align: center; }
+
+  /* Botão instalar acima da barra */
+  .pwa-install-btn { bottom: calc(88px + var(--safe-base)); }
+
+  /* Barra inferior com safe-area */
+  .mobile-nav { padding-bottom: var(--safe-base); }
+
+  /* Onboarding confortável no celular */
+  .onb-inner { padding: 28px 18px 70px; }
+  .onb-card { padding: 26px 20px; border-radius: 18px; }
+  .onb-titulo { font-size: 23px; }
+  .onb-steps { gap: 0; margin-bottom: 30px; }
+  .onb-step-linha { width: 22px; }
+
+  /* Conversas ocupam a tela toda (dvh corrige a barra do navegador) */
+  .wpp-layout.ver-chat .wpp-chat-card { height: calc(100dvh - 210px); }
+
+  /* Grade semanal: dica visual de que rola de lado */
+  .grade-semanal-scroll { border-radius: var(--raio); }
+}
+
+/* Modais viram bottom sheets em telas de celular */
+@media (max-width: 640px) {
+  .overlay { align-items: flex-end; padding: 0; }
+  .modal { width: 100%; max-width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; padding: 14px 20px calc(22px + var(--safe-base)); animation: sheetUp .3s cubic-bezier(.32,.72,.28,1); }
+  .modal::before { content: ''; display: block; width: 42px; height: 5px; border-radius: 3px; background: var(--cinza-claro); margin: 0 auto 16px; }
+  .modal-header { margin-bottom: 18px; }
+  .modal-acoes .btn { min-height: 48px; }
+  .onb-step-label { display: none; }
+  .onb-step-label.ativo { display: block; }
+  .planos-grid { gap: 14px; }
+}
+@keyframes sheetUp { from { transform: translateY(48%); opacity: .5; } to { transform: none; opacity: 1; } }
+
+/* ============================================================
+   🔐 Telas de entrada (login/cadastro) — bonitas também no celular
+   ============================================================ */
+@media (max-width: 900px) {
+  .auth-wrap { flex-direction: column; min-height: 100dvh; }
+  .auth-lado.esquerdo { display: flex; flex: 0 0 auto; padding: calc(34px + var(--safe-topo)) 26px 30px; border-radius: 0 0 30px 30px; box-shadow: 0 18px 40px -22px rgba(7,82,58,0.55); gap: 0; }
+  .auth-features { display: none; }
+  .auth-logo { font-size: 30px; text-align: center; }
+  .auth-lado { padding: 30px 22px calc(40px + var(--safe-base)); align-items: flex-start; }
+  .auth-form-wrap { max-width: 440px; margin: 0 auto; }
+  .auth-form-titulo { font-size: 25px; }
+  .auth-form-sub { margin-bottom: 24px; }
+}
+.auth-campo input { border-radius: 12px; padding: 13px 15px; }
+.onb-campo input, .onb-campo select { border-radius: 12px; padding: 13px 15px; }
+.config-campo input, .config-campo select, .config-campo textarea { border-radius: 11px; }
+
+/* ---- Micro-interações / acessibilidade ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
 /* Impressão do relatório (Imprimir/PDF): só o conteúdo da seção ativa */
 @media print {
-  .sidebar, .mobile-nav, .menu-mais, .menu-mais-overlay, .topbar-acoes,
+  .sidebar, .mobile-nav, .mobile-topbar, .menu-mais, .menu-mais-overlay, .topbar-acoes,
   .toast, .overlay, #banner-pagamento, #banner-trial, .btn, .btn-icone, select, input { display: none !important; }
   .app-wrap { display: block !important; }
   .main { margin: 0 !important; padding: 0 !important; }
@@ -1098,6 +1328,16 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
   </aside>
 
   <main class="main">
+    <!-- Cabeçalho do app no celular: marca + notificações -->
+    <div class="mobile-topbar">
+      <div>
+        <div class="mobile-topbar-logo">NastaDesk</div>
+      </div>
+      <button class="mobile-topbar-sino" onclick="toggleNotifPainel()" aria-label="Notificações">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <div class="sino-badge" id="sino-badge-top" style="display:none">0</div>
+      </button>
+    </div>
     <!-- AGENDA -->
     <section id="sec-agenda" class="sec ativa">
       <div class="topbar">
@@ -3852,7 +4092,7 @@ async function marcarTodasLidas(silencioso = false) {
 }
 
 function atualizarBadge(count) {
-  const badges = [document.getElementById('sino-badge'), document.getElementById('sino-badge-mobile'), document.getElementById('sino-badge-mais')];
+  const badges = [document.getElementById('sino-badge'), document.getElementById('sino-badge-mobile'), document.getElementById('sino-badge-mais'), document.getElementById('sino-badge-top')];
   const txt = count > 99 ? '99+' : String(count);
   badges.forEach(b => {
     if (!b) return;
