@@ -517,7 +517,7 @@ function renderPacientes() {
   }
   el.innerHTML = lista.map(p => `
     <div class="paciente-row" onclick="abrirFicha('${p.id}')">
-      <div class="avatar">${iniciaisDe(p.nome)}</div>
+      <div class="avatar">${esc(iniciaisDe(p.nome))}</div>
       <div>
         <div class="nome">${esc(p.nome)}</div>
         <div class="sub">${p.total_consultas || 0} consulta${p.total_consultas === 1 ? '' : 's'}${p.convenio ? ' · ' + esc(p.convenio) : ''}</div>

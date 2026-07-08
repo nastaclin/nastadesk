@@ -1,0 +1,87 @@
+# CI de segurança do NastaDesk — roda em todo push/PR.
+#
+# Jobs:
+#   secret-scan  -> gitleaks: procura credenciais/chaves no repo E no histórico do git
+#   sast         -> semgrep (p/security-audit): SAST das edge functions (TypeScript/Deno),
+#                   migrations SQL e demais arquivos. Falha em findings de severidade ERROR.
+#   xss-audit    -> heurística própria: interpolação sem esc()/escapeHtml() perto de
+#                   sinks de HTML (innerHTML etc.) nos *.html. Baseline em .github/xss-baseline.json.
+#   js-syntax    -> extrai os <script> inline dos *.html e roda `node --check`
+#                   (o "zero erro de sintaxe" que antes era conferido só manualmente).
+#   dep-audit    -> `npm audit` de dependências JS/TS. Hoje o front é sem build
+#                   (não existe package.json) — o job detecta isso e vira no-op;
+#                   se um dia entrar um package.json, a auditoria liga sozinha.
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Segredos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # histórico completo — segredo commitado e depois removido ainda vaza
+      - name: Instalar gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz \
+            | tar -xz gitleaks
+      - name: Varredura de segredos (working tree + histórico do git)
+        run: ./gitleaks detect --source . --no-banner --redact --verbose
+
+  sast:
+    name: SAST (semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar semgrep
+        run: pip install --quiet semgrep
+      - name: Semgrep security-audit (falha em ERROR)
+        run: semgrep scan --config p/security-audit --severity ERROR --error --metrics=off .
+
+  xss-audit:
+    name: XSS (sinks de HTML sem escape)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Auditar interpolações perto de innerHTML/insertAdjacentHTML
+        run: python3 .github/scripts/xss_audit.py
+
+  js-syntax:
+    name: Sintaxe dos scripts inline (node --check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: node --check em todos os <script> inline
+        run: python3 .github/scripts/check_inline_js.py
+
+  dep-audit:
+    name: Dependências JS/TS (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: npm audit (só se existir package.json)
+        run: |
+          if [ -f package.json ]; then
+            npm ci --ignore-scripts || npm install --ignore-scripts
+            npm audit --audit-level=high
+          else
+            echo "Sem package.json (front sem build) — nada a auditar. O job liga sozinho se um package.json for adicionado."
+          fi
