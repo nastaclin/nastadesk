@@ -373,10 +373,24 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 **Brinde por período (o site da clínica):** anual → **site grátis**; trimestral → **site pela metade
 (R$ 250)**; mensal → site por R$ 500. Os valores ficam em `config_publica.site` (editável no painel admin).
 
-**Links de checkout:** um por **plano × período** em `config_publica.checkout_links`. Os 3 links
-**mensais** já estão preenchidos (os que já estavam no ar); **trimestral e anual estão VAZIOS** —
-o dono precisa criar as ofertas na Cakto e colar os links em **Painel admin → Configurações**.
-Enquanto vazio, o botão daquele período avisa o cliente e oferece o WhatsApp (não quebra).
+**Links de checkout:** um por **plano × período** em `config_publica.checkout_links` — **os 9 já
+estão preenchidos e funcionando** (as 6 ofertas de trimestral/anual foram criadas na Cakto em
+2026-08-30, ver Histórico). Para trocar um link, o caminho é **Painel admin → Configurações**
+(não mexe no código). Se algum período ficar sem link, o botão avisa o cliente e oferece o
+WhatsApp em vez de quebrar.
+
+| Plano | Mensal | Trimestral (90 dias) | Anual (365 dias) |
+|---|---|---|---|
+| Básica | `ad8vfmf_949243` | `7u3jnuu` | `67d8hke` |
+| Profissional | `w3ryxws_949248` | `k6xzi95` | `368fhmd` |
+| Premium | `cvv64ck_949254` | `ixvgfda` | `3f9pcy6` |
+
+> O link é `https://pay.cakto.com.br/<id da oferta>`. **O sufixo numérico dos links mensais
+> (`_949243`) é decorativo** — o checkout resolve só pelo id da oferta (confirmado contra
+> `api.cakto.com.br/api/product/checkout/<id>/`). Por isso as ofertas novas não têm sufixo.
+> A **API pública da Cakto NÃO devolve a URL do checkout** em nenhum campo: para descobrir o
+> link de uma oferta nova, monte a URL com o `id` que o `offers_create` devolve.
+> ⚠️ `offers_create` **não tem idempotência** — repetir a chamada cria oferta duplicada.
 
 ### Cupons de parceria (2026-08-30)
 
@@ -491,6 +505,14 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 ## 9. Histórico de mudanças
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
+
+- **2026-08-30** — **🚀 NO AR: merge na `main` dos 2 repos + as 6 ofertas de trimestral/anual CRIADAS na Cakto e os 9 links de checkout gravados em `config_publica`.** Fecha os 3 pendentes da entrega anterior (só (b), cadastrar cupom na Cakto, continua sendo por cupom, quando existir).
+  **(1) Deploy — ⚠️ a Vercel estava PAUSADA (armadilha para os próximos chats).** `claude/nastadesk-tool-updates-68rej5` mergeada na `main` (fast-forward, 0 commits atrás) nos **dois** repos. O merge sozinho **não publicou**: os dois projetos da Vercel estavam **pausados** desde 2026-07-08 (último deploy de produção do app: `f6e0a28`), então o push na `main` **não gerou deployment nenhum** — nem de produção nem de preview — e os 2 domínios seguiam servindo a versão velha, **sem nenhum erro visível**. Corrigido com `unpause_project` nos 2 projetos + um push novo na `main` para disparar o build. 📌 **Nomes que confundem:** `nastadesk.vercel.app` é servido pelo projeto **`nastadeskexemplo`** (não pelo projeto chamado `nastaclin`, que aponta para o mesmo repositório e está ocioso); o painel admin é o projeto `nastaclin-admin`. **Como conferir se publicou de verdade** (não basta o merge): `curl -s https://nastadesk.vercel.app/ | grep -c periodo-btn` e `curl -s https://nastaclin-admin.vercel.app/ | grep -c sec-cupons` — zero significa que a versão velha ainda está no ar.
+  **(2) Ofertas na Cakto (produção).** Criadas via API pública da Cakto (MCP `cakto-mcp`, escopos `products`/`offers`/`write`), espelhando o formato das mensais que já existiam (`type=subscription`, `intervalType=lifetime`, `interval=1`, `quantity_recurrences=-1`, `trial_days=0`, `max_retries=3`, `retry_interval=1`) e mudando só o preço e o **`recurrence_period`**: **90 dias** no trimestral, **365** no anual. Ficaram 3 produtos × 3 ofertas = **9 ofertas, sem duplicata** (conferido). Ids na tabela da seção 5.
+  🔎 **Descobertas úteis para o próximo chat:** (a) a **API da Cakto não expõe a URL do checkout** — nem em `offers_retrieve` nem em `products_retrieve`; o link se monta como `https://pay.cakto.com.br/<offer_id>`; (b) **o sufixo `_949243` dos links antigos é decorativo** — provado chamando `api.cakto.com.br/api/product/checkout/<slug>/` com o id puro, com o sufixo certo e com um sufixo inventado (os 3 devolvem a mesma oferta; id inexistente dá 400); (c) o `offers_create` **exige `id` e `default` no corpo** (o schema marca os dois como `required` mesmo sendo readOnly), mas o **servidor ignora o `id` enviado** e gera o dele; (d) **não há idempotência** em `offers_create` — nunca repetir a chamada às cegas.
+  **(3) `config_publica.checkout_links` preenchida** com os 9 links (os 3 mensais **intocados**, via `jsonb ||` só nas chaves `trimestral`/`anual`). O app das clínicas lê de lá — **nenhuma mudança de código foi necessária**.
+  **Validado:** os **9 links resolvem no checkout real** com preço e recorrência corretos (Básica 262/931, Profissional 532/1.891, Premium 937/3.331; 90 e 365 dias; todas `active`), lidos **pela mesma rota que o app usa** (`config_publica` como `anon`). Deploy conferido no ar nos 2 domínios **depois de despausar** (marcadores `periodo-btn`/`logo-marca`/`site-topo` no app e `sec-cupons`/`sec-sites`/`sec-config` no painel).
+  ***Falta (só o dono faz):*** cadastrar cada **cupom** também na Cakto com o mesmo código, quando fechar cada parceria — aqui é só o rastreio/comissão.
 
 - **2026-08-30** — **🎨 Logo oficial + 💳 assinatura trimestral/anual + 🌐 área "Site" na Conta + 🎟️ cupons de parceria (com painel de repasse no admin). Migrations APLICADAS em produção; edges `cakto-webhook` (v5) e `admin-api` (v4) DEPLOYADAS. Branch `claude/nastadesk-tool-updates-68rej5` nos 2 repos (falta merge na `main` → Vercel).**
   Quatro pedidos do dono numa entrega só. **Decisões dele nesta data:** anual **−20%**, trimestral **−10%**; o cupom é cadastrado **também na Cakto** (é lá que o desconto sai) e o NastaDesk faz o rastreio; links de checkout de trimestral/anual **ainda não existem** → ficam **configuráveis no painel admin**; WhatsApp que recebe pedido de site: **(21) 98407-2359**.
