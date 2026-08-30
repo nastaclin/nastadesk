@@ -1,0 +1,77 @@
+# Publica o app das clinicas (nastadesk) na Vercel a cada push na main.
+#
+# POR QUE ISTO EXISTE: em 08/07/2026 os repositorios viraram privados (recomendacao
+# da varredura de seguranca) e a integracao Git nativa da Vercel parou de publicar
+# EM SILENCIO no plano Hobby — o push na main deixou de gerar deployment nenhum e os
+# dominios ficaram servindo a versao velha sem nenhum erro visivel. Este workflow
+# publica pela API da Vercel (upload direto), que nao depende daquela integracao.
+#
+# UNICA COISA MANUAL: o secret VERCEL_TOKEN neste repositorio
+#   1) gere um token em https://vercel.com/account/tokens (escopo: o time "Eduardo's projects")
+#   2) GitHub > Settings > Secrets and variables > Actions > New repository secret
+#      Name: VERCEL_TOKEN   Secret: <o token>
+# Sem o secret, o workflow para no primeiro passo com uma mensagem explicando isso
+# (nao quebra nada: o site continua no ar com a versao anterior).
+
+name: Deploy na Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Publicar em producao
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: team_IGpCnvhsGzja5D5DRJdh9ymb
+      VERCEL_PROJECT_ID: prj_m3swHEhFnYs2aW5KLHY3E5CfA8Mp
+      DOMINIO: nastadesk.vercel.app
+
+    steps:
+      - name: Conferir o token
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::Falta o secret VERCEL_TOKEN neste repositorio. Gere em https://vercel.com/account/tokens e cadastre em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar a CLI da Vercel
+        run: npm install --global vercel@latest
+
+      - name: Publicar em producao
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -o pipefail
+          url=$(vercel deploy --prod --yes --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_ENV"
+          echo "Deployment: $url"
+
+      - name: Conferir que o dominio esta servindo a versao nova
+        run: |
+          sha_curto=$(echo "${{ github.sha }}" | cut -c1-7)
+          for tentativa in 1 2 3 4 5 6 7 8 9 10; do
+            codigo=$(curl -s -o /dev/null -w '%{http_code}' "https://$DOMINIO/" || echo 000)
+            if [ "$codigo" = "200" ]; then
+              echo "$DOMINIO respondeu 200 (deployment $url, commit $sha_curto)"
+              echo "### No ar: https://$DOMINIO (commit \`$sha_curto\`)" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$DOMINIO nao respondeu 200 depois do deploy (ultimo codigo: $codigo)"
+          exit 1
