@@ -8,10 +8,10 @@
  *    NÃO intercepta — deixa passar direto (evita respostas opacas em cache).
  *  - Cache versionado: ao trocar a VERSION, o activate limpa os caches antigos.
  */
-const VERSION = 'nastadesk-v1-2026-07-03';
+const VERSION = 'nastadesk-v2-2026-08-30';
 const CORE = [
   '/', '/index.html', '/manifest.json',
-  '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'
+  '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/logo.png'
 ];
 
 self.addEventListener('install', (event) => {

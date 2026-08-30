@@ -33,7 +33,7 @@ Esta seção fixa (entre os marcadores 🔒) NÃO deve ser alterada.
 
 # NastaDesk — Contexto da ferramenta
 
-> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-07-06**.
+> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-08-30**.
 
 > ⭐ **COMO O DONO GOSTA DE TRABALHAR (ler sempre, vale para qualquer chat):**
 > - **Pode deixar as melhorias APARENTES para os clientes.** A intenção é que eles
@@ -112,12 +112,12 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | `lembretes-auto` | Lembretes automáticos (disparados por cron a cada 10 min). |
 | `mercadopago-checkout` | Cria checkout de assinatura no Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
 | `mercadopago-webhook` | Recebe eventos de cobrança do Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
-| `cakto-webhook` | Recebe eventos da Cakto (compra aprovada, assinatura criada/renovada/cancelada, reembolso, chargeback) e libera/suspende o acesso da clínica. Mapeia o comprador pelo **e-mail**, identifica o plano pelo **valor** (97/197/347) e **nunca derruba clínica em cortesia**. |
+| `cakto-webhook` | Recebe eventos da Cakto (compra aprovada, assinatura criada/renovada/cancelada, reembolso, chargeback) e libera/suspende o acesso da clínica. Mapeia o comprador pelo **e-mail**, identifica **plano E período** pelo **valor** (mensal 97/197/347 · trimestral 262/532/937 · anual 931/1891/3331, aceitando reais ou centavos), grava `assinaturas.periodo`, **confirma o cupom de parceiro** do cliente e **nunca derruba clínica em cortesia**. **v5 (períodos + cupom) deployada em 2026-08-30.** |
 | `agendar-publico` | Porteiro anti-robô do agendamento online. Recebe o booking + token do hCaptcha, verifica o token no servidor (secret em `admin_config`) e, se válido, delega à RPC `agendar_online` — repassando também a **versão do consentimento LGPD + IP** para registro. `verify_jwt=false`. |
 | `equipe-criar` | Cria o login de um funcionário da clínica. Só o **dono** chama (valida o JWT → `clinicas.user_id`), **trava por plano** (Profissional+), cria o usuário de auth (service_role, `user_metadata.tipo='membro'`) e vincula em `clinica_membros`. Para papel `profissional`, **exige e valida** o `profissional_id` (tem que ser da própria clínica) — é o vínculo que define o que a pessoa vê no portal. `verify_jwt=true`. **v2 (com essa validação de vínculo) deployada em produção em 2026-07-05.** |
 | `equipe-remover` | Exclui o login de um funcionário. Só o **dono** chama; remove o vínculo em `clinica_membros` e apaga o usuário de auth (libera o email). `verify_jwt=true`. |
 | `agenda-ics` | Feed de calendário **ICS** para assinar a agenda da clínica no Google Agenda/Outlook/Apple Calendar (só leitura, 1 via). Sem login (`verify_jwt=false`); o segredo é o `clinicas.ics_token` na URL (regenerável em Configurações → Agenda; o link antigo morre). Janela −7d/+60d, sem canceladas. |
-| `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. |
+| `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. **v4 (2026-08-30):** também serve e grava **cupons**, **usos de cupom**, **sites** e a **`config_publica`** (links de checkout por período + WhatsApp/preços do site). |
 
 ## 4. Funcionalidades do app (nastadesk)
 
@@ -273,6 +273,39 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   documentos** fail-closed) e modelos em `clinica_id/_modelos/` (fora dos fluxos por
   paciente; policies por clínica já cobrem). Exportação LGPD lista
   `documentos_anexados` separado dos exames; auditoria: `anexou/baixou/excluiu_documento`.
+- **Marca oficial (logo Nastaclin)** *(2026-08-30)* — o "N" provisório saiu; agora o app usa a
+  **logo oficial NC/NASTACLIN** (`/logo.png`, gerada de `marketing/logo-mark.png`) no splash, no
+  login, no onboarding, na sidebar, no cabeçalho do celular, no Portal do Profissional, na página
+  pública de agendamento, no `confirmado.html`, nas páginas legais e no painel admin. Como a logo
+  tem o "C" em verde escuro, sobre fundo verde ela vai numa **pastilha branca** (legibilidade).
+  **Favicon e ícones do PWA** (192/512/apple-touch + versões *maskable*) regerados a partir dela;
+  `sw.js` teve a versão de cache subida (`nastadesk-v2-2026-08-30`) para o ícone antigo não ficar preso.
+- **Assinatura mensal, trimestral e anual** *(2026-08-30)* — a tela **Planos** e o **paywall** ganharam
+  um seletor de período: **Mensal** · **Trimestral (-10%)** · **Anual (-20%)**. Preços por período —
+  mensal 97/197/347, trimestral **262/532/937**, anual **931/1891/3331** — com "equivale a R$ X/mês" no
+  card. Quem fecha **anual ganha o site da clínica de graça**; no **trimestral** o site sai **pela metade**
+  (isso aparece como benefício dentro de cada card). Os links de checkout são **por plano × período** e
+  ficam na tabela `config_publica` (o dono edita no painel admin, sem mexer no código); enquanto um
+  período não tiver link cadastrado, o botão **avisa e oferece o WhatsApp** em vez de quebrar. Coluna
+  aditiva `assinaturas.periodo` (null = mensal legado). ⚠️ **MRR no painel admin é mensalizado**
+  (anual ÷ 12, trimestral ÷ 3) — uma venda anual não infla a métrica.
+- **Site da clínica (Conta → Minha Clínica)** *(2026-08-30)* — card próprio explicando o serviço de
+  **site institucional feito pela Nastaclin**: tabela de preços (**R$ 500** cheio · **R$ 250** no
+  trimestral · **grátis** no anual), o que está incluso, e o **preço que vale para aquele cliente**
+  conforme o período que ele assina. O botão **"🚀 Quero meu site"** registra o pedido
+  (RPC `site_solicitar`) e abre o **WhatsApp com mensagem pronta**. Quando o site fica pronto, o admin
+  marca **"No ar"** e **a tela do cliente muda sozinha** para **"Seu site"** com o endereço e o botão
+  **"✏️ Quero mudar algo no site"** (outra mensagem pronta) — vale também para quem já tinha feito o
+  site antes de assinar. Tabela `sites` (1 por clínica): o cliente **só lê** a própria linha (RLS);
+  status/URL/valores são do admin. Estados: pedido enviado → em produção → no ar.
+- **Cupom de desconto (parcerias)** *(2026-08-30)* — campo **"🎟️ Tenho um cupom"** nos Planos, no
+  paywall e na área Site. O app **valida o código no servidor**, mostra o preço riscado com o desconto e
+  **registra o uso** antes de mandar o cliente ao checkout (o código também vai na URL da Cakto). O
+  desconto real sai na **Cakto** — o mesmo código precisa estar cadastrado lá. O cliente **nunca vê** o
+  parceiro nem a comissão: as tabelas `cupons`/`cupom_usos` são **fechadas** (deny-all, como
+  `admin_config`) e o app só conversa com elas por 2 RPCs `SECURITY DEFINER` que devolvem só o desconto.
+  Quando o pagamento é confirmado, o `cakto-webhook` marca o uso como **confirmado** (é isso que vira
+  comissão a pagar no painel).
 - **Pacotes de sessões** — venda/controle de pacotes de sessões.
 - **Financeiro** — **(a) por consulta** (inalterado): valor por consulta, registro
   de pagamento (Pix, cartão, dinheiro…), recibo em PDF, faturamento do mês;
@@ -324,13 +357,38 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 
 ## 5. Planos, preços e acesso
 
-### Preços (assinatura mensal por clínica)
+### Preços por plano e período (atualizado 2026-08-30)
 
-| Plano | Preço/mês | Observações |
-|---|---|---|
-| **Básica** | **R$ 97** | Gestão + lembretes manuais por WhatsApp. **Sem chatbot de IA. Sem multi-profissional/logins de equipe** (1 login, o dono). |
-| **Profissional** | **R$ 197** | Inclui o **chatbot de WhatsApp com IA** + **vários profissionais e logins de equipe** (recepção/profissional). |
-| **Premium** | **R$ 347** | Tudo do Profissional (tier mais alto). |
+| Plano | Mensal | Trimestral (−10%) | Anual (−20%) | Observações |
+|---|---|---|---|---|
+| **Básica** | **R$ 97** | **R$ 262** (R$ 87/mês) | **R$ 931** (R$ 78/mês) | Gestão + lembretes manuais por WhatsApp. **Sem chatbot de IA. Sem multi-profissional/logins de equipe** (1 login, o dono). |
+| **Profissional** | **R$ 197** | **R$ 532** (R$ 177/mês) | **R$ 1.891** (R$ 158/mês) | Inclui o **chatbot de WhatsApp com IA** + **vários profissionais e logins de equipe** (recepção/profissional). |
+| **Premium** | **R$ 347** | **R$ 937** (R$ 312/mês) | **R$ 3.331** (R$ 278/mês) | Tudo do Profissional (tier mais alto). |
+
+> **Fonte da verdade do preço é o BANCO** — a função `public.nastadesk_preco(plano, periodo)`.
+> O front tem os mesmos números só para exibir; quem calcula desconto de cupom é o servidor.
+> Ao mudar preço: atualizar **os 3 lugares** — `nastadesk_preco` (banco), `PRECOS_PERIODO`
+> (`nastadesk/index.html`), `PRECO` (`cakto-webhook`) e `PRECOS_PERIODO_ADM` (`dashboard/index.html`).
+
+**Brinde por período (o site da clínica):** anual → **site grátis**; trimestral → **site pela metade
+(R$ 250)**; mensal → site por R$ 500. Os valores ficam em `config_publica.site` (editável no painel admin).
+
+**Links de checkout:** um por **plano × período** em `config_publica.checkout_links`. Os 3 links
+**mensais** já estão preenchidos (os que já estavam no ar); **trimestral e anual estão VAZIOS** —
+o dono precisa criar as ofertas na Cakto e colar os links em **Painel admin → Configurações**.
+Enquanto vazio, o botão daquele período avisa o cliente e oferece o WhatsApp (não quebra).
+
+### Cupons de parceria (2026-08-30)
+
+O dono fecha parceria com quem indica o NastaDesk. Cada parceiro tem um **código próprio**:
+- O cupom é cadastrado **em dois lugares**: na **Cakto** (é lá que o desconto sai no pagamento) e no
+  **painel admin** (rastreio: parceiro, desconto, comissão, quantos usaram no mês).
+- Desconto: **% ou R$**, com **duração** (só o 1º mês, N meses, ou para sempre) e escopo
+  (**assinatura**, **site** ou ambos); dá para pôr **validade** e **limite de usos**.
+- Comissão do parceiro: **% do que o cliente pagou** ou **R$ fixo por cliente**, com marcação de
+  **recorrente**; o painel fecha por **mês (competência)** e tem botão **"Marcar pago"**.
+- O uso nasce **pendente** e vira **confirmado** quando o `cakto-webhook` confirma o pagamento —
+  então o "a repassar" só conta cliente que pagou de verdade.
 
 ### Regra de acesso (trial + paywall + cortesia) — atualizada 2026-07-06
 
@@ -376,11 +434,28 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 
 Seções:
 - **Visão geral** — clientes ativos, MRR (receita recorrente das assinaturas
-  ativas), custos mensais e margem.
+  ativas), custos mensais e margem. ⚠️ **MRR mensalizado** desde 2026-08-30:
+  assinatura anual conta `valor/12` e trimestral `valor/3` (uma venda anual de
+  R$ 3.331 entra como ~R$ 278/mês, não R$ 3.331).
 - **Clientes** — todas as clínicas com plano, status (Ativa / Cortesia / Sem
   plano / Suspensa), status da assinatura e receita/mês.
 - **Assinaturas** — concede cortesia e remove acesso (via RPCs admin que só
   rodam com service_role, nunca pelo navegador).
+- **Cupons** *(2026-08-30)* — criar/editar cupom de parceria (código, parceiro + contato +
+  chave Pix, desconto % ou R$, duração, escopo assinatura/site/ambos, comissão % ou R$,
+  recorrente, validade, limite de usos, observação). Cards do mês: cupons ativos, usos,
+  **comissão a pagar** e **já repassado**. Tabela de **repasse por parceiro** com seletor de
+  **mês (competência)** e botão **"Marcar pago"**; e a lista **"Quem usou cupom"** (cliente,
+  cupom, o que comprou, quanto pagou, comissão, status) com **Confirmar/Cancelar** manual.
+  Excluir cupom **não apaga o histórico** de uso (o código fica gravado no registro).
+- **Sites** *(2026-08-30)* — todos os pedidos e sites entregues: status (Pedido / Em produção /
+  No ar / Cancelado), endereço, data do pedido, valor cobrado e recebido, se foi cortesia e o
+  cupom usado. Marcar **"No ar" + URL** é o que faz a tela do cliente virar "editar site".
+  Dá para lançar um site **na mão** para quem fez o site antes de assinar.
+- **Configurações** *(2026-08-30)* — os **9 links de checkout** (3 planos × 3 períodos) e os dados
+  do **site** (WhatsApp que recebe os pedidos + preços mensal/trimestral/anual). Salva em
+  `config_publica`; o app das clínicas lê de lá — **não precisa mexer no código para trocar link
+  ou número.**
 - **Custos** — quanto o dono gasta por mês com o "stack", conforme o nº de
   clínicas ativas. Cada ferramenta tem um modelo de cálculo, editável:
 
@@ -416,6 +491,17 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 ## 9. Histórico de mudanças
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
+
+- **2026-08-30** — **🎨 Logo oficial + 💳 assinatura trimestral/anual + 🌐 área "Site" na Conta + 🎟️ cupons de parceria (com painel de repasse no admin). Migrations APLICADAS em produção; edges `cakto-webhook` (v5) e `admin-api` (v4) DEPLOYADAS. Branch `claude/nastadesk-tool-updates-68rej5` nos 2 repos (falta merge na `main` → Vercel).**
+  Quatro pedidos do dono numa entrega só. **Decisões dele nesta data:** anual **−20%**, trimestral **−10%**; o cupom é cadastrado **também na Cakto** (é lá que o desconto sai) e o NastaDesk faz o rastreio; links de checkout de trimestral/anual **ainda não existem** → ficam **configuráveis no painel admin**; WhatsApp que recebe pedido de site: **(21) 98407-2359**.
+  **(1) Logo oficial.** O placeholder "N" saiu de todo lugar. `logo.png` na raiz dos 2 repos (gerada de `marketing/logo-mark.png`, recortada e otimizada) + **ícones do PWA regerados** (192/512/apple-touch **+ 2 novos *maskable* full-bleed**, que é o formato certo p/ Android não cortar) e **favicon** em todas as páginas. Aplicada em: splash, login, onboarding, sidebar, cabeçalho do celular, `profissional.html`, `agendar.html`, `confirmado.html`, `privacidade/termos/dpa` e no **painel admin**. Sobre fundo verde ela vai numa **pastilha branca** (o "C" da logo é verde escuro e sumia). `sw.js` com versão de cache nova (`nastadesk-v2-2026-08-30`) para o ícone velho não ficar preso no celular de ninguém.
+  **(2) Trimestral e anual.** Seletor de período na tela **Planos** e no **paywall** (Mensal · Trimestral −10% · Anual −20%), preço do período + "equivale a R$ X/mês", e o **brinde do site** anunciado dentro de cada card. **Preço é do servidor**: nova função `public.nastadesk_preco(plano, periodo)` — o front tem os números só para exibir. **`assinaturas.periodo`** (aditiva, null = mensal legado). **Links de checkout por plano × período** em `config_publica` (os 3 mensais já preenchidos com os que estavam no ar; trimestral/anual vazios → o botão avisa e oferece o WhatsApp em vez de quebrar). 🐛 **Bug evitado:** o `cakto-webhook` casava o plano só por 97/197/347 — uma compra anual (3.331) não casaria com nada e cairia no fallback **liberando o plano errado**; agora ele reconhece os 9 valores (em reais **ou centavos**, com 1 real de tolerância), grava o período e o valor certo. 🐛 **Corrigido também:** o MRR do painel somava o valor cru — uma assinatura anual inflaria a receita mensal em 12×; agora é **mensalizado**. E o card "Plano atual" não trava mais quem está no **teste grátis** (antes o botão do plano do trial vinha desabilitado — a pessoa não conseguia assinar o próprio plano).
+  **(3) Área "Site" em Minha Clínica.** Card com a tabela **R$ 500 / R$ 250 (trimestral) / grátis (anual)**, destacando **o preço que vale para aquele cliente** conforme o período que ele assina. **"🚀 Quero meu site"** registra o pedido (`site_solicitar`) **antes** de abrir o WhatsApp com mensagem pronta (mesmo padrão do NPS, para o pedido não se perder). Tabela **`sites`** (1 por clínica): o cliente **só lê a própria linha** (RLS) — status/URL/valores são do admin. Quando o admin marca **"No ar" + URL**, **a tela do cliente vira sozinha** "Seu site" + **"✏️ Quero mudar algo no site"** (mensagem diferente, já com o endereço) — serve também para quem fez o site antes de assinar (o dono lança na mão pelo painel).
+  **(4) Cupons de parceria.** Campo de cupom nos Planos, no paywall e no Site. O app **valida no servidor**, mostra o preço riscado e **registra o uso antes do checkout** (o código também vai na URL da Cakto). Tabelas **`cupons` + `cupom_usos`** são **fechadas** (deny-all, como `admin_config`): o cliente **nunca** vê parceiro nem comissão — só 2 RPCs `SECURITY DEFINER` que devolvem o desconto. O uso nasce **pendente** e o `cakto-webhook` marca **confirmado** quando o pagamento entra (tolerante a falha — nunca impede a liberação do acesso). No **painel admin**: seções novas **Cupons** (cadastro completo + fechamento de repasse por mês + "Marcar pago" + lista de quem usou), **Sites** e **Configurações** (os 9 links + WhatsApp/preços do site).
+  🔐 **Achado de segurança corrigido na hora:** `revoke execute … from anon` **não basta** — no Postgres toda função nasce com EXECUTE para **PUBLIC**, e o `anon` herda de PUBLIC. Com isso um visitante **não logado** conseguia chamar `cupom_calcular` e **enumerar códigos de cupom** (descobrir se existe e qual desconto dá; parceiro/comissão nunca ficaram expostos). Migration `fecha_execute_public_nas_rpcs_de_cupom_e_site` **aplicada**: revoga de `public, anon` e concede só a `authenticated` nas 6 funções novas. **Confirmado pela API real:** anon → `42501 permission denied` em `cupom_validar`/`cupom_calcular`/`site_solicitar` e na tabela `cupons`; `config_publica` segue legível (é público de propósito) e o **booking público continua vivo**. *(Padrão a repetir em toda função nova: `revoke … from public, anon` + `grant … to authenticated`.)*
+  **DB (aditivo, zero dado tocado):** migration `20260830120000_planos_periodos_site_cupons.sql` **APLICADA**, testada antes **com ROLLBACK contra os dados reais** (o teste pegou um bug de verdade: `ON CONFLICT` não casa com índice **parcial** sem repetir o predicado — corrigido). Checks: preços por período, código de cupom normalizado por trigger, cupom sem sessão recusado, desconto 90% de 3.331 = 2.997,90 → final 333,10 e comissão 20% = 66,62, **registrar 2× cria 1 linha só** (não infla repasse), cupom "só site" recusado em assinatura, site do anual = R$ 0, `site_solicitar` idempotente, **cliente não lê `cupons`/`cupom_usos`** (permission denied), **cliente não consegue marcar o próprio site como "no ar"** nem escrever em `config_publica`, e o dono vê só o site dele. **Zero resíduo** após o rollback (0 cupons / 0 usos / 0 sites).
+  **Validado:** `node --check` nos 5 fronts + **57/57 testes de navegador no app das clínicas** (logo nos 5 pontos, preços dos 3 períodos, selos −10%/−20%, "equivale a R$/mês", brinde do site por período, link por período vindo da config, período sem link abre aviso, cupom inválido/válido, preço riscado 97→9,70, **registra o uso antes do checkout** e leva e-mail+cupom na URL, área Site nos 4 estados, cupom do site 500→50, pedido registrado antes do wa.me, **WhatsApp certo (5521984072359)**, site no ar vira "editar" com mensagem diferente, paywall com período+cupom, **sem ids duplicados no DOM**) + **48/48 no painel admin** (logo carregando de verdade, **MRR mensalizado 197+3331/12**, cupons: contadores do mês, a pagar 35,46 × já repassado 90, troca de mês recalcula, criar/editar com todos os campos, validação sem código não chama a API, marcar pago zera o "a pagar", sites: contadores/lista/editar/"no ar" exige URL, config: 9 links, link anual vazio, WhatsApp normalizado só com dígitos) + **17/17 testes unitários** do mapeamento valor→plano/período do webhook — **zero erro de JS** nas duas suítes. Edges testadas ao vivo (401 sem token / 401 token inválido / 200 no preflight / `cakto-webhook` 401 com secret errado). Advisors: só entram os avisos **do mesmo padrão intencional** já existente (DEFINER + `rls_enabled_no_policy` em `cupons`/`cupom_usos`, que é deny-all **de propósito**, igual `admin_config`).
+  ***FALTA (só o dono faz):*** **(a)** criar as ofertas **trimestral e anual** na Cakto (6 links) e colá-las em **Painel admin → Configurações**; **(b)** cadastrar cada cupom **também na Cakto** com o mesmo código (aqui é só o rastreio/comissão); **(c)** merge da branch na `main` dos 2 repos (Vercel publica) — migrations e edges **já estão em produção** e são aditivas ao front atual.
 
 - **2026-07-07** — **📱 REDESIGN RESPONSIVO / "app no celular" (pedido do dono: "melhora a interface para o celular, está muito ruim, parece que foi feito só pra computador; deixa bonita no celular E no computador; só front-end, nada que afete o sistema negativamente"). SÓ CSS/HTML (front) — zero mudança de lógica, banco, edge ou dados. Branch `claude/mobile-interface-redesign-id4m6g` (falta merge na `main`; falta replicar o registro no `CLAUDE.md` do `dashboard` — não estava no escopo desta sessão).**
   O dono relatava que **para usar no celular precisava ativar "site para computador"** no navegador — sinal clássico de página que estoura a largura do viewport. A causa raiz estava no `.main` (largura fixa da versão desktop) + linhas de consulta/financeiro que não quebravam, empurrando a página para ~957px num viewport de 390px. Feito, **aditivo e conservador** (nenhuma classe existente removida; nada que o JS lê foi alterado):

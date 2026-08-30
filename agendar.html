@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#07523A">
 <title>Agendar consulta</title>
 <meta name="description" content="Agende sua consulta de fisioterapia online em menos de 1 minuto.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif' fill='white'>N</text></svg>">
+<link rel="icon" type="image/png" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@ body { font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); min-heigh
 .topo::before { content: ''; position: absolute; width: 340px; height: 340px; border-radius: 50%; background: rgba(255,255,255,0.07); top: -150px; right: -100px; }
 .topo::after { content: ''; position: absolute; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,0.05); bottom: -120px; left: -70px; }
 .topo-logo { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Serif Display', serif; font-size: 15px; opacity: .82; margin-bottom: 16px; position: relative; padding: 5px 14px 5px 6px; background: rgba(255,255,255,0.12); border-radius: 999px; }
-.topo-logo::before { content: ''; width: 24px; height: 24px; border-radius: 7px; background: rgba(255,255,255,0.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='24' x='7' font-size='22' font-family='serif' fill='white'%3EN%3C/text%3E%3C/svg%3E") center / 17px no-repeat; }
+.topo-logo img { width: 26px; height: auto; display: block; flex: 0 0 auto; background: #fff; border-radius: 7px; padding: 3px; }
 .topo-nome { font-family: 'DM Serif Display', serif; font-size: 28px; letter-spacing: -0.4px; position: relative; line-height: 1.15; }
 .topo-end { font-size: 13px; opacity: .8; margin-top: 9px; line-height: 1.5; position: relative; }
 .wrap { max-width: 560px; margin: -50px auto 0; padding: 0 16px calc(60px + var(--safe-base)); position: relative; }
@@ -96,7 +96,7 @@ body { font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); min-heigh
 <body>
 
 <div class="topo">
-  <div class="topo-logo">NastaDesk · Agendamento online</div>
+  <div class="topo-logo"><img src="/logo.png" alt="Nastaclin" width="747" height="558">NastaDesk · Agendamento online</div>
   <div class="topo-nome" id="clinica-nome">Carregando...</div>
   <div class="topo-end" id="clinica-endereco"></div>
 </div>

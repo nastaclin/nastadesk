@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>NastaDesk — Portal do Profissional</title>
 <meta name="theme-color" content="#0B6E4F">
+<link rel="icon" type="image/png" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,7 +45,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 #app { display: none; max-width: 860px; margin: 0 auto; padding: 0 16px calc(96px + var(--safe-base)); }
 .topo { display: flex; align-items: center; gap: 11px; padding: calc(16px + var(--safe-topo)) 2px 14px; }
 .topo-logo { display: inline-flex; align-items: center; gap: 9px; font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--verde); }
-.topo-logo::before { content: ''; width: 30px; height: 30px; border-radius: 9px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='24' x='7' font-size='22' font-family='serif' fill='white'%3EN%3C/text%3E%3C/svg%3E"), linear-gradient(160deg, var(--verde-medio), var(--verde)); background-size: 20px, cover; background-position: center; background-repeat: no-repeat; box-shadow: 0 4px 10px -4px rgba(11,110,79,0.5); }
+.topo-logo img { width: 34px; height: auto; display: block; flex: 0 0 auto; }
+.tela-estado .logo img { width: 96px; height: auto; display: block; margin: 0 auto 8px; }
 .topo-badge { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--verde); background: var(--verde-claro); border-radius: 999px; padding: 4px 10px; }
 .topo-dir { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .btn-sair { background: none; border: 1.5px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--cinza-medio); transition: all .15s; }
@@ -170,12 +172,12 @@ textarea#evo-texto:focus { border-color: var(--verde-medio); background: white; 
 
 <!-- Estado: carregando / sem vínculo -->
 <div id="tela-carregando" class="tela-estado">
-  <div class="logo">NastaDesk</div>
+  <div class="logo"><img src="/logo.png" alt="Nastaclin" width="747" height="558">NastaDesk</div>
   <div class="spinner"></div>
   <p>Abrindo o seu portal…</p>
 </div>
 <div id="tela-sem-vinculo" class="tela-estado" style="display:none">
-  <div class="logo">NastaDesk</div>
+  <div class="logo"><img src="/logo.png" alt="Nastaclin" width="747" height="558">NastaDesk</div>
   <p><strong>Seu acesso ainda não está vinculado a um profissional.</strong><br>
   Peça para a clínica abrir <em>Configurações → Profissionais → Logins da equipe</em> e vincular o seu login ao seu cadastro de profissional. Depois é só entrar de novo.</p>
   <button class="btn btn-primario" onclick="sair()">Sair</button>
@@ -184,7 +186,7 @@ textarea#evo-texto:focus { border-color: var(--verde-medio); background: white; 
 <!-- App -->
 <div id="app">
   <div class="topo">
-    <div class="topo-logo">NastaDesk</div>
+    <div class="topo-logo"><img src="/logo.png" alt="Nastaclin" width="747" height="558">NastaDesk</div>
     <div class="topo-badge">Portal do Profissional</div>
     <div class="topo-dir">
       <button class="btn-sair" onclick="sair()">Sair</button>

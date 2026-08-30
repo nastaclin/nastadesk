@@ -6,7 +6,7 @@
 <title>NastaDesk — Gestão de Clínica</title>
 <!-- build: import-export-deploy -->
 <meta name="description" content="Painel de gestão para clínicas de fisioterapia: agenda, pacientes, financeiro, lembretes de WhatsApp e agendamento online.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B6E4F'/><text y='24' x='5' font-size='22' font-family='serif' fill='white'>N</text></svg>">
+<link rel="icon" type="image/png" href="/icon-192.png">
 <!-- PWA: instalável no celular (Fase 2 — paridade de mercado) -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0B6E4F">
@@ -597,6 +597,54 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .pac-selecionado-nome { font-size: 14px; font-weight: 600; color: var(--cinza-escuro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pac-selecionado-sub { font-size: 12px; color: var(--cinza-medio); margin-top: 1px; }
 
+/* ===== PERÍODO DA ASSINATURA (mensal / trimestral / anual) ===== */
+.periodo-wrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-width: 920px; margin-bottom: 14px; }
+.periodo-seg { display: inline-flex; background: #fff; border: 1px solid var(--cinza-claro); border-radius: 14px; padding: 4px; gap: 4px; box-shadow: var(--sombra); max-width: 100%; overflow-x: auto; }
+.periodo-btn { border: 0; background: transparent; border-radius: 10px; padding: 9px 15px; font-size: 13.5px; font-weight: 600; color: var(--cinza-medio); cursor: pointer; white-space: nowrap; transition: all .15s; font-family: inherit; }
+.periodo-btn:hover { color: var(--cinza-escuro); background: var(--creme); }
+.periodo-btn.ativo { background: linear-gradient(160deg, var(--verde-medio), var(--verde)); color: #fff; box-shadow: 0 6px 14px -8px rgba(11,110,79,.7); }
+.periodo-selo { display: inline-block; margin-left: 6px; font-size: 10.5px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: #FFF3D6; color: #8A5A00; }
+.periodo-btn.ativo .periodo-selo { background: rgba(255,255,255,.24); color: #fff; }
+.periodo-nota { font-size: 12.5px; color: var(--cinza-medio); }
+
+/* ===== CUPOM DE DESCONTO ===== */
+.cupom-box { max-width: 920px; margin-bottom: 16px; }
+.cupom-linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cupom-linha input { flex: 1; min-width: 150px; max-width: 260px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.cupom-abrir { background: none; border: 0; padding: 0; font-size: 13px; color: var(--verde); font-weight: 600; cursor: pointer; text-decoration: underline; font-family: inherit; }
+.cupom-ok { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--verde-claro); border: 1px solid rgba(11,110,79,.22); border-radius: 12px; padding: 11px 14px; font-size: 13px; color: var(--verde-escuro); }
+.cupom-ok b { letter-spacing: .06em; }
+.cupom-erro { font-size: 12.5px; color: var(--vermelho); margin-top: 7px; }
+.plano-preco-de { font-size: 14px; color: var(--cinza-medio); text-decoration: line-through; margin-right: 7px; }
+.plano-preco-eq { font-size: 12px; color: var(--cinza-medio); margin-top: 3px; }
+
+/* ===== SITE DA CLÍNICA ===== */
+.site-card { padding: 0; overflow: hidden; }
+.site-topo { padding: 22px 24px; background: linear-gradient(150deg, var(--verde) 0%, var(--verde-escuro) 100%); color: #fff; }
+.site-topo h3 { font-family: 'DM Serif Display', serif; font-size: 21px; margin: 0 0 4px; }
+.site-topo p { font-size: 13px; color: rgba(255,255,255,.72); line-height: 1.55; margin: 0; }
+.site-corpo { padding: 20px 24px 24px; }
+.site-carregando { padding: 24px; font-size: 13px; color: var(--cinza-medio); }
+.site-precos { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 16px; }
+.site-preco { border: 1px solid var(--cinza-claro); border-radius: 12px; padding: 11px 10px; text-align: center; background: #fff; }
+.site-preco.destaque { border-color: var(--verde); background: var(--verde-claro); }
+.site-preco-rot { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--cinza-medio); }
+.site-preco.destaque .site-preco-rot { color: var(--verde-escuro); }
+.site-preco-val { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--cinza-escuro); margin-top: 3px; }
+.site-preco.destaque .site-preco-val { color: var(--verde); }
+.site-aviso { border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.55; margin-bottom: 16px; }
+.site-aviso.bom { background: var(--verde-claro); color: var(--verde-escuro); border: 1px solid rgba(11,110,79,.2); }
+.site-aviso.neutro { background: var(--creme); color: var(--cinza-escuro); border: 1px solid var(--cinza-claro); }
+.site-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 999px; margin-bottom: 12px; }
+.site-status.solicitado { background: #FFF3D6; color: #8A5A00; }
+.site-status.em_producao { background: #E4EDFF; color: #1F4FA8; }
+.site-status.no_ar { background: var(--verde-claro); color: var(--verde); }
+.site-url { display: block; word-break: break-all; font-size: 13.5px; font-weight: 600; color: var(--verde); text-decoration: none; margin-bottom: 14px; }
+.site-lista { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 7px; }
+.site-lista li { display: flex; gap: 9px; font-size: 13px; color: var(--cinza-escuro); line-height: 1.5; }
+.site-lista li::before { content: '✓'; color: var(--verde); font-weight: 700; flex: 0 0 auto; }
+@media (max-width: 640px) { .site-precos { grid-template-columns: 1fr; } }
+
 /* ===== PLANOS ===== */
 .planos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 920px; }
 .plano-card { background: white; border: 1.5px solid var(--cinza-claro); border-radius: var(--raio); padding: 24px 22px; display: flex; flex-direction: column; position: relative; box-shadow: var(--sombra); }
@@ -739,10 +787,17 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .av-1{background:#17A076} .av-2{background:#3B6FD4} .av-3{background:#E87040}
 .av-4{background:#7B5CF0} .av-5{background:#D44598} .av-6{background:#E8A820}
 
+/* ===== MARCA OFICIAL (Nastaclin) ===== */
+/* A logo tem o "C" em verde escuro; sobre fundo verde ela fica ilegível, então
+   nos fundos escuros (splash/login/sidebar) ela vai numa pastilha branca. */
+.splash-marca { width: 132px; height: auto; display: block; background: #fff; border-radius: 22px; padding: 14px 16px; margin-bottom: 22px; box-shadow: 0 18px 40px -22px rgba(0,0,0,0.55); }
+.auth-marca { width: 118px; height: auto; display: block; background: #fff; border-radius: 18px; padding: 12px 14px; margin-bottom: 18px; position: relative; z-index: 1; box-shadow: 0 14px 34px -20px rgba(0,0,0,0.5); }
+.onb-marca { width: 116px; height: auto; display: block; margin: 0 auto 10px; }
+
 /* ===== SPLASH ===== */
 .splash { position: fixed; inset: 0; background: linear-gradient(165deg, var(--verde) 0%, var(--verde-escuro) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; transition: opacity .4s; }
 .splash.oculto { opacity: 0; pointer-events: none; }
-.splash-logo { font-family: 'DM Serif Display', serif; font-size: 42px; color: white; letter-spacing: -0.5px; margin-bottom: 8px; }
+.splash-logo { font-family: 'DM Serif Display', serif; font-size: 34px; color: white; letter-spacing: -0.5px; margin-bottom: 8px; }
 .splash-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 40px; }
 .splash-spinner { width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #7DEFC0; border-radius: 50%; animation: spin .7s linear infinite; }
 
@@ -862,7 +917,8 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
 /* ---- Sidebar (desktop) ---- */
 .sidebar { box-shadow: inset -1px 0 0 rgba(255,255,255,0.05), 8px 0 40px -30px rgba(7,82,58,0.5); }
 .logo { display: flex; align-items: center; gap: 11px; }
-.logo::before { content: ''; width: 36px; height: 36px; flex: 0 0 auto; border-radius: 11px; background: rgba(255,255,255,0.14) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='24' x='7' font-size='22' font-family='serif' fill='white'%3EN%3C/text%3E%3C/svg%3E") center / 24px no-repeat; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); }
+.logo-marca { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 11px; background: #fff; display: flex; align-items: center; justify-content: center; padding: 5px; box-shadow: 0 4px 12px -6px rgba(0,0,0,0.45); }
+.logo-marca img { width: 100%; height: auto; display: block; }
 .nav-item { border-radius: 11px; padding: 10px 13px; }
 .nav-item.ativo { background: rgba(255,255,255,0.16); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 6px 16px -10px rgba(0,0,0,0.35); }
 .nav-item.ativo::before { content: ''; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: #7DEFC0; }
@@ -916,7 +972,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
   /* Cabeçalho do app: marca + sino, fixo no topo */
   body.app-ativo .mobile-topbar { position: sticky; top: 0; z-index: 130; display: flex; align-items: center; gap: 10px; margin: -10px -14px 12px; padding: calc(10px + var(--safe-topo)) 16px 10px; background: rgba(248,247,243,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--borda); }
   .mobile-topbar-logo { display: flex; align-items: center; gap: 9px; font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--verde); letter-spacing: -0.3px; }
-  .mobile-topbar-logo::before { content: ''; width: 30px; height: 30px; border-radius: 9px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='24' x='7' font-size='22' font-family='serif' fill='white'%3EN%3C/text%3E%3C/svg%3E"), linear-gradient(160deg, var(--verde-medio), var(--verde)); background-size: 20px, cover; background-position: center, center; background-repeat: no-repeat; box-shadow: 0 4px 10px -4px rgba(11,110,79,0.5); }
+  .mobile-topbar-logo img { width: 34px; height: auto; display: block; flex: 0 0 auto; }
   .mobile-topbar-sub { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--cinza-medio); margin-top: 1px; }
   .mobile-topbar-sino { margin-left: auto; position: relative; width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--borda); background: white; display: flex; align-items: center; justify-content: center; color: var(--cinza-escuro); box-shadow: var(--sombra); }
   .mobile-topbar-sino svg { width: 19px; height: 19px; }
@@ -1061,6 +1117,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
 
 <!-- SPLASH -->
 <div class="splash" id="splash">
+  <img class="splash-marca" src="/logo.png" alt="Nastaclin" width="747" height="558">
   <div class="splash-logo">NastaDesk</div>
   <div class="splash-sub">by Nastaclin</div>
   <div class="splash-spinner"></div>
@@ -1070,6 +1127,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
 <div class="auth-wrap" id="auth-wrap" style="display:none">
   <div class="auth-lado esquerdo">
     <div>
+      <img class="auth-marca" src="/logo.png" alt="Nastaclin" width="747" height="558">
       <div class="auth-logo">NastaDesk <span>by Nastaclin</span></div>
     </div>
     <div class="auth-features">
@@ -1127,6 +1185,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
 <!-- ONBOARDING -->
 <div class="onb-wrap" id="onb-wrap">
   <div class="onb-inner">
+    <img class="onb-marca" src="/logo.png" alt="Nastaclin" width="747" height="558">
     <div class="onb-logo">NastaDesk</div>
     <div class="onb-progresso"><div class="onb-progresso-fill" id="onb-progresso-fill" style="width:25%"></div></div>
     <div class="onb-steps" id="onb-steps">
@@ -1268,7 +1327,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
 <!-- APP -->
 <div class="app-wrap" id="app-wrap">
   <aside class="sidebar">
-    <div class="logo"><div class="logo-nome">NastaDesk</div><div class="logo-tag">by Nastaclin</div></div>
+    <div class="logo"><div class="logo-marca"><img src="/logo.png" alt="Nastaclin" width="747" height="558"></div><div><div class="logo-nome">NastaDesk</div><div class="logo-tag">by Nastaclin</div></div></div>
     <nav class="nav">
       <div class="nav-label">Dia a dia</div>
       <div class="nav-item ativo" data-sec="agenda" onclick="irPara('agenda')">
@@ -1331,7 +1390,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
     <!-- Cabeçalho do app no celular: marca + notificações -->
     <div class="mobile-topbar">
       <div>
-        <div class="mobile-topbar-logo">NastaDesk</div>
+        <div class="mobile-topbar-logo"><img src="/logo.png" alt="Nastaclin" width="747" height="558">NastaDesk</div>
       </div>
       <button class="mobile-topbar-sino" onclick="toggleNotifPainel()" aria-label="Notificações">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -2001,6 +2060,11 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
           <div class="perfil-info-item"><div class="perfil-info-label">Membro desde</div><div class="perfil-info-val" id="perfil-desde">—</div></div>
         </div>
       </div>
+      <!-- SITE DA CLÍNICA (feito pela Nastaclin) -->
+      <div class="card site-card" id="card-site" style="max-width:580px;margin-bottom:16px">
+        <div id="site-conteudo"><div class="site-carregando">Carregando…</div></div>
+      </div>
+
       <div class="card" style="padding:28px;max-width:580px;margin-bottom:16px">
         <div class="card-titulo" style="margin-bottom:20px">Editar dados</div>
         <div class="config-campo"><label>Nome da clínica</label><input type="text" id="perf-nome"></div>
@@ -2067,14 +2131,19 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
     <!-- PLANOS -->
     <section id="sec-planos" class="sec">
       <div class="topbar">
-        <div class="topbar-titulo"><h1>Planos</h1><p id="planos-sub">Escolha o plano ideal para a sua clínica</p></div>
+          <div class="topbar-titulo"><h1>Planos</h1><p id="planos-sub">Escolha o plano ideal para a sua clínica</p></div>
       </div>
+      <div id="planos-periodo" class="periodo-wrap"></div>
+      <div id="planos-cupom" class="cupom-box"></div>
       <div id="planos-grid" class="planos-grid"></div>
       <div id="planos-gerenciar" style="max-width:920px;margin-top:14px"></div>
       <div class="card" style="padding:22px;margin-top:18px;max-width:920px">
         <div class="card-titulo" style="margin-bottom:8px">Como funciona a cobrança</div>
         <div style="font-size:13.5px;color:var(--cinza-medio);line-height:1.7">
-          A assinatura é mensal e pode ser cancelada quando quiser. O upgrade libera os recursos na hora.
+          Você escolhe pagar <strong>mensal</strong>, <strong>trimestral</strong> (10% off) ou <strong>anual</strong> (20% off) —
+          e pode cancelar quando quiser. O upgrade libera os recursos na hora.
+          Quem fecha no <strong>anual ganha o site da clínica de graça</strong>; no trimestral, o site sai pela metade
+          (veja em <strong>Minha Clínica → Site</strong>).
           Em caso de dúvidas sobre planos ou pagamento, fale com a gente.
         </div>
       </div>
@@ -3414,6 +3483,10 @@ async function carregarDados(user) {
   document.getElementById('topbar-data').textContent = hoje.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone: TZ });
   document.getElementById('satis-mes').textContent = MESES[hoje.getMonth()];
   document.getElementById('novo-data').value = dataLocalISO(hoje);
+
+  // Links de checkout por período + dados do site (o dono edita pelo painel admin).
+  // Carrega antes de qualquer tela de plano/paywall.
+  await carregarConfigPublica();
 
   // Resolve a clínica. FUNCIONÁRIO tem prioridade sobre "dono": assim, mesmo que
   // exista uma clínica órfã com o user_id do funcionário, ele cai na clínica certa
@@ -6914,6 +6987,7 @@ async function carregarPerfil() {
   if (regEl) regEl.value = cl.recibo_registro || '';
   carregarStatusMfa();
   carregarStatusDpa();
+  carregarSite();
 }
 
 // ===== 2FA (TOTP) — verificação em duas etapas (opt-in, Supabase Auth nativo) =====
@@ -8620,41 +8694,262 @@ async function criarAcessoEquipe() {
   carregarEquipe();
 }
 
+// ===== PERÍODOS DE ASSINATURA (mensal / trimestral / anual) =====
+// Trimestral = -10%, Anual = -20% sobre o mensal (valores arredondados).
+// Espelha public.nastadesk_preco no banco — que é a fonte da verdade do preço.
+const PERIODOS = {
+  mensal:     { nome: 'Mensal',     meses: 1,  rotulo: '/mês',           selo: '' },
+  trimestral: { nome: 'Trimestral', meses: 3,  rotulo: 'a cada 3 meses', selo: '-10%' },
+  anual:      { nome: 'Anual',      meses: 12, rotulo: 'por ano',        selo: '-20%' },
+};
+const ORDEM_PERIODOS = ['mensal', 'trimestral', 'anual'];
+const PRECOS_PERIODO = {
+  mensal:     { basico: 97,  profissional: 197,  premium: 347 },
+  trimestral: { basico: 262, profissional: 532,  premium: 937 },
+  anual:      { basico: 931, profissional: 1891, premium: 3331 },
+};
+// Vantagem do site por período (o site é um serviço à parte — ver Minha Clínica).
+const SITE_BENEFICIO = {
+  mensal:     'Site por R$ 500',
+  trimestral: 'Site pela metade: R$ 250',
+  anual:      'Site GRÁTIS',
+};
+
+let periodoSel = 'mensal';
+let cupomAssinatura = null;   // cupom aplicado na tela de planos
+let cupomSite = null;         // cupom aplicado na área Site
+let cfgPublica = {};          // config_publica: checkout_links + site
+let meuSite = null;           // registro em public.sites da minha clínica (ou null)
+
+function precoPlano(chave, periodo) {
+  const t = PRECOS_PERIODO[periodo] || PRECOS_PERIODO.mensal;
+  return t[chave];
+}
+function periodoAssinado() {
+  return (assinaturaAtual && assinaturaAtual.periodo) || 'mensal';
+}
+function temAssinaturaViva() {
+  return !!(assinaturaAtual && ['ativa', 'em_atraso'].includes(assinaturaAtual.status));
+}
+
+// Config pública (links de checkout por período, WhatsApp e preço do site).
+// Fica no banco para o dono trocar pelo painel admin sem mexer no código.
+async function carregarConfigPublica() {
+  try {
+    const { data } = await db.from('config_publica').select('chave,valor');
+    (data || []).forEach(r => { cfgPublica[r.chave] = r.valor || {}; });
+  } catch (e) { /* segue com os padrões embutidos */ }
+}
+
+// Links de checkout da Cakto. O mensal tem fallback embutido (o que já estava no ar);
+// trimestral/anual saem da config_publica — enquanto não houver link, o botão avisa.
+const LINKS_CAKTO = {
+  basico: 'https://pay.cakto.com.br/ad8vfmf_949243',
+  profissional: 'https://pay.cakto.com.br/w3ryxws_949248',
+  premium: 'https://pay.cakto.com.br/cvv64ck_949254',
+};
+function linkCheckout(chave, periodo) {
+  const mapa = (cfgPublica.checkout_links || {})[periodo] || {};
+  const link = String(mapa[chave] || '').trim();
+  if (link) return link;
+  return periodo === 'mensal' ? (LINKS_CAKTO[chave] || '') : '';
+}
+function whatsappNastaclin() {
+  return String((cfgPublica.site || {}).whatsapp || '5521984072359').replace(/\D/g, '');
+}
+function abrirWhatsAppNastaclin(msg) {
+  const n = whatsappNastaclin();
+  if (!n) { toast('Contato ainda não configurado. Tente novamente mais tarde.'); return; }
+  window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ===== CUPOM DE DESCONTO =====
+// O desconto REAL é aplicado no checkout da Cakto (o mesmo código cadastrado lá).
+// Aqui o app valida o código, mostra o valor com desconto e registra o uso —
+// é o registro que diz de qual parceiro veio o cliente (comissão no painel admin).
+function descontoDoCupom(cupom, base) {
+  if (!cupom) return 0;
+  const v = Number(cupom.valor_desconto) || 0;
+  const d = cupom.tipo_desconto === 'percentual' ? (base * Math.min(v, 100)) / 100 : Math.min(v, base);
+  return Math.round(d * 100) / 100;
+}
+
+// Os ids saem do containerId (que é único por tela) — a caixa de cupom aparece
+// em 3 lugares (Planos, paywall e Site) e não pode haver id duplicado no DOM.
+function renderCupomBox(containerId, contexto) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.dataset.contexto = contexto;
+  const cupom = contexto === 'site' ? cupomSite : cupomAssinatura;
+  if (cupom) {
+    el.innerHTML = `<div class="cupom-ok">
+      <span>🎟️ Cupom <b>${esc(cupom.codigo)}</b> aplicado — ${esc(cupom.rotulo_desconto)} ${esc(cupom.duracao_texto || '')}.</span>
+      <button class="cupom-abrir" onclick="removerCupom('${contexto}')">remover</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `
+    <button class="cupom-abrir" id="${containerId}-link" onclick="abrirCampoCupom('${containerId}')">🎟️ Tenho um cupom de desconto</button>
+    <div id="${containerId}-campo" style="display:none">
+      <div class="cupom-linha">
+        <input type="text" id="${containerId}-input" placeholder="CÓDIGO" maxlength="30"
+               autocomplete="off" onkeydown="if(event.key==='Enter')aplicarCupom('${containerId}')">
+        <button class="btn btn-secundario" onclick="aplicarCupom('${containerId}')">Aplicar</button>
+      </div>
+      <div class="cupom-erro" id="${containerId}-erro" style="display:none"></div>
+    </div>`;
+}
+
+function abrirCampoCupom(containerId) {
+  const campo = document.getElementById(`${containerId}-campo`);
+  const link = document.getElementById(`${containerId}-link`);
+  if (campo) campo.style.display = '';
+  if (link) link.style.display = 'none';
+  const inp = document.getElementById(`${containerId}-input`);
+  if (inp) inp.focus();
+}
+
+async function aplicarCupom(containerId) {
+  const box = document.getElementById(containerId);
+  const contexto = (box && box.dataset.contexto) || 'assinatura';
+  const inp = document.getElementById(`${containerId}-input`);
+  const erroEl = document.getElementById(`${containerId}-erro`);
+  const mostrarErro = (m) => { if (erroEl) { erroEl.textContent = m; erroEl.style.display = 'block'; } };
+  if (erroEl) erroEl.style.display = 'none';
+  const codigo = (inp && inp.value || '').trim();
+  if (!codigo) { mostrarErro('Digite o código do cupom.'); return; }
+
+  const plano = contexto === 'site' ? null : planoAtualChave();
+  const periodo = contexto === 'site' ? periodoAssinado() : periodoSel;
+  let r;
+  try {
+    const { data, error } = await db.rpc('cupom_validar', {
+      p_codigo: codigo, p_contexto: contexto, p_plano: plano, p_periodo: periodo,
+    });
+    if (error) throw error;
+    r = data;
+  } catch (e) { mostrarErro('Não foi possível validar o cupom agora. Tente de novo.'); return; }
+
+  if (!r || !r.ok) { mostrarErro((r && r.erro) || 'Cupom inválido.'); return; }
+
+  r.rotulo_desconto = r.tipo_desconto === 'percentual'
+    ? `${Number(r.valor_desconto)}% de desconto`
+    : `${fmtBRL(r.valor_desconto)} de desconto`;
+
+  if (contexto === 'site') { cupomSite = r; renderSite(); }
+  else { cupomAssinatura = r; atualizarTelasDePlano(); }
+  toast('Cupom aplicado ✓');
+}
+
+function removerCupom(contexto) {
+  if (contexto === 'site') { cupomSite = null; renderSite(); }
+  else { cupomAssinatura = null; atualizarTelasDePlano(); }
+}
+
+// Planos aparece em 2 lugares (a seção e o paywall). Redesenha o que estiver aberto.
+function atualizarTelasDePlano() {
+  if (document.getElementById('paywall-overlay')) { removerSelecaoPlano(); mostrarSelecaoPlano(); }
+  if (secAtiva === 'planos') carregarPlanos();
+}
+
+// Registra o uso do cupom (quem usou, de qual parceiro, quanto de comissão).
+// Tolerante a falha: um erro aqui NUNCA pode impedir o cliente de pagar.
+async function registrarUsoCupom(cupom, contexto, plano, periodo) {
+  if (!cupom) return;
+  try {
+    await db.rpc('cupom_registrar_uso', {
+      p_codigo: cupom.codigo, p_contexto: contexto, p_plano: plano, p_periodo: periodo,
+    });
+  } catch (e) { /* segue para o checkout mesmo assim */ }
+}
+
+// ===== TELA DE PLANOS =====
+function selecionarPeriodo(periodo) {
+  if (!PERIODOS[periodo]) return;
+  periodoSel = periodo;
+  atualizarTelasDePlano();
+}
+
+function renderPeriodoSeletor(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const botoes = ORDEM_PERIODOS.map(p => {
+    const cfg = PERIODOS[p];
+    return `<button class="periodo-btn ${p === periodoSel ? 'ativo' : ''}" onclick="selecionarPeriodo('${p}')">
+      ${cfg.nome}${cfg.selo ? `<span class="periodo-selo">${cfg.selo}</span>` : ''}
+    </button>`;
+  }).join('');
+  const nota = periodoSel === 'anual'
+    ? '🎁 No plano anual o <strong>site da sua clínica sai de graça</strong> (economia de R$ 500).'
+    : periodoSel === 'trimestral'
+      ? '🎁 No trimestral o <strong>site sai pela metade</strong> (R$ 250 em vez de R$ 500).'
+      : 'Pagando trimestral ou anual você economiza — e ainda ganha desconto no site da clínica.';
+  el.innerHTML = `<div class="periodo-seg">${botoes}</div><div class="periodo-nota">${nota}</div>`;
+}
+
+// Preço de um card, já considerando período e cupom aplicado.
+function blocoPrecoPlano(chave) {
+  const base = precoPlano(chave, periodoSel);
+  const desc = descontoDoCupom(cupomAssinatura, base);
+  const fim = Math.max(base - desc, 0);
+  const cfg = PERIODOS[periodoSel];
+  const eq = cfg.meses > 1
+    ? `<div class="plano-preco-eq">equivale a ${fmtBRL(fim / cfg.meses)}/mês</div>` : '';
+  return `<div class="plano-preco">
+      ${desc > 0 ? `<span class="plano-preco-de">${fmtBRL(base)}</span>` : ''}
+      <span class="plano-preco-val">${fmtBRL(fim)}</span>
+      <span class="plano-preco-mes">${cfg.rotulo}</span>
+    </div>${eq}`;
+}
+
 function carregarPlanos() {
   const atual = planoAtualChave();
   const idxAtual = ORDEM_PLANOS.indexOf(atual);
-  document.getElementById('planos-sub').textContent = `Seu plano atual: ${PLANOS[atual].nome}`;
+  const perAtual = periodoAssinado();
+  const assinado = temAssinaturaViva();
+  document.getElementById('planos-sub').textContent = assinado
+    ? `Seu plano atual: ${PLANOS[atual].nome} · ${PERIODOS[perAtual].nome}`
+    : 'Escolha o plano ideal para a sua clínica';
+  renderPeriodoSeletor('planos-periodo');
+  renderCupomBox('planos-cupom', 'assinatura');
+
   const check = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></svg>';
   const xis = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M6 18L18 6M6 6l12 12"/></svg>';
   document.getElementById('planos-grid').innerHTML = ORDEM_PLANOS.map((chave, i) => {
     const p = PLANOS[chave];
-    const ehAtual = chave === atual;
+    // "Plano atual" só quando há assinatura paga viva E o período bate. Quem está
+    // no teste grátis (cortesia) precisa conseguir ASSINAR o plano em que está.
+    const ehAtual = assinado && chave === atual && perAtual === periodoSel;
     const selo = ehAtual ? '<div class="plano-selo cinza">Seu plano</div>' : (p.destaque ? '<div class="plano-selo">Mais vendido</div>' : '');
     const feats = p.feats.map(([on, txt]) => `<li class="plano-feat ${on ? '' : 'off'}">${on ? check : xis}<span>${esc(txt)}</span></li>`).join('');
+    const featSite = `<li class="plano-feat"><span style="flex:0 0 auto">🎁</span><span>${esc(SITE_BENEFICIO[periodoSel])}</span></li>`;
     let btn;
     if (ehAtual) btn = '<button class="plano-btn atual" disabled>Plano atual</button>';
+    else if (!assinado) btn = `<button class="plano-btn ${p.destaque ? 'assinar' : 'secundario'}" onclick="assinarPlano('${chave}')">Assinar ${p.nome}</button>`;
+    else if (chave === atual) btn = `<button class="plano-btn assinar" onclick="assinarPlano('${chave}')">Mudar para ${PERIODOS[periodoSel].nome.toLowerCase()}</button>`;
     else if (i > idxAtual) btn = `<button class="plano-btn assinar" onclick="assinarPlano('${chave}')">Fazer upgrade</button>`;
     else btn = `<button class="plano-btn secundario" onclick="assinarPlano('${chave}')">Mudar para este</button>`;
     return `<div class="plano-card ${p.destaque ? 'destaque' : ''} ${ehAtual ? 'atual' : ''}">
       ${selo}
       <div class="plano-nome">${p.nome}</div>
       <div class="plano-tagline">${p.tagline}</div>
-      <div class="plano-preco"><span class="plano-preco-val">R$ ${p.preco}</span><span class="plano-preco-mes">/mês</span></div>
-      <ul class="plano-feats">${feats}</ul>
+      ${blocoPrecoPlano(chave)}
+      <ul class="plano-feats">${feats}${featSite}</ul>
       ${btn}
     </div>`;
   }).join('');
 
-  // Gestão da assinatura (só quando há uma assinatura real no Mercado Pago)
+  // Gestão da assinatura (só quando há uma assinatura real)
   const ger = document.getElementById('planos-gerenciar');
   if (ger) {
     const a = assinaturaAtual;
     if (a && (a.status === 'ativa' || a.status === 'em_atraso' || a.status === 'pendente')) {
       const venc = a.proximo_pagamento ? new Date(a.proximo_pagamento).toLocaleDateString('pt-BR') : null;
+      const per = PERIODOS[a.periodo || 'mensal'].nome.toLowerCase();
       let info;
       if (a.status === 'em_atraso') info = '<span style="color:#8A5A00">⚠️ Pagamento não confirmado — regularize para manter o acesso.</span>';
       else if (a.status === 'pendente') info = 'Aguardando a confirmação do pagamento...';
-      else info = `Assinatura ativa via ${a.provedor === 'cakto' ? 'Cakto' : 'Mercado Pago'}` + (venc ? ` · próxima cobrança em ${venc}` : '') + '.';
+      else info = `Assinatura ${per} ativa via ${a.provedor === 'cakto' ? 'Cakto' : 'Mercado Pago'}` + (venc ? ` · próxima cobrança em ${venc}` : '') + '.';
       ger.innerHTML = `<div class="card" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
         <div style="font-size:13.5px;color:var(--cinza-medio)">${info}</div>
         <a onclick="cancelarAssinatura()" style="font-size:13px;color:var(--cinza-medio);cursor:pointer;text-decoration:underline;white-space:nowrap">Cancelar assinatura</a>
@@ -8665,21 +8960,35 @@ function carregarPlanos() {
   }
 }
 
-// Links de checkout da Cakto (assinatura mensal) — um por plano.
-const LINKS_CAKTO = {
-  basico: 'https://pay.cakto.com.br/ad8vfmf_949243',
-  profissional: 'https://pay.cakto.com.br/w3ryxws_949248',
-  premium: 'https://pay.cakto.com.br/cvv64ck_949254',
-};
+// Período sem link de checkout cadastrado ainda: em vez de quebrar, abre o
+// caminho humano (WhatsApp) para fechar o plano.
+function avisarPeriodoIndisponivel(chave, periodo) {
+  const p = PLANOS[chave];
+  abrirModalConfirm(
+    `${p.nome} ${PERIODOS[periodo].nome.toLowerCase()}`,
+    `A contratação online desse período ainda está sendo liberada. Me chame no WhatsApp que eu fecho o ${p.nome} ${PERIODOS[periodo].nome.toLowerCase()} (${fmtBRL(precoPlano(chave, periodo))}) para você na hora.`,
+    'Falar no WhatsApp',
+    () => abrirWhatsAppNastaclin(
+      `Olá! Sou da clínica ${(clinicaAtual && clinicaAtual.nome) || ''} e quero contratar o plano ${p.nome} no período ${PERIODOS[periodo].nome.toLowerCase()}.` +
+      (cupomAssinatura ? ` Meu cupom é ${cupomAssinatura.codigo}.` : '')
+    )
+  );
+}
 
-async function assinarPlano(chave) {
+async function assinarPlano(chave, periodo) {
   if (!PLANOS[chave]) return;
-  if (chave === planoAtualChave() && clinicaAtual?.ativo !== false) {
+  periodo = PERIODOS[periodo] ? periodo : periodoSel;
+  if (chave === planoAtualChave() && temAssinaturaViva()
+      && periodo === periodoAssinado() && clinicaAtual?.ativo !== false) {
     toast('Este já é o seu plano atual.');
     return;
   }
-  const link = LINKS_CAKTO[chave];
-  if (!link) { toast('Plano indisponível no momento. Fale com o suporte.'); return; }
+  const link = linkCheckout(chave, periodo);
+  if (!link) { avisarPeriodoIndisponivel(chave, periodo); return; }
+
+  // Registra o cupom ANTES de sair da página (o cliente vai embora no redirect).
+  await registrarUsoCupom(cupomAssinatura, 'assinatura', chave, periodo);
+
   toast('Abrindo o pagamento...');
   // Pré-preenche o e-mail da conta: é por ele que o pagamento é vinculado à sua clínica.
   // Importante: pague com este mesmo e-mail para a liberação ser automática.
@@ -8687,7 +8996,189 @@ async function assinarPlano(chave) {
   try {
     if (!email) { const { data: { user } } = await db.auth.getUser(); email = (user && user.email) || ''; }
   } catch (_e) { /* sem e-mail: segue sem pré-preencher */ }
-  window.location.href = email ? `${link}?email=${encodeURIComponent(email)}` : link;
+
+  let destino = link;
+  try {
+    const u = new URL(link);
+    if (email) u.searchParams.set('email', email);
+    if (cupomAssinatura) { u.searchParams.set('coupon', cupomAssinatura.codigo); u.searchParams.set('cupom', cupomAssinatura.codigo); }
+    destino = u.toString();
+  } catch (_e) {
+    destino = email ? `${link}?email=${encodeURIComponent(email)}` : link;
+  }
+  irParaCheckout(destino);
+}
+
+// Isolado para poder ser testado sem sair da página.
+function irParaCheckout(url) { window.location.href = url; }
+
+
+// ===== SITE DA CLÍNICA (serviço feito pela Nastaclin) =====
+// Preço de tabela R$ 500. Quem assina ANUAL ganha o site; quem assina TRIMESTRAL
+// paga metade. O registro fica em public.sites — o cliente só LÊ (o status/URL
+// quem define é o admin), então a tela vira "editar site" sozinha quando o site
+// entra no ar, inclusive para quem fez o site antes de assinar.
+function precoSiteTabela() {
+  const c = cfgPublica.site || {};
+  return {
+    cheio: Number(c.preco ?? 500),
+    trimestral: Number(c.preco_trimestral ?? 250),
+    anual: Number(c.preco_anual ?? 0),
+  };
+}
+
+// Quanto ESTE cliente paga pelo site, conforme o período que ele assina hoje.
+function precoSiteParaMim() {
+  const t = precoSiteTabela();
+  const per = temAssinaturaViva() ? periodoAssinado() : null;
+  if (per === 'anual') return { valor: t.anual, motivo: 'Você assina o plano anual — o site é um presente nosso.', gratis: true };
+  if (per === 'trimestral') return { valor: t.trimestral, motivo: 'Você assina o plano trimestral — o site sai pela metade.', gratis: false };
+  return { valor: t.cheio, motivo: null, gratis: false };
+}
+
+async function carregarSite() {
+  const box = document.getElementById('site-conteudo');
+  if (!box) return;
+  if (!clinicaId) { box.innerHTML = '<div class="site-carregando">Carregando…</div>'; return; }
+  try {
+    const { data } = await db.from('sites').select('*').eq('clinica_id', clinicaId).maybeSingle();
+    meuSite = data || null;
+  } catch (e) { meuSite = null; }
+  renderSite();
+}
+
+function renderSite() {
+  const box = document.getElementById('site-conteudo');
+  if (!box) return;
+  const t = precoSiteTabela();
+  const meu = precoSiteParaMim();
+  const noAr = meuSite && meuSite.status === 'no_ar';
+  const emProducao = meuSite && meuSite.status === 'em_producao';
+  const solicitado = meuSite && meuSite.status === 'solicitado';
+
+  // --- Já tem site feito pela Nastaclin: a tela vira "editar site" ---
+  if (noAr) {
+    box.innerHTML = `
+      <div class="site-topo">
+        <h3>Seu site</h3>
+        <p>Site feito pela Nastaclin. Precisa mudar alguma coisa? É só me chamar.</p>
+      </div>
+      <div class="site-corpo">
+        <div class="site-status no_ar">● No ar</div>
+        ${meuSite.url ? `<a class="site-url" href="${esc(meuSite.url)}" target="_blank" rel="noopener">${esc(meuSite.url)} ↗</a>` : ''}
+        <div class="site-aviso bom">Trocar textos, fotos, horários, preços ou adicionar uma seção nova:
+        me mande o que você quer mudar que eu ajusto pra você.</div>
+        <button class="btn btn-primario" style="width:100%" onclick="falarSobreSite('editar')">✏️ Quero mudar algo no site</button>
+      </div>`;
+    return;
+  }
+
+  // --- Pedido em andamento ---
+  if (solicitado || emProducao) {
+    box.innerHTML = `
+      <div class="site-topo">
+        <h3>Site da sua clínica</h3>
+        <p>${emProducao ? 'Seu site já está sendo produzido.' : 'Recebi seu pedido! Em breve eu te chamo para começar.'}</p>
+      </div>
+      <div class="site-corpo">
+        <div class="site-status ${emProducao ? 'em_producao' : 'solicitado'}">● ${emProducao ? 'Em produção' : 'Pedido enviado'}</div>
+        <div class="site-aviso neutro">${emProducao
+          ? 'Assim que ficar pronto, o endereço do site aparece aqui nesta tela.'
+          : 'Quer adiantar? Me mande no WhatsApp as fotos, textos e o endereço da clínica que eu já começo.'}</div>
+        <button class="btn btn-secundario" style="width:100%" onclick="falarSobreSite('andamento')">💬 Falar sobre o meu site</button>
+      </div>`;
+    return;
+  }
+
+  // --- Ainda não tem site: tela de contratação ---
+  const per = temAssinaturaViva() ? periodoAssinado() : null;
+  const desc = descontoDoCupom(cupomSite, meu.valor);
+  const final = Math.max(meu.valor - desc, 0);
+  const cards = [
+    { rot: 'Mensal', val: t.cheio, on: per === 'mensal' || !per },
+    { rot: 'Trimestral', val: t.trimestral, on: per === 'trimestral' },
+    { rot: 'Anual', val: t.anual, on: per === 'anual' },
+  ].map(c => `<div class="site-preco ${c.on ? 'destaque' : ''}">
+      <div class="site-preco-rot">${c.rot}</div>
+      <div class="site-preco-val">${c.val > 0 ? fmtBRL(c.val) : 'Grátis'}</div>
+    </div>`).join('');
+
+  const aviso = meu.gratis
+    ? `<div class="site-aviso bom">🎁 <strong>Seu site é grátis.</strong> ${esc(meu.motivo)}</div>`
+    : meu.motivo
+      ? `<div class="site-aviso bom">🎁 <strong>${fmtBRL(meu.valor)} para você.</strong> ${esc(meu.motivo)}</div>`
+      : `<div class="site-aviso neutro">💡 Assine o <strong>plano anual</strong> e o site sai <strong>de graça</strong>. No <strong>trimestral</strong>, sai por ${fmtBRL(t.trimestral)}.</div>`;
+
+  const valorLinha = final !== meu.valor
+    ? `<span class="plano-preco-de">${fmtBRL(meu.valor)}</span><span class="plano-preco-val">${final > 0 ? fmtBRL(final) : 'Grátis'}</span>`
+    : `<span class="plano-preco-val">${meu.valor > 0 ? fmtBRL(meu.valor) : 'Grátis'}</span>`;
+
+  box.innerHTML = `
+    <div class="site-topo">
+      <h3>Site da sua clínica</h3>
+      <p>Um site profissional para a sua clínica aparecer no Google, receber pacientes novos e integrar com o seu agendamento online.</p>
+    </div>
+    <div class="site-corpo">
+      <div class="site-precos">${cards}</div>
+      ${aviso}
+      <ul class="site-lista">
+        <li>Site próprio, com a cara e as cores da sua clínica</li>
+        <li>Botão de WhatsApp e link do seu agendamento online do NastaDesk</li>
+        <li>Funciona no celular e aparece no Google</li>
+        <li>Eu faço tudo para você — você só manda as fotos e as informações</li>
+      </ul>
+      <div class="plano-preco" style="margin-bottom:6px">${valorLinha}</div>
+      <div id="site-cupom" class="cupom-box" style="margin-bottom:14px"></div>
+      <button class="btn btn-primario" style="width:100%" onclick="falarSobreSite('criar')">🚀 Quero meu site</button>
+      <p style="font-size:12px;color:var(--cinza-medio);margin:10px 0 0;line-height:1.5">
+        Ao clicar, abre o WhatsApp com uma mensagem pronta. Sem compromisso — a gente conversa antes de fechar.
+      </p>
+    </div>`;
+  renderCupomBox('site-cupom', 'site');
+}
+
+// Abre o WhatsApp com a mensagem pronta certa para cada situação e, quando é um
+// pedido novo, registra o pedido (e o cupom) ANTES de abrir o WhatsApp — mesmo
+// padrão do NPS, para o dono não perder o pedido se a pessoa fechar a aba.
+async function falarSobreSite(tipo) {
+  const nome = (clinicaAtual && clinicaAtual.nome) || 'minha clínica';
+  const resp = (clinicaAtual && clinicaAtual.responsavel) || '';
+  const meu = precoSiteParaMim();
+  const per = temAssinaturaViva() ? PERIODOS[periodoAssinado()].nome.toLowerCase() : null;
+
+  if (tipo === 'editar') {
+    abrirWhatsAppNastaclin(
+      `Olá! Aqui é ${resp || 'o responsável'} da clínica ${nome}.\n` +
+      (meuSite && meuSite.url ? `Meu site é ${meuSite.url}\n` : '') +
+      `Gostaria de mudar uma coisa no site: `
+    );
+    return;
+  }
+
+  if (tipo === 'andamento') {
+    abrirWhatsAppNastaclin(
+      `Olá! Aqui é ${resp || 'o responsável'} da clínica ${nome}. ` +
+      `Queria falar sobre o site que pedi pela NastaDesk.`
+    );
+    return;
+  }
+
+  // Pedido novo: registra primeiro (tolerante a falha), depois abre o WhatsApp.
+  try {
+    await registrarUsoCupom(cupomSite, 'site', null, temAssinaturaViva() ? periodoAssinado() : 'mensal');
+    await db.rpc('site_solicitar', { p_cupom: cupomSite ? cupomSite.codigo : null });
+  } catch (e) { /* o pedido de verdade é a mensagem no WhatsApp */ }
+
+  const valorTxt = meu.gratis ? 'grátis (plano anual)' : fmtBRL(meu.valor);
+  abrirWhatsAppNastaclin(
+    `Olá! Aqui é ${resp || 'o responsável'} da clínica ${nome}.\n` +
+    `Quero criar o site da minha clínica com a Nastaclin.\n` +
+    (per ? `Meu plano no NastaDesk é ${PLANOS[planoAtualChave()].nome} (${per}) — site: ${valorTxt}.\n` : '') +
+    (cupomSite ? `Cupom: ${cupomSite.codigo}\n` : '') +
+    `Pode me passar como funciona?`
+  );
+
+  carregarSite();
 }
 
 // Cancelar a assinatura. Cakto: gerenciada pela própria Cakto. MP (legado): cancela via API.
@@ -8808,15 +9299,16 @@ function mostrarSelecaoPlano() {
   const check = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></svg>';
   const cards = ORDEM_PLANOS.map(chave => {
     const p = PLANOS[chave];
-    const feats = p.feats.filter(([on]) => on).slice(0, 5)
+    const feats = p.feats.filter(([on]) => on).slice(0, 4)
       .map(([on, txt]) => `<li class="plano-feat">${check}<span>${esc(txt)}</span></li>`).join('');
+    const featSite = `<li class="plano-feat"><span style="flex:0 0 auto">🎁</span><span>${esc(SITE_BENEFICIO[periodoSel])}</span></li>`;
     const ehReativar = temPlanoAntes && chave === clinicaAtual.plano;
     return `<div class="plano-card ${p.destaque ? 'destaque' : ''}">
       ${p.destaque ? '<div class="plano-selo">Mais vendido</div>' : ''}
       <div class="plano-nome">${p.nome}</div>
       <div class="plano-tagline">${esc(p.tagline)}</div>
-      <div class="plano-preco"><span class="plano-preco-val">R$ ${p.preco}</span><span class="plano-preco-mes">/mês</span></div>
-      <ul class="plano-feats">${feats}</ul>
+      ${blocoPrecoPlano(chave)}
+      <ul class="plano-feats">${feats}${featSite}</ul>
       <button class="plano-btn assinar" onclick="assinarPlano('${chave}')">${ehReativar ? 'Reativar este plano' : 'Assinar ' + p.nome}</button>
     </div>`;
   }).join('');
@@ -8826,11 +9318,15 @@ function mostrarSelecaoPlano() {
   ov.innerHTML =
     `<div style="max-width:1040px;margin:0 auto;text-align:center">
       <div style="font-family:'DM Serif Display',serif;font-size:27px;color:var(--cinza-escuro);margin-bottom:10px">${titulo}</div>
-      <p style="font-size:14.5px;color:var(--cinza-medio);line-height:1.6;max-width:580px;margin:0 auto 28px">${sub}</p>
+      <p style="font-size:14.5px;color:var(--cinza-medio);line-height:1.6;max-width:580px;margin:0 auto 22px">${sub}</p>
+      <div id="paywall-periodo" class="periodo-wrap" style="justify-content:center;max-width:100%;margin-bottom:12px"></div>
+      <div id="paywall-cupom" class="cupom-box" style="max-width:100%;display:flex;justify-content:center"></div>
       <div class="planos-grid" style="margin-bottom:20px">${cards}</div>
       <button onclick="fazerLogout()" style="padding:10px 20px;border:1px solid var(--cinza-claro);border-radius:12px;background:#fff;color:var(--cinza-escuro);font-size:13.5px;cursor:pointer">Sair da conta</button>
     </div>`;
   document.body.appendChild(ov);
+  renderPeriodoSeletor('paywall-periodo');
+  renderCupomBox('paywall-cupom', 'assinatura');
 }
 
 function removerSelecaoPlano() {

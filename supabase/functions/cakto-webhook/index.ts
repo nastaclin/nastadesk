@@ -3,7 +3,8 @@
 //   body.event   -> nome do evento (subscription_created/renewed/canceled/renewal_refused, etc.)
 //   body.secret  -> secret configurado no webhook (validado)
 //   body.data.customer.email      -> e-mail do comprador (mapeia a clínica)
-//   body.data.baseAmount / amount -> valor (identifica o plano: 97/197/347)
+//   body.data.baseAmount / amount -> valor (identifica plano E período: mensal 97/197/347,
+//                                    trimestral 262/532/937, anual 931/1891/3331)
 //   body.data.subscription.id     -> id da assinatura recorrente (provider_id)
 //   body.data.subscription.status -> active/canceled/...
 // Segurança: valida o secret; mapeia por e-mail; NUNCA derruba clínica em cortesia.
@@ -43,7 +44,13 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const PRECO: Record<string, number> = { basico: 97, profissional: 197, premium: 347 };
+// Preço oficial por plano × período (espelha public.nastadesk_preco no banco).
+// Mensal 97/197/347 · Trimestral -10% · Anual -20% (arredondado).
+const PRECO: Record<string, Record<string, number>> = {
+  mensal: { basico: 97, profissional: 197, premium: 347 },
+  trimestral: { basico: 262, profissional: 532, premium: 937 },
+  anual: { basico: 931, profissional: 1891, premium: 3331 },
+};
 
 function pick(obj: any, paths: string[]): any {
   for (const p of paths) {
@@ -53,10 +60,34 @@ function pick(obj: any, paths: string[]): any {
   return undefined;
 }
 
-function planoPorValor(v: any): string | null {
-  const n = Math.round(Number(v) || 0);
-  const map: Record<number, string> = { 97: "basico", 197: "profissional", 347: "premium", 9700: "basico", 19700: "profissional", 34700: "premium" };
-  return map[n] || null;
+// Descobre plano E período pelo valor pago. Aceita reais e centavos.
+// Sem isto, uma compra anual (ex.: 3331) não casaria com nenhum plano e cairia
+// no fallback — liberando o plano errado para quem nunca teve plano.
+function planoEPeriodoPorValor(v: any): { plano: string; periodo: string } | null {
+  const n = Number(v) || 0;
+  const candidatos = [Math.round(n), Math.round(n / 100)]; // reais ou centavos
+  for (const alvo of candidatos) {
+    if (!alvo) continue;
+    for (const periodo of ["mensal", "trimestral", "anual"]) {
+      for (const [plano, preco] of Object.entries(PRECO[periodo])) {
+        if (Math.abs(alvo - preco) <= 1) return { plano, periodo }; // tolera 1 real de arredondamento
+      }
+    }
+  }
+  return null;
+}
+
+// Período pelo valor quando o plano veio pelo id da oferta (admin_config.cakto_planos).
+function periodoPorValor(v: any, plano: string): string {
+  const n = Number(v) || 0;
+  for (const alvo of [Math.round(n), Math.round(n / 100)]) {
+    if (!alvo) continue;
+    for (const periodo of ["mensal", "trimestral", "anual"]) {
+      const preco = PRECO[periodo][plano];
+      if (preco && Math.abs(alvo - preco) <= 1) return periodo;
+    }
+  }
+  return "mensal";
 }
 
 async function segredoEsperado(): Promise<string> {
@@ -82,6 +113,20 @@ async function auditar(rec: any) {
     arr.unshift(rec);
     await db.from("admin_config").upsert({ key: "cakto_debug", value: { eventos: arr.slice(0, 20) }, updated_at: agora() });
   } catch (_e) { /* auditoria nunca quebra o fluxo */ }
+}
+
+// Cupom de parceiro: o cliente aplica o cupom ANTES de ir ao checkout (fica
+// "pendente"). Quando o pagamento é confirmado aqui, marcamos como "confirmado"
+// — é isso que vira comissão a pagar no painel admin. Tolerante a falha: um erro
+// aqui NUNCA pode impedir a liberação do acesso da clínica.
+async function confirmarCupom(clinicaId: string) {
+  try {
+    await db.from("cupom_usos")
+      .update({ status: "confirmado", confirmado_em: agora() })
+      .eq("clinica_id", clinicaId)
+      .eq("contexto", "assinatura")
+      .eq("status", "pendente");
+  } catch (e) { console.warn("CAKTO: nao consegui confirmar cupom:", e); }
 }
 
 Deno.serve(async (req) => {
@@ -126,7 +171,10 @@ Deno.serve(async (req) => {
     if (!clinica) { console.warn("CAKTO: e-mail sem clínica:", email); return new Response("ok", { headers: cors }); }
 
     if (libera) {
-      const plano = (await planoPorId(offerId, productId)) || planoPorValor(valor) || clinica.plano || "profissional";
+      const porValor = planoEPeriodoPorValor(valor);
+      const planoPorOferta = await planoPorId(offerId, productId);
+      const plano = planoPorOferta || porValor?.plano || clinica.plano || "profissional";
+      const periodo = planoPorOferta ? periodoPorValor(valor, plano) : (porValor?.periodo || "mensal");
       await db.from("clinicas").update({ plano, ativo: true }).eq("id", clinica.id);
       let assId: string | null = null;
       if (subId) {
@@ -137,10 +185,11 @@ Deno.serve(async (req) => {
         const { data: ex2 } = await db.from("assinaturas").select("id").eq("provedor", "cakto").eq("clinica_id", clinica.id).in("status", ["ativa", "pendente", "em_atraso"]).order("criado_em", { ascending: false }).limit(1).maybeSingle();
         assId = ex2?.id || null;
       }
-      const patch: any = { clinica_id: clinica.id, plano, provedor: "cakto", provider_id: subId ? String(subId) : null, status: "ativa", em_atraso_desde: null, valor: PRECO[plano] ?? null, payer_email: email, atualizado_em: agora() };
+      const patch: any = { clinica_id: clinica.id, plano, periodo, provedor: "cakto", provider_id: subId ? String(subId) : null, status: "ativa", em_atraso_desde: null, valor: PRECO[periodo]?.[plano] ?? null, payer_email: email, atualizado_em: agora() };
       if (assId) await db.from("assinaturas").update(patch).eq("id", assId);
       else await db.from("assinaturas").insert(patch);
-      console.log("CAKTO: liberado", email, plano);
+      await confirmarCupom(clinica.id);
+      console.log("CAKTO: liberado", email, plano, periodo);
       return new Response("ok", { headers: cors });
     }
 
