@@ -214,6 +214,45 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .auth-sucesso { background: var(--verde-claro); color: var(--verde); border-radius: 9px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
 .auth-sucesso.visivel { display: block; }
 
+/* Tela "confirme seu e-mail" (mostrada no lugar do formulário após o cadastro) */
+.auth-confirme { text-align: center; animation: confirmeEntra .45s cubic-bezier(.2,.8,.2,1); }
+@keyframes confirmeEntra { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.auth-confirme-icone {
+  width: 88px; height: 88px; margin: 0 auto 22px; border-radius: 50%;
+  background: linear-gradient(160deg, var(--verde-claro), #d9f0e4);
+  display: flex; align-items: center; justify-content: center; color: var(--verde);
+  box-shadow: 0 10px 30px rgba(11,110,79,.18);
+}
+.auth-confirme-icone svg { width: 42px; height: 42px; }
+.auth-confirme-icone::after {
+  content: ''; position: absolute; width: 88px; height: 88px; border-radius: 50%;
+  border: 2px solid var(--verde); opacity: .35; animation: confirmePulso 2.4s ease-out infinite;
+}
+@keyframes confirmePulso { 0% { transform: scale(1); opacity: .35; } 70% { transform: scale(1.35); opacity: 0; } 100% { opacity: 0; } }
+.auth-confirme-titulo { font-family: 'DM Serif Display', serif; font-size: 30px; color: var(--cinza-escuro); margin-bottom: 10px; line-height: 1.15; }
+.auth-confirme-texto { font-size: 15px; color: var(--cinza-medio); line-height: 1.6; margin-bottom: 6px; }
+.auth-confirme-email {
+  display: block; margin: 14px auto 22px; padding: 12px 16px; max-width: 340px;
+  background: var(--verde-claro); color: var(--verde); border-radius: 11px;
+  font-size: 15px; font-weight: 700; word-break: break-all;
+}
+.auth-confirme-passos { text-align: left; background: var(--cinza-fundo); border-radius: 13px; padding: 16px 18px; margin-bottom: 20px; }
+.auth-confirme-passo { display: flex; gap: 12px; align-items: flex-start; font-size: 13.5px; color: var(--cinza-escuro); line-height: 1.5; }
+.auth-confirme-passo + .auth-confirme-passo { margin-top: 12px; }
+.auth-confirme-num {
+  flex: 0 0 22px; width: 22px; height: 22px; border-radius: 50%; background: var(--verde); color: #fff;
+  font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+.auth-confirme-spam { font-size: 12.5px; color: var(--cinza-medio); background: #FFF8E6; border: 1px solid #F5E3B3; border-radius: 10px; padding: 10px 13px; margin-bottom: 20px; line-height: 1.5; }
+.auth-confirme-acoes { display: flex; flex-direction: column; gap: 10px; }
+.auth-btn-secundario {
+  width: 100%; padding: 13px; border-radius: 11px; border: 1.5px solid var(--borda);
+  background: #fff; color: var(--cinza-escuro); font-size: 14.5px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: border-color .15s, background .15s;
+}
+.auth-btn-secundario:hover:not(:disabled) { border-color: var(--verde); background: var(--verde-claro); }
+.auth-btn-secundario:disabled { opacity: .55; cursor: default; }
+
 /* ===== APP / SIDEBAR ===== */
 .app-wrap { display: none; min-height: 100vh; }
 .app-wrap.visivel { display: flex; }
@@ -1178,6 +1217,33 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
       </label>
       <button class="auth-btn" id="cadastro-btn" onclick="fazerCadastro()">Criar minha conta</button>
       <div class="auth-troca">Já tem conta? <a onclick="alternarForm('login')">Entrar</a></div>
+    </div>
+    <!-- CONFIRME SEU E-MAIL (aparece no lugar do formulário depois do cadastro) -->
+    <div class="auth-form-wrap" id="form-confirme" style="display:none">
+      <div class="auth-confirme">
+        <div class="auth-confirme-icone" style="position:relative">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7.5A2.5 2.5 0 015.5 5h13A2.5 2.5 0 0121 7.5v9a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 16.5v-9z"/>
+            <path d="M3.5 7l8.5 6 8.5-6"/>
+          </svg>
+        </div>
+        <div class="auth-confirme-titulo">Falta só confirmar seu e-mail</div>
+        <div class="auth-confirme-texto">Sua conta foi criada! Mandamos um link de confirmação para:</div>
+        <div class="auth-confirme-email" id="confirme-email">seu@email.com</div>
+        <div class="auth-confirme-passos">
+          <div class="auth-confirme-passo"><div class="auth-confirme-num">1</div><div>Abra a caixa de entrada desse e-mail</div></div>
+          <div class="auth-confirme-passo"><div class="auth-confirme-num">2</div><div>Clique no botão <strong>Confirmar meu e-mail</strong> da mensagem da Nastaclin</div></div>
+          <div class="auth-confirme-passo"><div class="auth-confirme-num">3</div><div>Pronto — seus <strong>7 dias grátis</strong> começam na hora</div></div>
+        </div>
+        <div class="auth-confirme-spam">📬 Não achou? Olhe no <strong>spam</strong> ou em <strong>Promoções</strong>. O e-mail chega em poucos minutos.</div>
+        <div class="auth-confirme-acoes">
+          <button class="auth-btn" id="confirme-abrir" onclick="abrirWebmail()" style="display:none">Abrir meu e-mail</button>
+          <button class="auth-btn-secundario" id="confirme-reenviar" onclick="reenviarConfirmacao()">Reenviar o e-mail de confirmação</button>
+          <button class="auth-btn-secundario" onclick="alternarForm('login')">Voltar para o login</button>
+        </div>
+        <div class="auth-erro" id="confirme-erro" style="margin-top:16px"></div>
+        <div class="auth-sucesso" id="confirme-sucesso" style="margin-top:16px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -3031,7 +3097,7 @@ const CORES = ['av-1','av-2','av-3','av-4','av-5','av-6'];
 const TZ = 'America/Sao_Paulo';
 const POLITICA_VERSAO = '1.0 (2026-07-03)'; // versão dos Termos/Política registrada no consentimento
 const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
+let db = createClient(SUPA_URL, SUPA_KEY);  // 'let': o modo demonstração troca por um cliente falso
 
 let clinicaId = null;
 let clinicaAtual = null;
@@ -3221,9 +3287,703 @@ function mostrarOnboarding(clinica) {
   setTimeout(renderHorariosPorDia, 200);
 }
 
+
+/* ============================================================================
+   MODO DEMONSTRAÇÃO — conta de exemplo do NastaDesk
+   ----------------------------------------------------------------------------
+   Serve para mostrar a ferramenta funcionando de verdade, com agenda, pacientes,
+   financeiro, estoque, conversas e relatórios já preenchidos.
+
+   COMO FUNCIONA (e por que é seguro): quando alguém entra com o login de
+   demonstração, o app NÃO fala com o Supabase. Um "banco" falso é montado aqui
+   no navegador (sessionStorage) e um cliente que imita o supabase-js responde
+   às consultas. Ou seja:
+     · nenhum dado real é lido, gravado ou apagado — nem desta conta, nem de
+       clínica nenhuma;
+     · quem testa pode criar, editar e excluir à vontade;
+     · como o sessionStorage morre junto com a aba/navegador, ao fechar tudo a
+       demonstração se redefine sozinha e volta exatamente ao estado inicial.
+
+   O login/senha ficam em config_publica.demo (o dono edita no painel admin).
+   ========================================================================== */
+
+const DEMO_CHAVE = 'nastadesk_demo_v1';
+let MODO_DEMO = false;
+
+function demoUid() {
+  return 'dmo-' + Math.random().toString(16).slice(2, 10) + Math.random().toString(16).slice(2, 6);
+}
+
+// Relacionamentos que o app pede embutidos no select (ex.: '*, pacientes(nome)')
+const DEMO_REL = {
+  consultas:       { pacientes: ['paciente_id', 'pacientes'], modalidades: ['modalidade_id', 'modalidades'], profissionais: ['profissional_id', 'profissionais'], salas: ['sala_id', 'salas'] },
+  pacotes:         { pacientes: ['paciente_id', 'pacientes'] },
+  mensalidades:    { pacientes: ['paciente_id', 'pacientes'] },
+  lista_espera:    { pacientes: ['paciente_id', 'pacientes'] },
+  avaliacoes:      { pacientes: ['paciente_id', 'pacientes'], profissionais: ['profissional_id', 'profissionais'] },
+  evolucoes:       { pacientes: ['paciente_id', 'pacientes'] },
+  clinica_membros: { clinicas: ['clinica_id', 'clinicas'] },
+  nps_respostas:   { pacientes: ['paciente_id', 'pacientes'] },
+};
+
+function demoBanco() {
+  try {
+    const cru = sessionStorage.getItem(DEMO_CHAVE);
+    if (cru) return JSON.parse(cru);
+  } catch (e) { /* sessionStorage bloqueado: cai para a memória */ }
+  const novo = demoSemente();
+  demoSalvar(novo);
+  return novo;
+}
+
+let demoMemoria = null;
+function demoSalvar(banco) {
+  demoMemoria = banco;
+  try { sessionStorage.setItem(DEMO_CHAVE, JSON.stringify(banco)); } catch (e) { /* segue em memória */ }
+}
+function demoLer() {
+  if (demoMemoria) return demoMemoria;
+  demoMemoria = demoBanco();
+  return demoMemoria;
+}
+
+// ---------- filtros ----------
+function demoAplicaFiltro(linha, [op, col, val, val2]) {
+  const v = linha[col];
+  switch (op) {
+    case 'eq':  return String(v) === String(val);
+    case 'neq': return String(v) !== String(val);
+    case 'gt':  return v > val;
+    case 'gte': return v >= val;
+    case 'lt':  return v < val;
+    case 'lte': return v <= val;
+    case 'in':  return (val || []).map(String).includes(String(v));
+    case 'is':  return val === null ? (v === null || v === undefined) : v === val;
+    case 'not': // usado como .not('col','is',null)
+      if (val === 'is' && val2 === null) return !(v === null || v === undefined);
+      return String(v) !== String(val2);
+    case 'ilike': {
+      const re = new RegExp('^' + String(val).replace(/%/g, '.*').replace(/[.*+?^${}()|[\]\\]/g, m => m === '.' ? '.' : '\\' + m) + '$', 'i');
+      return re.test(String(v || ''));
+    }
+    default: return true;
+  }
+}
+
+// ---------- montagem da linha com os relacionamentos pedidos ----------
+function demoMontar(linha, tabela, campos) {
+  const saida = Object.assign({}, linha);
+  const rels = DEMO_REL[tabela] || {};
+  const texto = campos || '*';
+  Object.keys(rels).forEach(nomeRel => {
+    if (!texto.includes(nomeRel + '(')) return;
+    const [fk, destino] = rels[nomeRel];
+    const alvo = (demoLer()[destino] || []).find(r => r.id === linha[fk]);
+    saida[nomeRel] = alvo ? Object.assign({}, alvo) : null;
+  });
+  return saida;
+}
+
+// ---------- query builder que imita o do supabase-js ----------
+function demoFrom(tabela) {
+  const filtros = [];
+  let campos = '*', ordena = null, limite = null, faixa = null;
+  let modo = 'select', valores = null, contar = false, soCabecalho = false;
+
+  function linhas() {
+    return (demoLer()[tabela] || []).filter(l => filtros.every(f => demoAplicaFiltro(l, f)));
+  }
+
+  function executar() {
+    const banco = demoLer();
+    if (!banco[tabela]) banco[tabela] = [];
+
+    if (modo === 'insert' || modo === 'upsert') {
+      const lista = Array.isArray(valores) ? valores : [valores];
+      const criadas = lista.map(v => {
+        const nova = Object.assign({ id: demoUid(), criado_em: new Date().toISOString() }, v);
+        if (modo === 'upsert') {
+          const chave = (opcoesUpsert && opcoesUpsert.onConflict) || 'id';
+          const i = banco[tabela].findIndex(r => String(r[chave]) === String(nova[chave]));
+          if (i >= 0) { banco[tabela][i] = Object.assign({}, banco[tabela][i], v); return banco[tabela][i]; }
+        }
+        banco[tabela].push(nova);
+        return nova;
+      });
+      demoSalvar(banco);
+      const dados = criadas.map(l => demoMontar(l, tabela, campos));
+      return { data: retornoUnico ? (dados[0] || null) : dados, error: null };
+    }
+
+    if (modo === 'update') {
+      const alvo = linhas();
+      alvo.forEach(l => Object.assign(l, valores));
+      demoSalvar(banco);
+      const dados = alvo.map(l => demoMontar(l, tabela, campos));
+      return { data: retornoUnico ? (dados[0] || null) : dados, error: null };
+    }
+
+    if (modo === 'delete') {
+      const remover = new Set(linhas().map(l => l.id));
+      banco[tabela] = banco[tabela].filter(l => !remover.has(l.id));
+      demoSalvar(banco);
+      return { data: [], error: null };
+    }
+
+    // select
+    let dados = linhas().map(l => demoMontar(l, tabela, campos));
+    if (ordena) {
+      const { coluna, asc } = ordena;
+      dados.sort((a, b) => {
+        const x = a[coluna], y = b[coluna];
+        if (x === y) return 0;
+        if (x === null || x === undefined) return 1;
+        if (y === null || y === undefined) return -1;
+        return (x > y ? 1 : -1) * (asc ? 1 : -1);
+      });
+    }
+    if (faixa) dados = dados.slice(faixa[0], faixa[1] + 1);
+    if (limite !== null) dados = dados.slice(0, limite);
+    const total = dados.length;
+    if (soCabecalho) return { data: [], count: total, error: null };
+    if (retornoUnico) return { data: dados[0] || null, count: contar ? total : undefined, error: retornoObrigatorio && !dados[0] ? { message: 'No rows found' } : null };
+    return { data: dados, count: contar ? total : undefined, error: null };
+  }
+
+  let retornoUnico = false, retornoObrigatorio = false, opcoesUpsert = null;
+
+  const api = {
+    select(f, opts) {
+      if (modo === 'select') campos = f || '*';
+      if (opts && opts.count) { contar = true; if (opts.head) soCabecalho = true; }
+      return api;
+    },
+    insert(v) { modo = 'insert'; valores = v; return api; },
+    update(v) { modo = 'update'; valores = v; return api; },
+    upsert(v, o) { modo = 'upsert'; valores = v; opcoesUpsert = o; return api; },
+    delete() { modo = 'delete'; return api; },
+    eq(c, v)  { filtros.push(['eq', c, v]);  return api; },
+    neq(c, v) { filtros.push(['neq', c, v]); return api; },
+    gt(c, v)  { filtros.push(['gt', c, v]);  return api; },
+    gte(c, v) { filtros.push(['gte', c, v]); return api; },
+    lt(c, v)  { filtros.push(['lt', c, v]);  return api; },
+    lte(c, v) { filtros.push(['lte', c, v]); return api; },
+    in(c, v)  { filtros.push(['in', c, v]);  return api; },
+    is(c, v)  { filtros.push(['is', c, v]);  return api; },
+    not(c, op, v) { filtros.push(['not', c, op, v]); return api; },
+    ilike(c, v) { filtros.push(['ilike', c, v]); return api; },
+    order(c, o) { ordena = { coluna: c, asc: !(o && o.ascending === false) }; return api; },
+    limit(n) { limite = n; return api; },
+    range(a, b) { faixa = [a, b]; return api; },
+    single() { retornoUnico = true; retornoObrigatorio = true; return api; },
+    maybeSingle() { retornoUnico = true; return api; },
+    then(ok, falha) { return Promise.resolve().then(executar).then(ok, falha); },
+    catch(f) { return Promise.resolve().then(executar).catch(f); },
+  };
+  return api;
+}
+
+/* ---------------------------------------------------------------------------
+   A SEMENTE: o estado inicial da conta de demonstração.
+   É recriada do zero toda vez que a demonstração recomeça, com as datas sempre
+   relativas a HOJE — assim a agenda nunca aparece vazia ou vencida.
+   --------------------------------------------------------------------------- */
+function demoSemente() {
+  // Datas SEMPRE no fuso da clínica (São Paulo), no mesmo formato que o app usa ao
+  // agendar (`...T09:00:00-03:00`). Com o fuso da máquina, a agenda da demonstração
+  // apareceria deslocada no computador de quem está testando.
+  const HOJE_SP = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const baseUTC = new Date(HOJE_SP + 'T12:00:00Z');   // meio-dia: nunca vira o dia
+  const dia = (dias) => { const d = new Date(baseUTC); d.setUTCDate(d.getUTCDate() + (dias || 0)); return d.toISOString().slice(0, 10); };
+  const dh = (dias, hora, min) => dia(dias) + 'T' + String(hora).padStart(2, '0') + ':' + String(min || 0).padStart(2, '0') + ':00-03:00';
+  const diaSemana = (dias) => { const d = new Date(baseUTC); d.setUTCDate(d.getUTCDate() + (dias || 0)); return d.getUTCDay(); };
+  const comp = (mesesAtras) => { const d = new Date(baseUTC); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - (mesesAtras || 0)); return d.toISOString().slice(0, 10); };
+  const vencDe = (mesesAtras, diaMes) => comp(mesesAtras).slice(0, 8) + String(diaMes).padStart(2, '0');
+
+  const CLI = 'demo-clinica-0001';
+  const id = (n) => 'demo-' + n;
+
+  const modalidades = [
+    { id: id('mod-fisio'),   clinica_id: CLI, nome: 'Fisioterapia', cor: '#0B6E4F', ordem: 1, ativo: true },
+    { id: id('mod-pilates'), clinica_id: CLI, nome: 'Pilates',      cor: '#2E86AB', ordem: 2, ativo: true },
+    { id: id('mod-rpg'),     clinica_id: CLI, nome: 'RPG',          cor: '#C77DFF', ordem: 3, ativo: true },
+    { id: id('mod-drena'),   clinica_id: CLI, nome: 'Drenagem',     cor: '#E8A87C', ordem: 4, ativo: true },
+  ];
+  const salas = [
+    { id: id('sala-1'), clinica_id: CLI, nome: 'Sala 1',            ordem: 1, ativo: true },
+    { id: id('sala-2'), clinica_id: CLI, nome: 'Sala 2',            ordem: 2, ativo: true },
+    { id: id('sala-3'), clinica_id: CLI, nome: 'Studio de Pilates', ordem: 3, ativo: true },
+  ];
+  const profissionais = [
+    { id: id('prof-ana'),    clinica_id: CLI, nome: 'Dra. Ana Beatriz Rocha', registro: 'CREFITO-2 98765-F', cor: '#0B6E4F', ordem: 1, ativo: true, comissao_tipo: 'percentual', comissao_valor: 40 },
+    { id: id('prof-rafael'), clinica_id: CLI, nome: 'Dr. Rafael Lima',        registro: 'CREFITO-2 45321-F', cor: '#2E86AB', ordem: 2, ativo: true, comissao_tipo: 'percentual', comissao_valor: 35 },
+    { id: id('prof-marina'), clinica_id: CLI, nome: 'Marina Duarte',          registro: 'CREFITO-2 77410-F', cor: '#C77DFF', ordem: 3, ativo: true, comissao_tipo: 'valor', comissao_valor: 45 },
+  ];
+
+  const P = [
+    ['Helena Martins',      '11987650001', 'mod-pilates', 'mensalidade', 380, 5,  'Dor lombar crônica há 2 anos'],
+    ['Ricardo Alves',       '11987650002', 'mod-fisio',   'sessao',      120, null, 'Pós-operatório de menisco'],
+    ['Beatriz Nogueira',    '11987650003', 'mod-pilates', 'mensalidade', 380, 10, 'Fortalecimento e postura'],
+    ['Carlos Eduardo Pinto','11987650004', 'mod-fisio',   'sessao',      120, null, 'Tendinite no ombro direito'],
+    ['Fernanda Souza',      '11987650005', 'mod-rpg',     'mensalidade', 420, 5,  'Escoliose — acompanhamento'],
+    ['Marcos Vinícius Dias','11987650006', 'mod-fisio',   'sessao',      120, null, 'Lombalgia aguda'],
+    ['Juliana Prado',       '11987650007', 'mod-pilates', 'mensalidade', 380, 15, 'Condicionamento pós-parto'],
+    ['Antônio Ferreira',    '11987650008', 'mod-fisio',   'sessao',      140, null, 'Reabilitação de joelho (LCA)'],
+    ['Patrícia Gomes',      '11987650009', 'mod-drena',   'sessao',      110, null, 'Drenagem pós-cirúrgica'],
+    ['Lucas Andrade',       '11987650010', 'mod-fisio',   'sessao',      120, null, 'Dor cervical (home office)'],
+    ['Sônia Regina Barros', '11987650011', 'mod-rpg',     'mensalidade', 420, 20, 'Artrose de quadril'],
+    ['Vinícius Camargo',    '11987650012', 'mod-pilates', 'mensalidade', 380, 5,  'Prevenção — atleta amador'],
+    ['Débora Nunes',        '11987650013', 'mod-fisio',   'sessao',      120, null, 'Fascite plantar'],
+    ['Roberto Tavares',     '11987650014', 'mod-fisio',   'nenhuma',     null, null, 'Avaliação inicial'],
+  ];
+  const pacientes = P.map((p, i) => ({
+    id: id('pac-' + (i + 1)), clinica_id: CLI, nome: p[0], whatsapp: p[1],
+    email: p[0].toLowerCase().split(' ')[0] + '@exemplo.com.br',
+    data_nascimento: dia(-((25 + i * 3) * 365)),
+    queixa_principal: p[6], total_consultas: 0, ultima_consulta: null, status: 'ativo',
+    criado_em: dh(i < 3 ? -(2 + i * 6) : -(130 - i * 6), 9), convenio: i % 4 === 0 ? 'Unimed' : (i % 5 === 0 ? 'Bradesco Saúde' : 'Particular'),
+    cpf: '0000000' + String(1000 + i).slice(-4) + '' + (10 + i % 89),
+    modalidade_id: id(p[2]), cobranca_tipo: p[3], cobranca_valor: p[4], cobranca_dia_vencimento: p[5],
+    observacoes: null, historico_medico: i % 3 === 0 ? 'Hipertensão controlada' : null,
+    medicamentos: null, alergias: i % 6 === 0 ? 'Dipirona' : null, genero: i % 2 === 0 ? 'F' : 'M',
+    profissao: ['Professora', 'Engenheiro', 'Advogada', 'Comerciante', 'Designer', 'Motorista', 'Enfermeira'][i % 7],
+  }));
+
+  const consultas = [];
+  const novaConsulta = (o) => { consultas.push(Object.assign({
+    id: demoUid(), clinica_id: CLI, status: 'agendado', origem: 'manual', valor: 120,
+    pagamento_status: 'pendente', forma_pagamento: null, pago_em: null, criado_em: dh(-3, 10),
+    queixa: null, observacoes: null, satisfacao: null, pacote_id: null, sala_id: id('sala-1'),
+    teleconsulta: false, serie_id: null, experimental: false, anamnese_enviada: false, anamnese_preenchida: false,
+  }, o)); };
+
+  // --- HOJE: agenda cheia, com status variados para mostrar o fluxo do dia ---
+  const hojeLista = [
+    [7,  0, 'pac-1',  'prof-ana',    'mod-pilates', 'sala-3', 'atendido',  'pago',      'pix'],
+    [8,  0, 'pac-4',  'prof-ana',    'mod-fisio',   'sala-1', 'atendido',  'pago',      'cartao'],
+    [9,  0, 'pac-2',  'prof-rafael', 'mod-fisio',   'sala-2', 'aguardando','pendente',  null],
+    [10, 0, 'pac-7',  'prof-marina', 'mod-pilates', 'sala-3', 'confirmado','pendente',  null],
+    [11, 0, 'pac-9',  'prof-rafael', 'mod-drena',   'sala-2', 'confirmado','pendente',  null],
+    [14, 0, 'pac-5',  'prof-ana',    'mod-rpg',     'sala-1', 'agendado',  'pendente',  null],
+    [15, 0, 'pac-10', 'prof-rafael', 'mod-fisio',   'sala-2', 'agendado',  'pendente',  null],
+    [16, 0, 'pac-12', 'prof-marina', 'mod-pilates', 'sala-3', 'agendado',  'pendente',  null],
+    [17, 0, 'pac-14', 'prof-ana',    'mod-fisio',   'sala-1', 'agendado',  'isento',    null],
+  ];
+  hojeLista.forEach(c => novaConsulta({
+    queixa: (pacientes.find(x => x.id === id(c[2])) || {}).queixa_principal,
+    paciente_id: id(c[2]), profissional_id: id(c[3]), modalidade_id: id(c[4]), sala_id: id(c[5]),
+    data_hora: dh(0, c[0], c[1]), status: c[6], pagamento_status: c[7], forma_pagamento: c[8],
+    pago_em: c[7] === 'pago' ? dh(0, c[0], 45) : null,
+    valor: c[7] === 'isento' ? 0 : 120,
+    experimental: c[2] === 'pac-14',
+    origem: c[2] === 'pac-10' ? 'online' : 'manual',
+  }));
+
+  // --- Horário fixo (série semanal): Helena, Pilates, seg/qua/sex às 7h ---
+  const serie = demoUid();
+  for (let s = 1; s <= 8; s++) {
+    [1, 3, 5].forEach(dsem => {
+      const off = s * 7 + (dsem - diaSemana(0));
+      if (off > 0 && off < 60) novaConsulta({
+        paciente_id: id('pac-1'), profissional_id: id('prof-ana'), modalidade_id: id('mod-pilates'),
+        sala_id: id('sala-3'), data_hora: dh(off, 7), serie_id: serie, valor: 95,
+      });
+    });
+  }
+
+  // --- Próximos dias: agenda da semana ---
+  [[1, 8, 'pac-3', 'prof-marina', 'mod-pilates', 'sala-3'], [1, 9, 'pac-6', 'prof-rafael', 'mod-fisio', 'sala-2'],
+   [1, 14, 'pac-8', 'prof-ana', 'mod-fisio', 'sala-1'], [2, 8, 'pac-11', 'prof-ana', 'mod-rpg', 'sala-1'],
+   [2, 10, 'pac-13', 'prof-rafael', 'mod-fisio', 'sala-2'], [2, 16, 'pac-2', 'prof-rafael', 'mod-fisio', 'sala-2'],
+   [3, 9, 'pac-5', 'prof-ana', 'mod-rpg', 'sala-1'], [3, 15, 'pac-9', 'prof-marina', 'mod-drena', 'sala-2'],
+   [4, 8, 'pac-4', 'prof-ana', 'mod-fisio', 'sala-1'], [4, 11, 'pac-7', 'prof-marina', 'mod-pilates', 'sala-3'],
+   [5, 10, 'pac-10', 'prof-rafael', 'mod-fisio', 'sala-2'], [6, 9, 'pac-12', 'prof-marina', 'mod-pilates', 'sala-3'],
+  ].forEach(c => novaConsulta({
+    paciente_id: id(c[2]), profissional_id: id(c[3]), modalidade_id: id(c[4]), sala_id: id(c[5]),
+    data_hora: dh(c[0], c[1]), status: c[0] === 1 ? 'confirmado' : 'agendado',
+  }));
+
+  // Uma teleconsulta e um agendamento vindo do site
+  novaConsulta({ paciente_id: id('pac-13'), profissional_id: id('prof-rafael'), modalidade_id: id('mod-fisio'),
+    sala_id: null, data_hora: dh(1, 17), teleconsulta: true, status: 'confirmado' });
+  novaConsulta({ paciente_id: id('pac-6'), profissional_id: id('prof-ana'), modalidade_id: id('mod-fisio'),
+    sala_id: id('sala-1'), data_hora: dh(3, 11), origem: 'online', status: 'agendado' });
+
+  // --- Passado: 10 semanas de histórico (alimenta financeiro e relatório) ---
+  const formas = ['pix', 'cartao', 'dinheiro', 'transferencia'];
+  const queixas = ['Dor lombar', 'Dor cervical', 'Reabilitação pós-cirúrgica', 'Dor no ombro',
+                   'Fortalecimento', 'Dor no joelho', 'Postura', 'Dor lombar', 'Dor cervical', 'Fortalecimento'];
+  // Gerador pseudoaleatório com semente fixa (a demonstração é sempre igual).
+  // Math.imul mantém a conta em 32 bits: sem ele, `semente * 1103515245` estoura
+  // os 2^53 do JavaScript, perde os bits baixos e passa a devolver sempre o mesmo
+  // resto — o que fazia quase todo o histórico nascer "cancelado".
+  let semente = 7;
+  const rnd = (n) => { semente = (Math.imul(semente, 1664525) + 1013904223) >>> 0; return (semente >>> 8) % n; };
+  for (let d = 1; d <= 70; d++) {
+    const ds = diaSemana(-d);
+    if (ds === 0) continue;                       // domingo fechado
+    const qtd = ds === 6 ? 2 : 4 + rnd(3);        // sábado mais curto
+    for (let k = 0; k < qtd; k++) {
+      const pi = rnd(14), pr = rnd(3), faltou = rnd(12) === 0, cancel = rnd(16) === 0;
+      const pac = pacientes[pi];
+      novaConsulta({
+        paciente_id: pac.id, profissional_id: profissionais[pr].id, modalidade_id: pac.modalidade_id,
+        sala_id: salas[rnd(3)].id, data_hora: dh(-d, 8 + k * 2), criado_em: dh(-d - 5, 10),
+        status: cancel ? 'cancelado' : (faltou ? 'faltou' : 'atendido'),
+        queixa: queixas[rnd(queixas.length)],
+        valor: 90 + rnd(6) * 10,
+        pagamento_status: (cancel || faltou) ? 'pendente' : (rnd(10) === 0 ? 'pendente' : 'pago'),
+        forma_pagamento: (cancel || faltou) ? null : formas[rnd(4)],
+        pago_em: (cancel || faltou) ? null : dh(-d, 9 + k * 2),
+        satisfacao: (!cancel && !faltou && rnd(3) === 0) ? ['otimo', 'bom', 'otimo', 'regular'][rnd(4)] : null,
+        origem: rnd(5) === 0 ? 'online' : 'manual',
+      });
+    }
+  }
+
+  // Estatísticas dos pacientes a partir do histórico
+  pacientes.forEach(p => {
+    const dele = consultas.filter(c => c.paciente_id === p.id && c.status === 'atendido');
+    p.total_consultas = dele.length;
+    const ult = dele.map(c => c.data_hora).sort().pop();
+    p.ultima_consulta = ult ? ult.slice(0, 10) : null;
+  });
+
+  // --- Mensalidades (mês atual e anterior) ---
+  const mensalidades = [];
+  pacientes.filter(p => p.cobranca_tipo === 'mensalidade').forEach((p, i) => {
+    [0, 1].forEach(m => {
+      const venc = vencDe(m, p.cobranca_dia_vencimento || 5);
+      const pago = m === 1 || i % 3 !== 0;
+      mensalidades.push({
+        id: demoUid(), clinica_id: CLI, paciente_id: p.id, competencia: comp(m),
+        valor: p.cobranca_valor, vencimento: venc,
+        status: pago ? 'pago' : 'pendente',
+        forma_pagamento: pago ? ['pix', 'cartao', 'dinheiro'][i % 3] : null,
+        pago_em: pago ? venc + 'T10:00:00-03:00' : null, criado_em: comp(m) + 'T09:00:00-03:00',
+      });
+    });
+  });
+
+  // --- Pacotes de sessões ---
+  const pacotes = [
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-8'),  nome: 'Reabilitação de joelho — 10 sessões', total_sessoes: 10, sessoes_usadas: 6, valor_total: 1100, valor_pago: 1100, pagamento_status: 'pago',     forma_pagamento: 'cartao', pago_em: dh(-40, 10), validade: dia(50), status: 'ativo',    criado_em: dh(-40, 10) },
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-9'),  nome: 'Drenagem pós-operatória — 8 sessões', total_sessoes: 8,  sessoes_usadas: 3, valor_total: 800,  valor_pago: 400,  pagamento_status: 'parcial',  forma_pagamento: 'pix',    pago_em: null,        validade: dia(60), status: 'ativo',    criado_em: dh(-20, 14) },
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-4'),  nome: 'Pacote ombro — 12 sessões',           total_sessoes: 12, sessoes_usadas: 12, valor_total: 1320, valor_pago: 1320, pagamento_status: 'pago',    forma_pagamento: 'pix',    pago_em: dh(-90, 10), validade: dia(-10), status: 'concluido', criado_em: dh(-95, 10) },
+  ];
+
+  // --- Despesas do mês (contas a pagar / DRE) ---
+  const despesas = [
+    ['Aluguel da sala',          'aluguel',   3200, 10, 'pago'],
+    ['Energia elétrica',         'utilidades', 480, 15, 'pago'],
+    ['Internet e telefone',      'utilidades', 220, 12, 'pago'],
+    ['Materiais (elásticos, gel)','materiais',  340, 20, 'pendente'],
+    ['Contadora',                'servicos',   450, 20, 'pendente'],
+    ['Limpeza',                  'servicos',   600,  5, 'pago'],
+    ['Software NastaDesk',       'software',   347,  8, 'pago'],
+  ].map(d => {
+    const venc = vencDe(0, d[3]);
+    return { id: demoUid(), clinica_id: CLI, descricao: d[0], categoria: d[1], valor: d[2],
+      competencia: comp(0), vencimento: venc, status: d[4],
+      forma_pagamento: d[4] === 'pago' ? 'pix' : null, pago_em: d[4] === 'pago' ? venc + 'T10:00:00-03:00' : null,
+      observacao: null, criado_em: comp(0) + 'T09:00:00-03:00' };
+  });
+
+  // --- Estoque (dois itens abaixo do mínimo, para mostrar o alerta) ---
+  const itens = [
+    ['Elástico Theraband médio', 'Materiais',  'un',  4, 10],
+    ['Gel condutor 1L',          'Materiais',  'un',  2,  5],
+    ['Fita Kinesio',             'Materiais',  'rolo', 12,  6],
+    ['Álcool 70%',               'Limpeza',    'L',    9,  4],
+    ['Papel toalha',             'Limpeza',    'pct', 14,  6],
+    ['Lençol descartável',       'Descartáveis','cx',   7,  3],
+    ['Luva de procedimento',     'Descartáveis','cx',   5,  2],
+  ];
+  const estoque_itens = itens.map(i => ({ id: demoUid(), clinica_id: CLI, nome: i[0], categoria: i[1],
+    unidade: i[2], quantidade: i[3], quantidade_minima: i[4], observacao: null, ativo: true, criado_em: dh(-60, 9) }));
+  const estoque_movimentos = [];
+  estoque_itens.forEach((it, k) => {
+    estoque_movimentos.push({ id: demoUid(), clinica_id: CLI, item_id: it.id, tipo: 'entrada',
+      quantidade: it.quantidade + 6, motivo: 'Estoque inicial', criado_em: dh(-60, 9) });
+    estoque_movimentos.push({ id: demoUid(), clinica_id: CLI, item_id: it.id, tipo: 'saida',
+      quantidade: 6, motivo: ['Uso nos atendimentos', 'Reposição das salas', 'Uso nos atendimentos'][k % 3], criado_em: dh(-10 - k, 11) });
+  });
+
+  // --- NPS ---
+  const nps_respostas = [
+    { pac: 'pac-1',  nota: 10, com: 'Atendimento excelente, melhorei muito da lombar!' },
+    { pac: 'pac-4',  nota: 9,  com: 'Equipe muito atenciosa.' },
+    { pac: 'pac-7',  nota: 10, com: 'Adoro as aulas de pilates, horário sempre pontual.' },
+    { pac: 'pac-2',  nota: 7,  com: 'Bom, mas o estacionamento é complicado.' },
+    { pac: 'pac-10', nota: null, com: null },
+    { pac: 'pac-12', nota: null, com: null },
+  ].map((n, i) => {
+    const p = pacientes.find(x => x.id === id(n.pac));
+    return { id: demoUid(), clinica_id: CLI, paciente_id: p.id, nome: p.nome, nota: n.nota,
+      comentario: n.com, canal: 'whatsapp', enviado_em: dh(-8 + i, 10),
+      respondido_em: n.nota === null ? null : dh(-7 + i, 15), criado_em: dh(-8 + i, 10) };
+  });
+
+  // --- Conversas de WhatsApp (com o bot de IA) ---
+  const conversas = [
+    { id: demoUid(), clinica_id: CLI, telefone: '11987650002', nome_contato: 'Ricardo Alves', paciente_id: id('pac-2'), tipo: 'paciente', interesse: 'agendamento', bot_ativo: true, bot_pausado_ate: null, estado: {}, nao_lidas: 2, ultima_msg: 'Perfeito, obrigado!', ultima_msg_em: dh(0, 8, 40), criado_em: dh(-2, 9) },
+    { id: demoUid(), clinica_id: CLI, telefone: '11991234567', nome_contato: 'Camila (novo contato)', paciente_id: null, tipo: 'lead', interesse: 'primeira consulta', bot_ativo: true, bot_pausado_ate: null, estado: {}, nao_lidas: 1, ultima_msg: 'Vocês atendem Unimed?', ultima_msg_em: dh(0, 7, 20), criado_em: dh(0, 7, 10) },
+    { id: demoUid(), clinica_id: CLI, telefone: '11987650005', nome_contato: 'Fernanda Souza', paciente_id: id('pac-5'), tipo: 'paciente', interesse: 'remarcar', bot_ativo: false, bot_pausado_ate: null, estado: {}, nao_lidas: 0, ultima_msg: 'Combinado, quinta às 9h!', ultima_msg_em: dh(-1, 16, 5), criado_em: dh(-1, 15) },
+  ];
+  const msg = (conv, dir, autor, texto, quando) => ({ id: demoUid(), conversa_id: conv, clinica_id: CLI, direcao: dir, autor, conteudo: texto, msg_externa_id: null, criado_em: quando });
+  const mensagens = [
+    msg(conversas[0].id, 'entrada', 'paciente', 'Oi! Queria remarcar minha sessão de amanhã', dh(0, 8, 30)),
+    msg(conversas[0].id, 'saida', 'bot', 'Olá, Ricardo! 👋 Claro. Tenho estes horários livres amanhã: 9h, 15h ou 16h. Qual fica melhor?', dh(0, 8, 31)),
+    msg(conversas[0].id, 'entrada', 'paciente', 'Pode ser 16h', dh(0, 8, 38)),
+    msg(conversas[0].id, 'saida', 'bot', 'Prontinho! Remarquei para amanhã às 16h com o Dr. Rafael Lima. Te mando um lembrete no dia. 😊', dh(0, 8, 39)),
+    msg(conversas[0].id, 'entrada', 'paciente', 'Perfeito, obrigado!', dh(0, 8, 40)),
+    msg(conversas[1].id, 'entrada', 'paciente', 'Bom dia! Vocês atendem Unimed?', dh(0, 7, 20)),
+    msg(conversas[2].id, 'entrada', 'paciente', 'Boa tarde, consigo mudar de quarta para quinta?', dh(-1, 15, 50)),
+    msg(conversas[2].id, 'saida', 'atendente', 'Oi Fernanda! Consigo sim, quinta às 9h com a Dra. Ana. Fecha?', dh(-1, 16, 0)),
+    msg(conversas[2].id, 'entrada', 'paciente', 'Combinado, quinta às 9h!', dh(-1, 16, 5)),
+  ];
+
+  // --- Prontuário: avaliações (a EVA gera o gráfico de evolução da dor) ---
+  const avaliacoes = [
+    ...[8, 7, 5, 3].map((nota, i) => ({ id: demoUid(), clinica_id: CLI, paciente_id: id('pac-1'), profissional_id: id('prof-ana'),
+      tipo: 'eva', dados: { nota, local: 'Lombar', observacao: i === 0 ? 'Início do tratamento' : 'Evolução boa, dor cedendo' }, criado_em: dh(-45 + i * 14, 9) })),
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-8'), profissional_id: id('prof-ana'), tipo: 'goniometria',
+      dados: { medidas: [{ articulacao: 'Joelho', movimento: 'Flexão', lado: 'Direito', ativa: 110, passiva: 120 },
+                          { articulacao: 'Joelho', movimento: 'Extensão', lado: 'Direito', ativa: -5, passiva: 0 }] }, criado_em: dh(-30, 10) },
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-8'), profissional_id: id('prof-ana'), tipo: 'funcional',
+      dados: { testes: [{ nome: 'TUG (Timed Up and Go)', resultado: 9.4, unidade: 's' }, { nome: 'Sentar-levantar 30s', resultado: 12, unidade: 'rep' }] }, criado_em: dh(-15, 10) },
+  ];
+
+  // --- Evoluções ---
+  const evolucoes = [
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-1'), consulta_id: null, texto: 'Paciente relata melhora importante da dor lombar. Progredimos a carga no solo e iniciamos exercícios no reformer.', criado_em: dh(-3, 8) },
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-8'), consulta_id: null, texto: 'ADM de joelho em 110° ativo. Iniciada propriocepção unipodal. Sem queixas de dor.', criado_em: dh(-5, 15) },
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-4'), consulta_id: null, texto: 'Tendinite de ombro em regressão. Manter fortalecimento do manguito rotador 3x/semana.', criado_em: dh(-7, 9) },
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-5'), consulta_id: null, texto: 'RPG: cadeia posterior ainda encurtada. Orientada quanto à postura no trabalho.', criado_em: dh(-9, 11) },
+  ];
+
+  // --- Lista de espera ---
+  const lista_espera = [
+    { id: demoUid(), clinica_id: CLI, paciente_id: null, nome: 'Tatiane Moraes', whatsapp: '11996540011', modalidade_id: id('mod-pilates'), profissional_id: null, preferencia: 'Manhã, seg/qua/sex', observacao: 'Indicação da Helena', status: 'aguardando', criado_em: dh(-4, 10) },
+    { id: demoUid(), clinica_id: CLI, paciente_id: id('pac-13'), nome: null, whatsapp: null, modalidade_id: id('mod-fisio'), profissional_id: id('prof-rafael'), preferencia: 'Fim de tarde', observacao: null, status: 'aguardando', criado_em: dh(-2, 16) },
+    { id: demoUid(), clinica_id: CLI, paciente_id: null, nome: 'Paulo Sérgio Matos', whatsapp: '11996540022', modalidade_id: id('mod-rpg'), profissional_id: null, preferencia: 'Qualquer horário', observacao: null, status: 'aguardando', criado_em: dh(-1, 9) },
+  ];
+
+  // --- Alertas / notificações ---
+  const alertas = [
+    { id: demoUid(), clinica_id: CLI, tipo: 'agendamento', mensagem: 'Novo agendamento online: Lucas Andrade (paciente já cadastrado — 6 consultas)', lido: false, criado_em: dh(0, 7, 5) },
+    { id: demoUid(), clinica_id: CLI, tipo: 'estoque',     mensagem: 'Estoque baixo: Gel condutor 1L (2 un, mínimo 5)', lido: false, criado_em: dh(0, 6, 30) },
+    { id: demoUid(), clinica_id: CLI, tipo: 'whatsapp',    mensagem: 'Nova mensagem de Camila (novo contato)', lido: false, criado_em: dh(0, 7, 20) },
+    { id: demoUid(), clinica_id: CLI, tipo: 'financeiro',  mensagem: 'Mensalidade vencida: Helena Martins', lido: true, criado_em: dh(-2, 9) },
+  ];
+
+  const clinica = {
+    id: CLI, nome: 'Clínica Movimento (demonstração)', responsavel: 'Dra. Ana Beatriz Rocha',
+    whatsapp: '11987650000', email: 'demo@nastadesk.com.br', plano: 'premium', ativo: true,
+    criado_em: dh(-180, 9), user_id: 'demo-user-0001', onboarding_completo: true,
+    horario_inicio: '07:00:00', horario_fim: '19:00:00',
+    dias_atendimento: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'], intervalo_consulta: 60,
+    cor_tema: 'verde', endereco: 'Rua das Acácias, 120 — Vila Mariana, São Paulo/SP',
+    endereco_complemento: 'Sala 42', horarios_por_dia: {}, valor_consulta_padrao: 120,
+    slug: 'clinica-movimento-demo', agendamento_online: true, cortesia: false, cortesia_expira_em: null,
+    recibo_cpf_cnpj: '000.000.000-00', recibo_registro: 'CREFITO-2 98765-F', ics_token: 'demo-ics-token',
+  };
+
+  return {
+    clinicas: [clinica],
+    pacientes, consultas, profissionais, modalidades, salas,
+    mensalidades, pacotes, despesas, estoque_itens, estoque_movimentos,
+    nps_respostas, conversas, mensagens, avaliacoes, evolucoes, lista_espera, alertas,
+    configuracoes: [{ id: demoUid(), clinica_id: CLI, antecedencia_lembrete_1: 24, antecedencia_lembrete_2: 1,
+      bot_ativo: true, lembrete_auto: true, atualizado_em: dh(-30, 9),
+      bot_faq: 'Atendemos de segunda a sábado. Estacionamento conveniado na esquina. Aceitamos Unimed e Bradesco Saúde.' }],
+    assinaturas: [{ id: demoUid(), clinica_id: CLI, plano: 'premium', provedor: 'cakto', provider_id: 'demo',
+      status: 'ativa', valor: 347, periodo: 'mensal', payer_email: 'demo@nastadesk.com.br',
+      criado_em: dh(-180, 9), atualizado_em: dh(-5, 9), proximo_pagamento: dh(25, 9) }],
+    sites: [], clinica_membros: [], lembretes: [], evolucoes_extra: [],
+    consentimentos: [], auditoria: [],
+    config_publica: (typeof cfgPublica === 'object' && Object.keys(cfgPublica || {}).length)
+      ? Object.keys(cfgPublica).map(k => ({ chave: k, valor: cfgPublica[k] }))
+      : [{ chave: 'site', valor: { whatsapp: '5521984072359', preco: 500, preco_trimestral: 250, preco_anual: 0 } }],
+  };
+}
+
+// ---------- cliente falso completo (imita a superfície do supabase-js) ----------
+function demoCliente() {
+  const semNada = { data: [], error: null };
+  return {
+    from: demoFrom,
+    rpc: async (nome, args) => demoRpc(nome, args || {}),
+    auth: {
+      getSession: async () => ({ data: { session: { access_token: 'demo', user: demoUsuario() } }, error: null }),
+      getUser: async () => ({ data: { user: demoUsuario() }, error: null }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+      signInWithPassword: async () => ({ data: {}, error: null }),
+      signUp: async () => ({ data: {}, error: null }),
+      signOut: async () => { sairModoDemo(); return { error: null }; },
+      updateUser: async () => ({ data: {}, error: null }),
+      resetPasswordForEmail: async () => ({ data: {}, error: null }),
+      resend: async () => ({ data: {}, error: null }),
+      mfa: {
+        listFactors: async () => ({ data: { totp: [], all: [] }, error: null }),
+        getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: 'aal1', nextLevel: 'aal1' }, error: null }),
+        enroll: async () => ({ data: null, error: { message: 'Indisponível na demonstração' } }),
+        challenge: async () => ({ data: null, error: { message: 'Indisponível na demonstração' } }),
+        verify: async () => ({ data: null, error: { message: 'Indisponível na demonstração' } }),
+        unenroll: async () => ({ data: null, error: { message: 'Indisponível na demonstração' } }),
+      },
+    },
+    storage: {
+      from: () => ({
+        list: async (prefixo) => {
+          const banco = demoLer();
+          const arqs = (banco.arquivos || []).filter(a => !prefixo || a.caminho.startsWith(prefixo));
+          return { data: arqs.map(a => ({ name: a.nome, created_at: a.criado_em, metadata: { size: a.tamanho } })), error: null };
+        },
+        upload: async (caminho, arquivo) => {
+          const banco = demoLer();
+          if (!banco.arquivos) banco.arquivos = [];
+          const partes = caminho.split('/');
+          banco.arquivos.push({ caminho, nome: partes[partes.length - 1], pasta: partes.slice(0, -1).join('/'),
+            tamanho: (arquivo && arquivo.size) || 12345, criado_em: new Date().toISOString() });
+          demoSalvar(banco);
+          return { data: { path: caminho }, error: null };
+        },
+        remove: async (caminhos) => {
+          const banco = demoLer();
+          banco.arquivos = (banco.arquivos || []).filter(a => !caminhos.includes(a.caminho));
+          demoSalvar(banco);
+          return { data: [], error: null };
+        },
+        // Na demonstração não há arquivo de verdade: abre a própria logo como exemplo.
+        createSignedUrl: async () => ({ data: { signedUrl: location.origin + '/logo.png' }, error: null }),
+      }),
+    },
+    channel: () => { const ch = { on() { return ch; }, subscribe() { return ch; } }; return ch; },
+    removeChannel: () => {},
+  };
+}
+
+function demoUsuario() {
+  return { id: 'demo-user-0001', email: (cfgDemo() && cfgDemo().email) || 'demo@nastadesk.com.br',
+           user_metadata: { tipo: 'dono' } };
+}
+
+// ---------- RPCs ----------
+function demoRpc(nome, args) {
+  const banco = demoLer();
+  const CLI = 'demo-clinica-0001';
+  if (nome === 'gerar_mensalidades') {
+    const competencia = args.p_competencia || args.competencia;
+    let criadas = 0;
+    (banco.pacientes || []).filter(p => p.cobranca_tipo === 'mensalidade').forEach(p => {
+      const existe = (banco.mensalidades || []).some(m => m.paciente_id === p.id && m.competencia === competencia);
+      if (existe) return;
+      const dd = String(p.cobranca_dia_vencimento || 5).padStart(2, '0');
+      banco.mensalidades.push({ id: demoUid(), clinica_id: CLI, paciente_id: p.id, competencia,
+        valor: p.cobranca_valor, vencimento: competencia.slice(0, 8) + dd, status: 'pendente',
+        forma_pagamento: null, pago_em: null, criado_em: new Date().toISOString() });
+      criadas++;
+    });
+    demoSalvar(banco);
+    return { data: criadas, error: null };
+  }
+  if (nome === 'paciente_anonimizar' || nome === 'paciente_excluir') {
+    const pid = args.p_paciente_id || args.paciente_id;
+    if (nome === 'paciente_excluir') {
+      ['consultas', 'evolucoes', 'avaliacoes', 'mensalidades', 'pacotes', 'nps_respostas', 'lista_espera'].forEach(t => {
+        banco[t] = (banco[t] || []).filter(r => r.paciente_id !== pid);
+      });
+      banco.pacientes = (banco.pacientes || []).filter(p => p.id !== pid);
+    } else {
+      const p = (banco.pacientes || []).find(x => x.id === pid);
+      if (p) Object.assign(p, { nome: 'Paciente anonimizado', whatsapp: '', email: null, cpf: null,
+        queixa_principal: null, historico_medico: null, medicamentos: null, alergias: null,
+        observacoes: null, endereco: null, profissao: null, status: 'anonimizado' });
+      banco.evolucoes = (banco.evolucoes || []).filter(e => e.paciente_id !== pid);
+    }
+    demoSalvar(banco);
+    return { data: true, error: null };
+  }
+  if (nome === 'cupom_validar' || nome === 'cupom_calcular') {
+    return { data: { ok: false, erro: 'Cupons não funcionam na conta de demonstração.' }, error: null };
+  }
+  if (nome === 'site_solicitar') {
+    banco.sites = [{ id: demoUid(), clinica_id: CLI, status: 'solicitado', url: null, valor_cobrado: 500,
+      valor_pago: null, gratuito: false, cupom_codigo: null, origem: 'cliente',
+      solicitado_em: new Date().toISOString(), criado_em: new Date().toISOString() }];
+    demoSalvar(banco);
+    return { data: { ok: true }, error: null };
+  }
+  // registrar_auditoria, registrar_aceite_dpa e qualquer outra: aceita e segue
+  return { data: null, error: null };
+}
+
+// ---------- credenciais (config_publica.demo, com padrão embutido) ----------
+const DEMO_PADRAO = { email: 'demo@nastadesk.com.br', senha: 'Demo@2026', ativo: true };
+function cfgDemo() {
+  const c = (typeof cfgPublica === 'object' && cfgPublica && cfgPublica.demo) || {};
+  return { email: c.email || DEMO_PADRAO.email, senha: c.senha || DEMO_PADRAO.senha,
+           ativo: c.ativo !== false };
+}
+function ehLoginDemo(email, senha) {
+  const c = cfgDemo();
+  return c.ativo && String(email).trim().toLowerCase() === String(c.email).toLowerCase() && senha === c.senha;
+}
+
+// ---------- entrar / sair ----------
+async function entrarModoDemo() {
+  MODO_DEMO = true;
+  window.MODO_DEMO = true;
+  db = demoCliente();          // a partir daqui NADA vai para o Supabase
+  demoMemoria = null;          // força ler (ou semear) o banco da sessão
+  demoLer();
+  protegerSaidasDemo();
+  document.getElementById('auth-wrap').style.display = 'none';
+  await entrarNoApp(demoUsuario());
+  mostrarBannerDemo();
+}
+
+function sairModoDemo() {
+  try { sessionStorage.removeItem(DEMO_CHAVE); } catch (e) {}
+  demoMemoria = null;
+  location.reload();
+}
+
+function reiniciarDemo() {
+  abrirModalConfirm('Recomeçar a demonstração',
+    'Tudo o que você criou ou alterou nesta demonstração será descartado e a conta volta ao estado inicial. Nenhum dado real é afetado.',
+    'Recomeçar', () => { try { sessionStorage.removeItem(DEMO_CHAVE); } catch (e) {} demoMemoria = null; location.reload(); });
+}
+
+// Na demonstração, os botões que falariam com o mundo real (WhatsApp de verdade e
+// checkout de pagamento) só explicam o que aconteceria na conta real.
+function protegerSaidasDemo() {
+  const abrirOriginal = window.open.bind(window);
+  window.open = function (url, ...resto) {
+    const u = String(url || '');
+    if (/wa\.me|api\.whatsapp\.com|pay\.cakto\.com\.br/.test(u)) {
+      toast('Modo demonstração: aqui o WhatsApp/checkout abriria de verdade 😉');
+      return null;
+    }
+    return abrirOriginal(url, ...resto);
+  };
+}
+
+function mostrarBannerDemo() {
+  if (document.getElementById('banner-demo')) return;
+  const el = document.createElement('div');
+  el.id = 'banner-demo';
+  el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9100;background:#0B6E4F;color:#fff;padding:8px 14px;font-size:13px;text-align:center;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap';
+  el.innerHTML = '<span>🎬 <b>Conta de demonstração</b> — explore à vontade: nada é salvo de verdade e tudo volta ao normal quando você fechar o navegador.</span>' +
+    '<a onclick="reiniciarDemo()" style="cursor:pointer;text-decoration:underline;color:#BFE6D2;font-weight:700">Recomeçar do zero</a>';
+  document.body.appendChild(el);
+}
+
 // ===== INIT / AUTH =====
 async function init() {
   setTimeout(() => ocultarSplash(), 5000);
+  carregarConfigPublica();   // traz também o login/senha da conta de demonstração
   try {
     const { data: { session } } = await db.auth.getSession();
     if (session) {
@@ -3333,6 +4093,19 @@ async function fazerLogin() {
   const btn = document.getElementById('login-btn');
   erro.classList.remove('visivel');
   document.getElementById('login-sucesso').classList.remove('visivel');
+  // Conta de demonstração: entra num app 100% local, sem tocar no Supabase.
+  if (ehLoginDemo(email, senha)) {
+    btn.disabled = true; btn.textContent = 'Abrindo a demonstração...';
+    try {
+      await entrarModoDemo();
+    } catch (e) {
+      console.error('demo:', e);
+      erro.textContent = 'Não foi possível abrir a demonstração. Recarregue a página e tente de novo.';
+      erro.classList.add('visivel');
+    }
+    btn.disabled = false; btn.textContent = 'Entrar';
+    return;
+  }
   btn.disabled = true; btn.textContent = 'Entrando...';
   const { error } = await db.auth.signInWithPassword({ email, password: senha });
   btn.disabled = false; btn.textContent = 'Entrar';
@@ -3409,8 +4182,21 @@ async function fazerCadastro() {
     }
   });
   btn.disabled = false; btn.textContent = 'Criar minha conta';
-  if (error) { erro.textContent = traduzirErro(error.message); erro.classList.add('visivel'); }
-  else { sucesso.textContent = 'Conta criada! Enviamos um link de confirmação para o seu e-mail — clique nele para ativar sua conta.'; sucesso.classList.add('visivel'); }
+  if (error) { erro.textContent = traduzirErro(error.message); erro.classList.add('visivel'); return; }
+  // Sucesso: a tela inteira muda para a de "confirme seu e-mail" — antes era só uma
+  // faixa verde no topo, que muita gente não reparava e ficava sem confirmar a conta.
+  limparFormCadastro();
+  mostrarConfirmeEmail(email);
+}
+
+function limparFormCadastro() {
+  ['cad-clinica', 'cad-nome', 'cad-wpp', 'cad-email', 'cad-senha'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const consent = document.getElementById('cad-consent');
+  if (consent) consent.checked = false;
+  atualizarReqSenha();
 }
 
 function abrirModalConfirm(titulo, texto, btnLabel, callback) {
@@ -3450,6 +4236,83 @@ async function fazerLogout() {
 function alternarForm(qual) {
   document.getElementById('form-login').style.display = qual === 'login' ? 'block' : 'none';
   document.getElementById('form-cadastro').style.display = qual === 'cadastro' ? 'block' : 'none';
+  const conf = document.getElementById('form-confirme');
+  if (conf) conf.style.display = qual === 'confirme' ? 'block' : 'none';
+}
+
+// ===== Tela "confirme seu e-mail" (no lugar do avisinho verde) =====
+let emailAguardandoConfirmacao = '';
+
+function mostrarConfirmeEmail(email) {
+  emailAguardandoConfirmacao = email;
+  document.getElementById('confirme-email').textContent = email;
+  document.getElementById('confirme-erro').classList.remove('visivel');
+  document.getElementById('confirme-sucesso').classList.remove('visivel');
+  // Atalho para o webmail, quando dá para saber qual é
+  const btnAbrir = document.getElementById('confirme-abrir');
+  const url = urlDoWebmail(email);
+  if (url) { btnAbrir.style.display = 'block'; btnAbrir.dataset.url = url; }
+  else { btnAbrir.style.display = 'none'; }
+  alternarForm('confirme');
+  window.scrollTo(0, 0);
+}
+
+function urlDoWebmail(email) {
+  const dominio = (email.split('@')[1] || '').toLowerCase();
+  if (dominio === 'gmail.com' || dominio === 'googlemail.com') return 'https://mail.google.com';
+  if (['outlook.com', 'hotmail.com', 'live.com', 'msn.com'].includes(dominio)) return 'https://outlook.live.com/mail/';
+  if (['yahoo.com', 'yahoo.com.br', 'ymail.com'].includes(dominio)) return 'https://mail.yahoo.com';
+  if (dominio === 'icloud.com' || dominio === 'me.com') return 'https://www.icloud.com/mail';
+  if (dominio === 'uol.com.br' || dominio === 'bol.com.br') return 'https://email.uol.com.br';
+  if (dominio === 'terra.com.br') return 'https://mail.terra.com.br';
+  return null;
+}
+
+function abrirWebmail() {
+  const url = document.getElementById('confirme-abrir').dataset.url;
+  if (url) window.open(url, '_blank', 'noopener');
+}
+
+async function reenviarConfirmacao() {
+  const btn = document.getElementById('confirme-reenviar');
+  const erro = document.getElementById('confirme-erro');
+  const ok = document.getElementById('confirme-sucesso');
+  erro.classList.remove('visivel'); ok.classList.remove('visivel');
+  if (!emailAguardandoConfirmacao) return;
+  btn.disabled = true; btn.textContent = 'Reenviando...';
+  try {
+    const { error } = await db.auth.resend({
+      type: 'signup',
+      email: emailAguardandoConfirmacao,
+      options: { emailRedirectTo: location.origin + '/confirmado.html' }
+    });
+    if (error) {
+      erro.textContent = traduzirErro(error.message);
+      erro.classList.add('visivel');
+      btn.disabled = false; btn.textContent = 'Reenviar o e-mail de confirmação';
+      return;
+    }
+    ok.textContent = 'Pronto — reenviamos o e-mail. Confira a caixa de entrada e o spam.';
+    ok.classList.add('visivel');
+  } catch (e) {
+    erro.textContent = 'Não foi possível reenviar agora. Tente de novo em instantes.';
+    erro.classList.add('visivel');
+    btn.disabled = false; btn.textContent = 'Reenviar o e-mail de confirmação';
+    return;
+  }
+  // trava de 60s para não estourar o limite de envio do servidor
+  let restam = 60;
+  btn.textContent = 'Reenviar em ' + restam + 's';
+  const tick = setInterval(() => {
+    restam--;
+    if (restam <= 0) {
+      clearInterval(tick);
+      btn.disabled = false;
+      btn.textContent = 'Reenviar o e-mail de confirmação';
+    } else {
+      btn.textContent = 'Reenviar em ' + restam + 's';
+    }
+  }, 1000);
 }
 
 function traduzirErro(msg) {

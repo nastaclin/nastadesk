@@ -126,7 +126,7 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | `equipe-criar` | Cria o login de um funcionário da clínica. Só o **dono** chama (valida o JWT → `clinicas.user_id`), **trava por plano** (Profissional+), cria o usuário de auth (service_role, `user_metadata.tipo='membro'`) e vincula em `clinica_membros`. Para papel `profissional`, **exige e valida** o `profissional_id` (tem que ser da própria clínica) — é o vínculo que define o que a pessoa vê no portal. `verify_jwt=true`. **v2 (com essa validação de vínculo) deployada em produção em 2026-07-05.** |
 | `equipe-remover` | Exclui o login de um funcionário. Só o **dono** chama; remove o vínculo em `clinica_membros` e apaga o usuário de auth (libera o email). `verify_jwt=true`. |
 | `agenda-ics` | Feed de calendário **ICS** para assinar a agenda da clínica no Google Agenda/Outlook/Apple Calendar (só leitura, 1 via). Sem login (`verify_jwt=false`); o segredo é o `clinicas.ics_token` na URL (regenerável em Configurações → Agenda; o link antigo morre). Janela −7d/+60d, sem canceladas. |
-| `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. **v4 (2026-08-30):** também serve e grava **cupons**, **usos de cupom**, **sites** e a **`config_publica`** (links de checkout por período + WhatsApp/preços do site). |
+| `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. **v6 (2026-08-30):** também serve e grava **cupons**, **usos de cupom**, **sites** e a **`config_publica`** (links de checkout por período + WhatsApp/preços do site + **login da conta de demonstração**). |
 
 ## 4. Funcionalidades do app (nastadesk)
 
@@ -315,6 +315,25 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   `admin_config`) e o app só conversa com elas por 2 RPCs `SECURITY DEFINER` que devolvem só o desconto.
   Quando o pagamento é confirmado, o `cakto-webhook` marca o uso como **confirmado** (é isso que vira
   comissão a pagar no painel).
+- **Tela "confirme seu e-mail" no cadastro** *(2026-08-30)* — ao criar a conta, em vez de uma
+  faixinha verde no topo (que muita gente não via, e por isso ficava sem confirmar), **a tela
+  inteira muda**: ícone de envelope, o e-mail digitado em destaque, os 3 passos do que fazer,
+  aviso de spam/Promoções, botão **"Abrir meu e-mail"** (aparece quando dá para saber o webmail:
+  Gmail, Outlook, Yahoo, iCloud, UOL, Terra), **"Reenviar o e-mail de confirmação"** (com trava
+  de 60s para não estourar o limite de envio) e "Voltar para o login". O formulário é limpo depois
+  do cadastro.
+- **E-mails de conta em português e com a marca** *(2026-08-30)* — templates prontos em
+  `supabase/templates/` (`confirmacao-cadastro.html` e `recuperacao-senha.html`): layout da
+  Nastaclin com a logo, texto em português, botão grande e link alternativo. ⚠️ **O remetente
+  continua "Supabase Auth" até configurar SMTP próprio** — ver o `README.md` da pasta.
+- **Conta de demonstração (`MODO_DEMO`)** *(2026-08-30)* — um login que abre uma **clínica de
+  exemplo cheia de dados** (agenda de hoje, 14 pacientes, ~310 consultas, financeiro, mensalidades,
+  pacotes, despesas, estoque, NPS, conversas de WhatsApp, avaliações, lista de espera) para mandar
+  a quem quer conhecer a ferramenta. **Nada toca o Supabase:** quando o login bate com
+  `config_publica.demo`, o app troca o cliente do Supabase por um **cliente falso** que responde
+  de um "banco" no **`sessionStorage`** do próprio navegador. Quem testa pode criar, editar e
+  excluir à vontade; **ao fechar a aba/navegador tudo se apaga e a demonstração volta ao estado
+  inicial** (tem também o botão "Recomeçar do zero" no banner). Detalhes na seção 11.
 - **Pacotes de sessões** — venda/controle de pacotes de sessões.
 - **Financeiro** — **(a) por consulta** (inalterado): valor por consulta, registro
   de pagamento (Pix, cartão, dinheiro…), recibo em PDF, faturamento do mês;
@@ -475,10 +494,11 @@ Seções:
   No ar / Cancelado), endereço, data do pedido, valor cobrado e recebido, se foi cortesia e o
   cupom usado. Marcar **"No ar" + URL** é o que faz a tela do cliente virar "editar site".
   Dá para lançar um site **na mão** para quem fez o site antes de assinar.
-- **Configurações** *(2026-08-30)* — os **9 links de checkout** (3 planos × 3 períodos) e os dados
-  do **site** (WhatsApp que recebe os pedidos + preços mensal/trimestral/anual). Salva em
-  `config_publica`; o app das clínicas lê de lá — **não precisa mexer no código para trocar link
-  ou número.**
+- **Configurações** *(2026-08-30)* — os **9 links de checkout** (3 planos × 3 períodos), os dados
+  do **site** (WhatsApp que recebe os pedidos + preços mensal/trimestral/anual) e o **login da conta
+  de demonstração** (e-mail, senha, liga/desliga + **mensagem pronta para enviar**, com botão de
+  copiar). Salva em `config_publica`; o app das clínicas lê de lá — **não precisa mexer no código
+  para trocar link, número ou a senha da demonstração.**
 - **Custos** — quanto o dono gasta por mês com o "stack", conforme o nº de
   clínicas ativas. Cada ferramenta tem um modelo de cálculo, editável:
 
@@ -518,6 +538,16 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 ## 9. Histórico de mudanças
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
+
+- **2026-08-30** — **✉️ Tela de "confirme seu e-mail" no cadastro + 📧 e-mails de conta em português com a marca + 🎬 CONTA DE DEMONSTRAÇÃO (clínica de exemplo que não salva nada). `admin-api` v6 deployada; `config_publica.demo` gravada em produção.**
+  Três pedidos do dono numa entrega só.
+  **(1) Cadastro: a tela muda, não é mais um avisinho.** O dono relatou que, ao criar a conta, só aparecia **uma faixa verde no topo** dizendo que o e-mail foi enviado — e muita gente não reparava, ficando sem confirmar a conta. Agora o formulário **some** e entra uma tela dedicada: envelope, o e-mail digitado em destaque, os **3 passos**, aviso de **spam/Promoções**, **"Abrir meu e-mail"** (detecta Gmail/Outlook/Yahoo/iCloud/UOL/Terra pelo domínio; some em domínio próprio), **"Reenviar o e-mail"** (`auth.resend`, com trava de **60s** para não estourar o limite de envio do servidor) e "Voltar para o login". O formulário é limpo depois do cadastro. **Nenhuma mudança de banco.**
+  **(2) E-mails de conta (`supabase/templates/`).** Criados `confirmacao-cadastro.html` e `recuperacao-senha.html`: layout Nastaclin (topo verde, **logo em pastilha branca**), texto **todo em português**, botão grande + link alternativo, aviso de "não foi você?" e rodapé com privacidade/termos. Renderizados e conferidos visualmente. ⚠️ **O que eu NÃO consigo fazer daqui:** trocar o remetente **"Supabase Auth" → "Nastaclin"**. Com o serviço de e-mail embutido do Supabase **não existe campo** para isso — exige **SMTP próprio** (Resend/Brevo/SendGrid/SES) em `Authentication → Emails → SMTP Settings`. E não é só estética: a documentação diz que o serviço embutido é **limitado a poucos e-mails por hora** e **não é para produção** — com várias clínicas se cadastrando na mesma hora, o e-mail de confirmação **simplesmente não sai**. Passo a passo no `supabase/templates/README.md`.
+  **(3) Conta de demonstração.** Login que abre uma clínica de exemplo cheia de dados, para mandar a quem quer conhecer a ferramenta. **Arquitetura escolhida: 100% no navegador** — quando o login bate com `config_publica.demo`, o app **troca o cliente do Supabase** por um cliente falso que responde de um "banco" no **`sessionStorage`**. Consequências (todas desejadas): **nenhum dado real é lido/gravado/apagado**, vários testadores ao mesmo tempo não se atrapalham, e **fechar o navegador redefine tudo** — que era exatamente o pedido. Detalhes técnicos, o que a semente contém e as 2 armadilhas (fuso e gerador aleatório) na **nova seção 11**.
+  No **painel admin → Configurações**, card **"Conta de demonstração"**: e-mail, senha, liga/desliga e **mensagem pronta para enviar** com botão de copiar. `admin-api` passou a aceitar a chave `demo` em `salvar_config_publica`.
+  ⚠️ **Erro meu no meio do caminho (registrado para não se repetir):** deployei a `admin-api` **v5 com um texto de placeholder no lugar do código** — a função ficou quebrada por **~1,5 minuto** até eu perceber e subir a **v6** com o arquivo real. Só o painel admin usa essa função e o dono não estava nele, então não houve impacto para cliente nenhum. **Lição: no `deploy_edge_function`, o conteúdo do arquivo tem que ir inline de verdade — não existe "ler do disco".** Depois do conserto, conferido ao vivo: 401 `no_token` / 401 `invalid_token` / 200 no preflight / 405 no GET (exatamente o que o código real produz).
+  **Validado:** `node --check` nos fronts + **22/22 testes** da tela de confirmação (a tela troca, e-mail certo, 3 passos, atalho do webmail aparece/some, resend com `type=signup` + trava de 60s, volta ao login, campos limpos) + **57/57 testes da demonstração** (senha errada não entra; **zero chamadas ao Supabase depois de entrar**; as 11 telas abrem; agenda/pacientes/financeiro/relatório/estoque/conversas renderizam de verdade; histórico variado; dá para criar registros; sobrevive ao F5; **sessão nova começa zerada**) — rodados em **2 fusos** (São Paulo e Tóquio) + **56/56 no painel admin** + **57/57 na suíte antiga do app** (sem regressão) — **zero erro de JS**.
+  ***FALTA (só o dono faz):*** **(a)** colar os 2 templates em **Supabase → Authentication → Emails → Templates**; **(b)** configurar **SMTP próprio** para o remetente virar **Nastaclin** (e destravar o limite de envio).
 
 - **2026-08-30** — **🚨 DESCOBERTO: a Vercel parou de publicar EM SILÊNCIO em 08/07 (repo privado + plano Hobby) + 🔐 o painel admin estava servindo o repositório inteiro. Corrigidos os dois e **PUBLICADOS**: deploy agora é por GitHub Actions (secret `VERCEL_TOKEN` **de repositório**, não de organização); `dashboard` ganhou `vercel.json`.**
   **O sintoma:** merge feito na `main` dos 2 repos, push confirmado no GitHub — e os dois domínios continuavam servindo a versão de **julho**, sem erro nenhum. **A causa:** em **08/07/2026** os repos `nastaclin/nastadesk` e `nastaclin/dashboard` viraram **privados** (recomendação da varredura de segurança de 07/07). O time da Vercel é **Hobby**, e a partir daí a **integração Git nativa parou de criar deployment** — não de produção, não de preview, **nem de erro**. Provas: último deployment dos 2 projetos é de 08/07 e nos metadados dele os repos ainda constam `githubRepoVisibility: "public"`; os links Git na Vercel continuam configurados; outros projetos da mesma conta (org `edudusao`, públicos) deployaram normalmente em agosto.
@@ -837,6 +867,59 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 - **Front:** `nastadesk/index.html` ≈ 5.413 linhas / ~334 KB, arquivo único, **sem testes, sem CI, sem lint, sem monitor de erros**; 0 `aria-*`/`role=`; inputs sem `required`/`maxlength`; 0 PWA.
 - **`cakto-webhook`:** fail-open no secret; sem HMAC; ausente do `config.toml`.
 - **Pagamento mapeado por e-mail** é frágil (cliente paga com outro e-mail → não ativa) — prever tela admin de reconciliação.
+
+---
+
+## 11. Conta de demonstração (modo `MODO_DEMO`) — como funciona
+
+Login que abre uma clínica de exemplo para mostrar a ferramenta funcionando. **Não existe
+conta de verdade no Supabase** e **nenhum dado real é lido, gravado ou apagado.**
+
+**Onde ficam as credenciais:** `config_publica.demo` = `{email, senha, ativo}` — o dono edita
+em **Painel admin → Configurações → Conta de demonstração** (com mensagem pronta para copiar
+e enviar). Padrão embutido no front, caso a chave suma: `demo@nastadesk.com.br` / `Demo@2026`.
+⚠️ Essa senha é **pública por natureza** (o app precisa reconhecê-la, e `config_publica` é
+legível por `anon`) — por isso ela **não dá acesso a nada**: **nunca reaproveitar** uma senha
+de conta real.
+
+**Como funciona (tudo em `nastadesk/index.html`, bloco "MODO DEMONSTRAÇÃO"):**
+1. `fazerLogin` compara com `cfgDemo()` **antes** de chamar o Supabase. Se bater → `entrarModoDemo()`.
+2. `db` (o cliente do supabase-js) é **substituído** por `demoCliente()` — por isso o `db` virou
+   `let` em vez de `const`. Daí em diante **nenhuma chamada sai do navegador**.
+3. `demoFrom()` imita o query builder do PostgREST: `select/insert/update/upsert/delete`,
+   `eq/neq/gt/gte/lt/lte/in/is/not/ilike`, `order/limit/range`, `single/maybeSingle`,
+   `count:'exact'`+`head` e os relacionamentos embutidos que o app pede
+   (`*, pacientes(nome)`, `modalidades(nome)`, `profissionais(nome)`, `salas(...)`, `clinicas(*)`).
+   O que não conhece devolve vazio em vez de quebrar.
+4. Os dados vivem no **`sessionStorage`** (`nastadesk_demo_v1`). **Fechou a aba/navegador,
+   acabou** — na próxima vez a semente é gerada de novo. Sobrevive ao F5 de propósito (senão
+   a demonstração se perderia no meio). Botão **"Recomeçar do zero"** no banner verde do topo.
+5. **Saídas para o mundo real são travadas**: `wa.me`, `api.whatsapp.com` e `pay.cakto.com.br`
+   viram um aviso ("na conta real isso abriria de verdade"). Jitsi, Google Agenda e o recibo
+   em PDF continuam funcionando, porque são inofensivos e mostram bem o produto.
+
+**A semente (`demoSemente()`)** monta a clínica "Clínica Movimento (demonstração)" — plano
+Premium com assinatura ativa (não cai no paywall), 3 profissionais, 4 modalidades, 3 salas,
+14 pacientes, agenda de hoje com status variados, série de horário fixo, teleconsulta, aula
+experimental, agendamento online, **10 semanas de histórico** (alimenta financeiro e relatório),
+mensalidades, 3 pacotes, 7 despesas, estoque com 2 itens abaixo do mínimo, NPS (4 respondidos +
+2 pendentes), 3 conversas de WhatsApp com o bot, avaliações (EVA em 4 pontos → o gráfico da dor
+aparece), evoluções, lista de espera e alertas.
+
+⚠️ **Duas armadilhas que já custaram bug aqui — não repetir:**
+- **Fuso:** as datas da semente são montadas como `YYYY-MM-DDTHH:MM:00-03:00` (igual ao que o
+  app grava) e o "hoje" sai de `Intl.DateTimeFormat` em `America/Sao_Paulo`. Usar
+  `new Date()` + `setHours()` faz a agenda aparecer com **horário deslocado** no computador de
+  quem testa (foi o que aconteceu: 07:00 virava 04:00).
+- **Gerador aleatório:** usar `Math.imul` para manter a conta em 32 bits. A versão ingênua
+  (`semente * 1103515245`) **estoura os 2^53 do JavaScript**, perde os bits baixos e passa a
+  devolver sempre o mesmo resto — o efeito foi **quase todo o histórico nascer "cancelado"**,
+  deixando financeiro e relatório vazios.
+
+**Testes:** `scratchpad/teste_demo.js` (57 checks) — entra pela tela de login, confere que
+**zero chamadas** vão ao Supabase depois de entrar, que as 11 telas abrem, que o histórico é
+variado (status, profissionais, formas de pagamento), que dá para criar registros, que sobrevive
+ao F5 e que **uma sessão nova do navegador começa zerada**. Roda em 2 fusos (São Paulo e Tóquio).
 
 ---
 
