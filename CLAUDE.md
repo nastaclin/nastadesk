@@ -324,8 +324,12 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   do cadastro.
 - **E-mails de conta em português e com a marca** *(2026-08-30)* — templates prontos em
   `supabase/templates/` (`confirmacao-cadastro.html` e `recuperacao-senha.html`): layout da
-  Nastaclin com a logo, texto em português, botão grande e link alternativo. ⚠️ **O remetente
-  continua "Supabase Auth" até configurar SMTP próprio** — ver o `README.md` da pasta.
+  Nastaclin com a logo, texto em português, botão grande e link alternativo. **Remetente
+  "Nastaclin":** decidido em 2026-08-30 usar **SMTP próprio na Resend** com o domínio
+  **`nastadesk.com`/`.com.br`** (o `nastaclin.com` fica para o site institucional) — passo a
+  passo completo no **`supabase/templates/README.md`**. ⚠️ Enquanto o SMTP não estiver ligado,
+  o remetente continua "Supabase Auth" **e vale o teto de poucos e-mails por hora** do serviço
+  embutido do Supabase (que a documentação diz não servir para produção).
 - **Conta de demonstração (`MODO_DEMO`)** *(2026-08-30)* — um login que abre uma **clínica de
   exemplo cheia de dados** (agenda de hoje, 14 pacientes, ~310 consultas, financeiro, mensalidades,
   pacotes, despesas, estoque, NPS, conversas de WhatsApp, avaliações, lista de espera) para mandar
@@ -538,6 +542,15 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 ## 9. Histórico de mudanças
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
+
+- **2026-08-30** — **📮 Decidido o caminho do remetente "Nastaclin": domínio próprio + SMTP na Resend. Passo a passo escrito em `supabase/templates/README.md` (falta só o dono executar).**
+  Continuação do item (2) da entrega anterior. O dono quis resolver o remetente porque o problema **não é só estético**: o serviço de e-mail embutido do Supabase é limitado a poucos e-mails por hora e a própria documentação diz que **não é para produção** — com várias clínicas se cadastrando na mesma hora, o e-mail de confirmação não sai e a pessoa não consegue ativar a conta.
+  **Por que exige domínio:** trocar o remetente só é possível com **SMTP próprio**, e todo provedor exige **verificação por DNS** (SPF/DKIM) para provar que o envio é seu. Por isso **não dá para usar o Gmail** (`nastaclincont@gmail.com`) como remetente: sem controle do DNS não há como verificar, e desde 2024 as regras de remetente em massa do Gmail/Yahoo rejeitam esse tipo de envio.
+  **Decisões do dono nesta data:** domínio **`nastadesk.com` / `nastadesk.com.br`** para o produto (o **`nastaclin.com` fica reservado para o site institucional** da Nastaclin) e provedor **Resend** (grátis: 3.000/mês, 100/dia).
+  🔎 **Disponibilidade conferida no RDAP nesta data** (para não perder tempo depois): `nastadesk.com`, `nastadesk.com.br`, `nastaclin.com` e `nastaclin.com.br` estavam **todos livres**. `.com.br` sai ~R$ 40/ano no `registro.br` e **registra no CPF** — não precisa de CNPJ.
+  **Dados de SMTP conferidos na documentação do Resend** (não chutados): host `smtp.resend.com`, portas 25/465/587/2465/2587, usuário `resend`, senha = a API key `re_...`.
+  ⚠️ **Pegadinha que o passo a passo cobre:** ligar o SMTP **não levanta sozinho** o limite de envio — é preciso também aumentar **Authentication → Rate Limits → "Emails sent per hour"** no Supabase. E os valores de DKIM/SPF são **gerados por domínio** pela Resend: têm que ser copiados de lá, não existe valor padrão.
+  ***FALTA (só o dono faz):*** registrar o domínio → adicionar no Resend e colar os registros DNS no `registro.br` → gerar a API key → preencher o SMTP no Supabase (com o nome do remetente **Nastaclin**) → subir o rate limit → testar um cadastro. Tudo detalhado no `README.md` da pasta de templates. *(Continua pendente também colar os 2 templates HTML em Authentication → Emails → Templates.)*
 
 - **2026-08-30** — **✉️ Tela de "confirme seu e-mail" no cadastro + 📧 e-mails de conta em português com a marca + 🎬 CONTA DE DEMONSTRAÇÃO (clínica de exemplo que não salva nada). `admin-api` v6 deployada; `config_publica.demo` gravada em produção.**
   Três pedidos do dono numa entrega só.
