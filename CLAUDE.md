@@ -33,7 +33,7 @@ Esta seção fixa (entre os marcadores 🔒) NÃO deve ser alterada.
 
 # NastaDesk — Contexto da ferramenta
 
-> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-08-30**.
+> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-10-19**.
 
 > ⭐ **COMO O DONO GOSTA DE TRABALHAR (ler sempre, vale para qualquer chat):**
 > - **Pode deixar as melhorias APARENTES para os clientes.** A intenção é que eles
@@ -115,7 +115,7 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 
 | Função | Papel |
 |---|---|
-| `whatsapp-webhook` | Cérebro do chatbot. Recebe eventos da Evolution API, roda o bot (menus + IA) e responde. Registra o consumo de tokens da IA por clínica. |
+| `whatsapp-webhook` | Cérebro do chatbot. Recebe eventos da Evolution API, roda o bot (menus + IA) e responde. Registra o consumo de tokens da IA por clínica. **v8 (2026-10-19): trava de IA** — antes de cada chamada ao Claude checa a cota do plano e o limite diário do telefone (RPC `ia_checar_e_contar`); ver seção 6. |
 | `whatsapp-enviar` | Envio de mensagens pelo WhatsApp. |
 | `whatsapp-conexao` | Gerencia a conexão/instância da clínica na Evolution. |
 | `lembretes-auto` | Lembretes automáticos (disparados por cron a cada 10 min). |
@@ -126,7 +126,7 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | `equipe-criar` | Cria o login de um funcionário da clínica. Só o **dono** chama (valida o JWT → `clinicas.user_id`), **trava por plano** (Profissional+), cria o usuário de auth (service_role, `user_metadata.tipo='membro'`) e vincula em `clinica_membros`. Para papel `profissional`, **exige e valida** o `profissional_id` (tem que ser da própria clínica) — é o vínculo que define o que a pessoa vê no portal. `verify_jwt=true`. **v2 (com essa validação de vínculo) deployada em produção em 2026-07-05.** |
 | `equipe-remover` | Exclui o login de um funcionário. Só o **dono** chama; remove o vínculo em `clinica_membros` e apaga o usuário de auth (libera o email). `verify_jwt=true`. |
 | `agenda-ics` | Feed de calendário **ICS** para assinar a agenda da clínica no Google Agenda/Outlook/Apple Calendar (só leitura, 1 via). Sem login (`verify_jwt=false`); o segredo é o `clinicas.ics_token` na URL (regenerável em Configurações → Agenda; o link antigo morre). Janela −7d/+60d, sem canceladas. |
-| `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. **v6 (2026-08-30):** também serve e grava **cupons**, **usos de cupom**, **sites** e a **`config_publica`** (links de checkout por período + WhatsApp/preços do site + **login da conta de demonstração**). |
+| `admin-api` | Backend do painel admin. Valida que quem chama é o admin e só então lê todas as clínicas/assinaturas e roda ações administrativas com a service_role. **v6 (2026-08-30):** também serve e grava **cupons**, **usos de cupom**, **sites** e a **`config_publica`** (links de checkout por período + WhatsApp/preços do site + **login da conta de demonstração**). **v7 (2026-10-19):** serve a **trava de IA** (limites, totais por clínica/mês dos últimos 6 meses, marcos) e grava os limites (`salvar_ia_limites`); a soma de tokens do mês passou a ser feita no banco (RPC `admin_ia_uso_mes`). |
 
 ## 4. Funcionalidades do app (nastadesk)
 
@@ -473,8 +473,42 @@ O dono fecha parceria com quem indica o NastaDesk. Cada parceiro tem um **códig
   `bot_proxima_consulta`, etc.) validam datas, horários livres e duplicidade no
   banco — mesmo que a IA escolha argumentos errados, o banco rejeita.
 - **Custo da IA:** cada chamada ao Claude grava o consumo de tokens por clínica
-  na tabela `ia_uso` (ver seção 7). O registro é tolerante a falhas: se a
-  gravação falhar, o bot responde normalmente assim mesmo.
+  na tabela `ia_uso` (ver seção 7) via RPC `ia_registrar_uso`, que também soma o
+  custo do mês em `ia_cota_mensal`. O registro é tolerante a falhas: se a
+  gravação falhar, o bot responde normalmente assim mesmo (e agora **loga** o
+  erro — antes o `try/catch` não pegava nada, porque o supabase-js devolve
+  `{ error }` em vez de lançar exceção).
+- **Trava de IA** *(2026-10-19)* — impede o custo de IA passar do valor da assinatura.
+  - **1 "conversa de IA" = 1 paciente (conversa) que usou a IA num dia** (fuso de SP).
+    Decisão da Roberta. Todas as mensagens de IA desse paciente no dia contam 1.
+  - **Profissional:** até **1.500 conversas/mês** OU **R$ 70 de custo real** no mês, o
+    que vier primeiro. Estourou → para **conversa nova** o robô responde só com as
+    infos básicas da clínica (endereço/valor/dias) + **menu** — agendar, confirmar e
+    atendente continuam funcionando (não usam IA). Nunca deixa o paciente sem resposta.
+    Por que o teto em R$: a cota em conversas sozinha não garante — no pior caso
+    (FAQ enorme, todo mundo batendo o limite diário) 1.500 conversas custariam ~R$ 735.
+  - **Premium:** ilimitado, como a página de planos promete. Acima de **6.000 conversas
+    ou R$ 120** no mês só registra o marco **"Teto Premium"** para o admin; nunca bloqueia.
+  - **Limite diário por telefone:** **15 mensagens à IA**. Passou → alerta para a clínica,
+    resposta "vou chamar um atendente" e `conversas.bot_pausado_ate` = meia-noite (o robô
+    pausa só para aquele contato até o dia seguinte; não desliga o bot da conversa).
+  - **Avisos para a clínica** em **80% e 100%** da cota (tabela `alertas`, tipo `whatsapp`,
+    1 por marco por mês — garantido pela PK de `ia_cota_eventos`). Uso da cota = o
+    **maior** entre % de conversas e % do teto de custo.
+  - **Tudo configurável** em `admin_config.ia_limites` (editável no painel → Trava de IA).
+    Preços do Claude e câmbio usados pela trava vêm do card "API Claude" em
+    `admin_config.custos` (um lugar só). O câmbio da trava é o **manual** (`cambio_brl`);
+    o painel usa o ao vivo para exibir.
+  - **Atômico:** `ia_checar_e_contar` trava a linha do mês da clínica (`FOR UPDATE`) —
+    mensagens simultâneas não furam a cota. **Fail-open:** se a checagem der erro, o
+    robô responde com IA normalmente.
+  - Tabelas (migration `20261019120000_trava_ia_cota.sql`, no repo nastadesk):
+    `ia_conversas` (conversa × dia → nº de chamadas; **não guarda telefone**),
+    `ia_cota_mensal` (clínica × mês → conversas, chamadas, bloqueadas, limite_diario,
+    custo_usd; a clínica pode **ler** a própria linha), `ia_cota_eventos` (marcos).
+    RLS ligado nas 3; RPCs só para `service_role`.
+  - Custo estimado (out/2026): ~R$ 0,013 por mensagem à IA; ~R$ 0,04 por conversa
+    típica; ~R$ 60 para 1.500 conversas normais.
 
 ## 7. Painel admin (dashboard / nastaclin-admin)
 
@@ -526,6 +560,19 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 - Mostra, por cliente: tokens de entrada/saída, custo em US$ e em R$ no mês.
 - **Não há histórico anterior** ao início do rastreio (deploy em 2026-06-29): o
   gasto real só conta a partir daí.
+- **Cache com preço próprio** *(2026-10-19)*: escrita US$ 1,25/1M e leitura US$ 0,10/1M
+  (antes entravam como entrada normal). A soma de tokens é feita no banco
+  (`admin_ia_uso_mes`) — a API do Supabase devolve no máximo 1.000 linhas, então
+  somar no código subestimaria o custo em silêncio.
+
+### Trava de IA (seção própria do painel, 2026-10-19)
+
+Aba **"Trava de IA"**: seletor de mês (últimos 6), cards (custo de IA do mês, conversas,
+custo médio por conversa, clínicas ≥ 80%), tabela **por clínica** (plano, conversas,
+mensagens à IA, barra de **uso da cota**, custo em R$/US$, **receita mensalizada**,
+**margem = receita − custo de IA**, situação Normal / Perto do limite / Só menu /
+Acima do teto + contadores de "só menu" e limite diário), **formulário dos limites**
+(salva em `admin_config.ia_limites`) e lista dos **marcos do mês**.
 
 ## 8. Estado atual / o que está no ar
 
@@ -538,10 +585,19 @@ O card "API Claude / Anthropic" mostra o **gasto real**, não uma estimativa:
 - **2 clínicas clientes** usando a ferramenta (na época deste registro).
 - Rastreio de custo real da IA (`ia_uso` + registro no webhook + card no painel)
   **deployado e ativo** desde 2026-06-29.
+- **Trava de IA** (cota por plano + limite diário + aba no painel): ver Histórico
+  2026-10-19 para o estado do deploy.
 
 ## 9. Histórico de mudanças
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
+
+- **2026-10-19** — **🔒 Trava de IA do robô: cota mensal por plano + limite diário por telefone + aba "Trava de IA" no painel admin.** *(Pedido da Roberta, que assumiu a tarefa iniciada pelo Eduardo.)*
+  **Por quê:** não havia trava nenhuma — o custo de IA de uma clínica podia passar do valor da assinatura.
+  **Achado ao conferir `ia_uso` vazia:** o registro estava ligado, mas **o robô não rodou desde 16/06** (as 6 conexões de WhatsApp estão desconectadas; a tabela foi criada em 29/06). E havia um defeito escondido: o `try/catch` do registro nunca pegava erro, porque o supabase-js devolve `{ error }` em vez de lançar exceção — agora o erro é conferido e logado.
+  **O que entrou:** migration `20261019120000_trava_ia_cota.sql` (3 tabelas novas com RLS, chave `admin_config.ia_limites`, preços de cache no card do Claude, RPCs `ia_checar_e_contar`, `ia_registrar_uso`, `admin_ia_uso_mes`, só `service_role`); `whatsapp-webhook` v8; `admin-api` v7; painel com a aba nova e preço de cache correto. Regras e números na **seção 6**.
+  **Testes:** RPCs testadas em produção dentro de transação desfeita (nada gravado): limite diário, cota de conversas, teto de custo, Premium que só alerta, 1 alerta por marco, preço de cache, permissões e RLS; soma de 1.500 linhas na RPC do painel. Painel testado no navegador com dados simulados.
+  **Pendente:** o robô só passa a contar quando as conexões de WhatsApp voltarem — conferir no painel o custo real das primeiras semanas e ajustar os limites se precisar.
 
 - **2026-08-30** — **📮 Decidido o caminho do remetente "Nastaclin": domínio próprio + SMTP na Resend. Passo a passo escrito em `supabase/templates/README.md` (falta só o dono executar).**
   Continuação do item (2) da entrega anterior. O dono quis resolver o remetente porque o problema **não é só estético**: o serviço de e-mail embutido do Supabase é limitado a poucos e-mails por hora e a própria documentação diz que **não é para produção** — com várias clínicas se cadastrando na mesma hora, o e-mail de confirmação não sai e a pessoa não consegue ativar a conta.

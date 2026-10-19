@@ -115,25 +115,65 @@ async function chamarClaude(system: string, mensagens: { role: string; content: 
 }
 
 // Registra o consumo de tokens da chamada ao Claude, por clínica, para o painel
-// admin calcular o custo REAL da API. Tolerante a falhas de propósito: se a
-// tabela ainda não existir ou a gravação falhar, apenas loga e segue — o bot
-// nunca deve quebrar por causa do rastreio de custo.
+// admin calcular o custo REAL da API e a trava de custo do plano. A RPC grava em
+// ia_uso e soma o custo do mês em ia_cota_mensal. Tolerante a falhas de
+// propósito: se a gravação falhar, apenas loga e segue — o bot nunca deve
+// quebrar por causa do rastreio de custo.
+// Obs.: o supabase-js NÃO lança exceção em erro de banco (devolve { error }),
+// por isso o erro é conferido explicitamente.
 async function registrarUsoIA(clinicaId: string, conversaId: string | null, resp: any) {
   try {
     const u = resp?.usage;
     if (!u) return;
-    await db.from("ia_uso").insert({
-      clinica_id: clinicaId,
-      conversa_id: conversaId,
-      modelo: resp?.model || "claude-haiku-4-5",
+    const tokens = {
       input_tokens: u.input_tokens || 0,
       output_tokens: u.output_tokens || 0,
       cache_creation_input_tokens: u.cache_creation_input_tokens || 0,
       cache_read_input_tokens: u.cache_read_input_tokens || 0,
+    };
+    const modelo = resp?.model || "claude-haiku-4-5";
+    const { error } = await db.rpc("ia_registrar_uso", {
+      p_clinica_id: clinicaId, p_conversa_id: conversaId, p_modelo: modelo,
+      p_input: tokens.input_tokens, p_output: tokens.output_tokens,
+      p_cache_escrita: tokens.cache_creation_input_tokens, p_cache_leitura: tokens.cache_read_input_tokens,
     });
+    if (!error) return;
+    console.error("Falha na RPC ia_registrar_uso, gravando direto em ia_uso:", error.message);
+    const { error: e2 } = await db.from("ia_uso").insert({ clinica_id: clinicaId, conversa_id: conversaId, modelo, ...tokens });
+    if (e2) console.error("Falha ao registrar uso de IA (ignorado):", e2.message);
   } catch (e) {
     console.error("Falha ao registrar uso de IA (ignorado):", e);
   }
+}
+
+// Trava de IA: checa a cota do plano e o limite diário do telefone ANTES de
+// chamar o Claude (RPC atômica ia_checar_e_contar). Se a checagem falhar por
+// qualquer motivo, devolve "ok" — o robô continua respondendo com IA.
+async function checarCotaIA(conv: any): Promise<string> {
+  try {
+    const { data, error } = await db.rpc("ia_checar_e_contar", { p_clinica_id: conv.clinica_id, p_conversa_id: conv.id });
+    if (error) { console.error("Checagem da cota de IA falhou (seguindo com IA):", error.message); return "ok"; }
+    return (data && data.status) || "ok";
+  } catch (e) {
+    console.error("Checagem da cota de IA falhou (seguindo com IA):", e);
+    return "ok";
+  }
+}
+
+// Meia-noite de amanhã no fuso de São Paulo (fim da pausa por limite diário).
+function inicioDeAmanhaISO(): string {
+  return new Date(addDias(hojeISO(), 1) + "T00:00:00-03:00").toISOString();
+}
+
+// Passou do limite diário de mensagens à IA: atendente assume a conversa e o
+// robô fica pausado só para esse telefone até o fim do dia.
+async function handoffLimiteDiario(conv: any, instancia: string) {
+  await db.from("conversas").update({ bot_pausado_ate: inicioDeAmanhaISO(), estado: {} }).eq("id", conv.id);
+  await db.from("alertas").insert({
+    clinica_id: conv.clinica_id, tipo: "whatsapp",
+    mensagem: `${conv.nome_contato || conv.telefone} mandou muitas mensagens para o robô hoje. Um atendente precisa continuar a conversa (o robô volta amanhã para esse contato).`,
+  });
+  await responder(conv, instancia, "Para te ajudar melhor, vou chamar um atendente da clínica 💬 Ele te responde por aqui em breve.");
 }
 
 // ---------- Persistência da conversa ----------
@@ -283,6 +323,21 @@ async function handoff(conv: any, instancia: string) {
 
 // ---------- IA: resposta de FAQ / roteamento de texto livre ----------
 async function cerebroIA(conv: any, instancia: string, cli: any, cfg: any, txt: string) {
+  // Trava de IA: cota do plano esgotada -> só menu (agendar/confirmar/atendente
+  // continuam funcionando); limite diário do telefone -> atendente assume.
+  const cota = await checarCotaIA(conv);
+  if (cota === "cota_esgotada") {
+    const info = [
+      `🏥 *${cli.nome}*`,
+      cli.endereco ? `📍 ${cli.endereco}${cli.endereco_complemento ? " — " + cli.endereco_complemento : ""}` : "",
+      cli.valor_consulta_padrao ? `💰 Consulta: R$ ${Number(cli.valor_consulta_padrao).toFixed(2)}` : "",
+      (cli.dias_atendimento || []).length ? `🗓️ Atendimento: ${(cli.dias_atendimento || []).map((d: string) => NOMES_DIA[d]).join(", ")}` : "",
+    ].filter(Boolean).join("\n");
+    await responder(conv, instancia, `${info}\n\nPara outras dúvidas, responda *4* e um atendente te ajuda.\n\n${MENU}`);
+    return;
+  }
+  if (cota === "limite_diario") return handoffLimiteDiario(conv, instancia);
+
   // histórico recente para contexto
   const { data: hist } = await db.from("mensagens").select("autor,conteudo,direcao").eq("conversa_id", conv.id).order("criado_em", { ascending: false }).limit(8);
   const historico = (hist || []).reverse().map((m: any) => ({
