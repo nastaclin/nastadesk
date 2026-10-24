@@ -581,7 +581,9 @@ async function carregarHistorico(pacienteId) {
 }
 
 async function carregarEvolucoes(pacienteId) {
-  const { data } = await db.from('evolucoes').select('id, texto, criado_em')
+  // select('*'): traz autor_nome/autor_registro quando a migration já rodou, sem
+  // quebrar enquanto as colunas não existem.
+  const { data } = await db.from('evolucoes').select('*')
     .eq('paciente_id', pacienteId).order('criado_em', { ascending: false });
   const el = document.getElementById('ficha-evolucoes');
   if (!data || !data.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhuma evolução registrada ainda.</div>'; return; }
@@ -589,6 +591,7 @@ async function carregarEvolucoes(pacienteId) {
     <div class="evolucao-item">
       <div class="evolucao-data">${new Date(e.criado_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone: TZ })}</div>
       <div class="evolucao-texto">${esc(e.texto)}</div>
+      ${e.autor_nome ? `<div style="font-size:12px;color:var(--cinza-medio);margin-top:6px;border-top:1px dashed #E6E8E3;padding-top:6px">✍️ ${esc(e.autor_nome)}${e.autor_registro ? ' — ' + esc(e.autor_registro) : ' — CREFITO não informado'}</div>` : ''}
     </div>`).join('');
 }
 
@@ -596,6 +599,10 @@ async function salvarEvolucao() {
   if (!pacienteAtual || !clinicaId) return;
   const texto = document.getElementById('evo-texto').value.trim();
   if (!texto) { toast('Escreva a evolução antes de salvar'); return; }
+  // COFFITO 414/2012: a evolução precisa identificar o fisioterapeuta (nome + CREFITO).
+  if (!(meuProf && (meuProf.registro || '').trim())) {
+    toast('Seu CREFITO não está cadastrado. Peça ao responsável da clínica para preencher em Configurações → Profissionais.');
+  }
   const btn = document.getElementById('evo-btn');
   btn.disabled = true;
   const { error } = await db.from('evolucoes').insert({

@@ -1,0 +1,52 @@
+# Publica um PREVIEW (não produção) na Vercel a cada push numa branch que não é a main.
+# Serve para testar uma mudança com login de verdade antes do merge.
+# O preview usa o MESMO banco de produção (o Supabase é fixo no index.html) —
+# por isso só faça push de branch com mudanças já pensadas para produção.
+# Usa o mesmo secret VERCEL_TOKEN do deploy-vercel.yml. A URL sai no resumo do job.
+
+name: Preview na Vercel
+
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: preview-vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Publicar preview
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: team_IGpCnvhsGzja5D5DRJdh9ymb
+      VERCEL_PROJECT_ID: prj_m3swHEhFnYs2aW5KLHY3E5CfA8Mp
+
+    steps:
+      - name: Conferir o token
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::Falta o secret VERCEL_TOKEN neste repositorio."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar a CLI da Vercel
+        run: npm install --global vercel@latest
+
+      - name: Publicar preview
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -o pipefail
+          url=$(vercel deploy --yes --token="$VERCEL_TOKEN")
+          echo "Preview: $url"
+          echo "### Preview: $url" >> "$GITHUB_STEP_SUMMARY"

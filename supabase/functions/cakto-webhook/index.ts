@@ -8,6 +8,9 @@
 //   body.data.subscription.id     -> id da assinatura recorrente (provider_id)
 //   body.data.subscription.status -> active/canceled/...
 // Segurança: valida o secret; mapeia por e-mail; NUNCA derruba clínica em cortesia.
+// v6 (2026-10-24): grava proximo_pagamento ao liberar e, no cancelamento "puro",
+// mantém o acesso até essa data (o cron encerrar_assinaturas_canceladas corta depois).
+// Reembolso/chargeback continuam cortando na hora.
 //
 // O secret esperado e o mapa opcional de planos vêm de public.admin_config:
 //   key 'cakto_webhook_secret' -> { "secret": "..." }
@@ -88,6 +91,15 @@ function periodoPorValor(v: any, plano: string): string {
     }
   }
   return "mensal";
+}
+
+// Fim do período pago a partir de agora (fallback quando a Cakto não manda a data).
+function fimDoPeriodo(periodo: string): string {
+  const d = new Date();
+  if (periodo === "anual") d.setFullYear(d.getFullYear() + 1);
+  else if (periodo === "trimestral") d.setMonth(d.getMonth() + 3);
+  else d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
 }
 
 async function segredoEsperado(): Promise<string> {
@@ -185,7 +197,14 @@ Deno.serve(async (req) => {
         const { data: ex2 } = await db.from("assinaturas").select("id").eq("provedor", "cakto").eq("clinica_id", clinica.id).in("status", ["ativa", "pendente", "em_atraso"]).order("criado_em", { ascending: false }).limit(1).maybeSingle();
         assId = ex2?.id || null;
       }
-      const patch: any = { clinica_id: clinica.id, plano, periodo, provedor: "cakto", provider_id: subId ? String(subId) : null, status: "ativa", em_atraso_desde: null, valor: PRECO[periodo]?.[plano] ?? null, payer_email: email, atualizado_em: agora() };
+      // v6: guarda até quando está pago — quem cancela usa até essa data (o corte
+      // é feito pelo cron encerrar_assinaturas_canceladas). Usa a data da Cakto
+      // quando vier no payload; senão, agora + duração do período.
+      const proxCakto = pick(body, ["data.subscription.next_payment_date", "data.subscription.nextPaymentDate", "data.next_payment_date"]);
+      const proximo = proxCakto && !isNaN(Date.parse(String(proxCakto)))
+        ? new Date(String(proxCakto)).toISOString()
+        : fimDoPeriodo(periodo);
+      const patch: any = { clinica_id: clinica.id, plano, periodo, provedor: "cakto", provider_id: subId ? String(subId) : null, status: "ativa", em_atraso_desde: null, valor: PRECO[periodo]?.[plano] ?? null, payer_email: email, proximo_pagamento: proximo, atualizado_em: agora() };
       if (assId) await db.from("assinaturas").update(patch).eq("id", assId);
       else await db.from("assinaturas").insert(patch);
       await confirmarCupom(clinica.id);
@@ -204,6 +223,16 @@ Deno.serve(async (req) => {
     }
 
     if (corta) {
+      // v6: cancelamento "puro" (o cliente parou de pagar daqui pra frente) mantém o
+      // acesso até o fim do período já pago. Reembolso/chargeback cortam na hora.
+      const soCancelamento = /cancel/.test(evento) && !/refund|reembols|charge|estorn/.test(evento);
+      let pagoAte: string | null = null;
+      {
+        let q = db.from("assinaturas").select("proximo_pagamento").eq("provedor", "cakto");
+        q = subId ? q.eq("provider_id", String(subId)) : q.eq("clinica_id", clinica.id).in("status", ["ativa", "pendente", "em_atraso"]);
+        const { data: atual } = await q.order("criado_em", { ascending: false }).limit(1).maybeSingle();
+        pagoAte = (atual as any)?.proximo_pagamento || null;
+      }
       if (subId) {
         await db.from("assinaturas").update({ status: "cancelada", cancelada_em: agora(), atualizado_em: agora() }).eq("provedor", "cakto").eq("provider_id", String(subId));
       } else {
@@ -211,6 +240,8 @@ Deno.serve(async (req) => {
       }
       if (clinica.cortesia === true) {
         console.log("CAKTO: cortesia — acesso preservado", email);
+      } else if (soCancelamento && pagoAte && new Date(pagoAte) > new Date()) {
+        console.log("CAKTO: cancelado — acesso mantido até o fim do período pago", email, pagoAte);
       } else {
         const { data: ativa } = await db.from("assinaturas").select("id").eq("clinica_id", clinica.id).eq("status", "ativa").maybeSingle();
         if (!ativa) await db.from("clinicas").update({ ativo: false }).eq("id", clinica.id);

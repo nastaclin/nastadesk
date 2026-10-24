@@ -2022,7 +2022,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
           <div class="card-sub" style="margin-bottom:20px">Cadastre quem atende na sua clínica. Depois é só escolher o profissional em cada agendamento — vira etiqueta colorida na agenda e permite filtrar o dia por profissional. Quem atende sozinho pode simplesmente não cadastrar ninguém: nada muda.</div>
           <div class="salas-add-row">
             <input type="text" id="novo-prof-nome" placeholder="Nome (ex: Dra. Marina Alves)" onkeydown="if(event.key==='Enter')adicionarProfissional()">
-            <input type="text" id="novo-prof-registro" placeholder="Registro (opcional)" style="flex:0 0 170px" onkeydown="if(event.key==='Enter')adicionarProfissional()">
+            <input type="text" id="novo-prof-registro" placeholder="CREFITO (ex: CREFITO-2 12345-F)" title="Obrigatório para fisioterapeutas: identifica as evoluções no prontuário (COFFITO 414/2012)" style="flex:0 0 170px" onkeydown="if(event.key==='Enter')adicionarProfissional()">
             <input type="color" id="novo-prof-cor" value="#0B6E4F" title="Cor na agenda" style="width:46px;height:42px;padding:4px;border:1px solid var(--cinza-claro);border-radius:9px;background:white;cursor:pointer;flex:0 0 auto">
             <button class="btn btn-primario" onclick="adicionarProfissional()">Adicionar</button>
           </div>
@@ -2142,9 +2142,9 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
       </div>
       <div class="card" style="padding:28px;max-width:580px;margin-bottom:16px">
         <div class="card-titulo" style="margin-bottom:6px">Dados para o recibo</div>
-        <div style="font-size:13px;color:var(--cinza-medio);line-height:1.6;margin-bottom:18px">Aparecem no <strong>Recibo de pagamento</strong> (botão nas consultas, mensalidades e pacotes pagos). Com o seu <strong>CPF</strong> e o <strong>registro profissional</strong>, o paciente pode usar o recibo para <strong>deduzir no Imposto de Renda</strong> (despesa médica). Não exige CNPJ.</div>
+        <div style="font-size:13px;color:var(--cinza-medio);line-height:1.6;margin-bottom:18px">Aparecem no <strong>Recibo de pagamento</strong> (botão nas consultas, mensalidades e pacotes pagos). O recibo é um <strong>comprovante de pagamento</strong> para o paciente. <strong>Atenção — Imposto de Renda:</strong> desde 2025, para o paciente deduzir a despesa no IR, o fisioterapeuta <strong>autônomo (CPF)</strong> precisa emitir o recibo também no app <strong>Receita Saúde</strong> da Receita Federal; a clínica com <strong>CNPJ</strong> emite <strong>nota fiscal (NFS-e)</strong> e informa na Dmed.</div>
         <div class="config-campo"><label>CPF ou CNPJ do emissor</label><input type="text" id="perf-recibo-doc" placeholder="Ex: 123.456.789-00" maxlength="20"></div>
-        <div class="config-campo"><label>Registro profissional (opcional)</label><input type="text" id="perf-recibo-registro" placeholder="Ex: CREFITO-3 123456-F" maxlength="40"></div>
+        <div class="config-campo"><label>Seu registro profissional (CREFITO) — identifica suas evoluções no prontuário</label><input type="text" id="perf-recibo-registro" placeholder="Ex: CREFITO-3 123456-F" maxlength="40"></div>
         <button class="btn btn-primario" onclick="salvarDadosRecibo()">Salvar dados do recibo</button>
       </div>
       <div class="card" style="padding:28px;max-width:580px">
@@ -5633,10 +5633,55 @@ async function salvarNovoPaciente() {
   }
 }
 
-function deletarPaciente() {
+// ===== GUARDA DO PRONTUÁRIO (COFFITO 414/2012, art. 6º, I) =====
+// O prontuário fica guardado por no mínimo 5 anos a contar do último registro.
+// Antes de excluir ou anonimizar, olhamos o registro clínico mais recente
+// (evolução, avaliação ou consulta atendida). Checado ANTES de apagar os exames
+// do Storage, para não sobrar prontuário pela metade. O banco tem a mesma trava.
+const GUARDA_PRONTUARIO_ANOS = 5;
+async function checarGuardaProntuario(pid) {
+  const datas = [];
+  const ordem = asc => ({ ascending: asc });
+  const [evoU, avalU, consU, evoP, avalP] = await Promise.all([
+    db.from('evolucoes').select('criado_em').eq('paciente_id', pid).order('criado_em', ordem(false)).limit(1),
+    db.from('avaliacoes').select('criado_em').eq('paciente_id', pid).order('criado_em', ordem(false)).limit(1),
+    db.from('consultas').select('data_hora').eq('paciente_id', pid).eq('status', 'atendido').order('data_hora', ordem(false)).limit(1),
+    db.from('evolucoes').select('criado_em').eq('paciente_id', pid).order('criado_em', ordem(true)).limit(1),
+    db.from('avaliacoes').select('criado_em').eq('paciente_id', pid).order('criado_em', ordem(true)).limit(1),
+  ]);
+  if ([evoU, avalU, consU, evoP, avalP].some(r => r.error)) return { ok: false, erro: 'não foi possível verificar o prontuário' };
+  if (evoU.data?.[0]?.criado_em) datas.push(new Date(evoU.data[0].criado_em));
+  if (avalU.data?.[0]?.criado_em) datas.push(new Date(avalU.data[0].criado_em));
+  if (consU.data?.[0]?.data_hora) datas.push(new Date(consU.data[0].data_hora));
+  if (!datas.length) return { ok: true, bloqueado: false };
+  // Tolerância de 24h (mesma regra do banco): se TODO o registro clínico foi
+  // criado nas últimas 24h e não há consulta atendida, foi engano de cadastro.
+  const primeiros = [evoP.data?.[0]?.criado_em, avalP.data?.[0]?.criado_em].filter(Boolean).map(d => new Date(d).getTime());
+  const umDia = Date.now() - 864e5;
+  if (!consU.data?.length && primeiros.length && Math.min(...primeiros) > umDia) return { ok: true, bloqueado: false };
+  const ultimo = new Date(Math.max(...datas.map(d => d.getTime())));
+  const liberaEm = new Date(ultimo);
+  liberaEm.setFullYear(liberaEm.getFullYear() + GUARDA_PRONTUARIO_ANOS);
+  return { ok: true, bloqueado: liberaEm > new Date(), ultimo, liberaEm };
+}
+
+function avisarGuardaProntuario(nome, g) {
+  const fmt = d => d.toLocaleDateString('pt-BR', { timeZone: TZ });
+  abrirModalConfirm(
+    'Prontuário em período de guarda obrigatória',
+    `O último registro clínico de "${nome}" é de ${fmt(g.ultimo)}. Pela Resolução COFFITO 414/2012 (art. 6º), o prontuário deve ser guardado por no mínimo ${GUARDA_PRONTUARIO_ANOS} anos a contar do último registro — ou seja, até ${fmt(g.liberaEm)}. A LGPD (art. 16, I) também prevê a guarda para cumprir obrigação legal. Até lá, use "Inativar" para tirar o paciente das listas. Se o cadastro foi criado por engano, fale com o suporte.`,
+    'Entendi',
+    async () => {}
+  );
+}
+
+async function deletarPaciente() {
   if (!pacienteAtual) return;
   const idParaDeletar = pacienteAtual.id;
   const nomeParaDeletar = pacienteAtual.nome;
+  const g = await checarGuardaProntuario(idParaDeletar);
+  if (!g.ok) { toast('Não foi possível verificar o prontuário. Tente de novo.'); return; }
+  if (g.bloqueado) { avisarGuardaProntuario(nomeParaDeletar, g); return; }
   abrirModalConfirm(
     'Excluir paciente?',
     `Isso vai remover "${nomeParaDeletar}" e TUDO que é dele — consultas, evoluções, avaliações, exames e documentos anexados, pacotes, mensalidades e conversas — permanentemente. Esta ação não pode ser desfeita. Se a intenção é atender um pedido LGPD mantendo o histórico financeiro, use "Eliminar dados pessoais" na ficha.`,
@@ -5713,10 +5758,13 @@ async function exportarDadosPaciente() {
 
 // Direito de eliminação: apaga os dados pessoais/sensíveis e mantém só o
 // esqueleto financeiro sem identificação (obrigações contábeis preservadas).
-function anonimizarPaciente() {
+async function anonimizarPaciente() {
   if (!pacienteAtual) return;
   const pid = pacienteAtual.id;
   const nome = pacienteAtual.nome;
+  const g = await checarGuardaProntuario(pid);
+  if (!g.ok) { toast('Não foi possível verificar o prontuário. Tente de novo.'); return; }
+  if (g.bloqueado) { avisarGuardaProntuario(nome, g); return; }
   abrirModalConfirm(
     'Eliminar dados pessoais? (LGPD)',
     `Os dados pessoais e de saúde de "${nome}" serão apagados permanentemente — nome, CPF, contato, anamnese, evoluções, avaliações, exames e documentos anexados e conversas. O histórico financeiro (consultas, pacotes, mensalidades) continua, sem identificação. Dica: exporte os dados antes, se o paciente quiser uma cópia. Esta ação não pode ser desfeita.`,
@@ -5959,13 +6007,35 @@ async function carregarEvolucoes(pacienteId) {
     <div class="evolucao-item">
       <div class="evolucao-data">${new Date(e.criado_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone: TZ })}</div>
       <div class="evolucao-texto">${esc(e.texto)}</div>
+      ${assinaturaEvolucao(e)}
     </div>`).join('');
+}
+
+// COFFITO 414/2012, art. 2º, par. único: cada registro do prontuário eletrônico
+// traz nome completo e nº do CREFITO de quem registrou. Os campos autor_* são
+// preenchidos no servidor (trigger); registros antigos não têm e ficam sem linha.
+function assinaturaEvolucao(e) {
+  if (!e || !e.autor_nome) return '';
+  const reg = e.autor_registro ? ` — ${esc(e.autor_registro)}` : ' — <span style="color:var(--laranja)">CREFITO não informado</span>';
+  return `<div style="font-size:12px;color:var(--cinza-medio);margin-top:6px;border-top:1px dashed var(--cinza-claro);padding-top:6px">✍️ ${esc(e.autor_nome)}${reg}</div>`;
+}
+
+// Registro profissional de quem está logado (para avisar antes de evoluir sem CREFITO).
+function meuRegistroProfissional() {
+  if (meuPapel === 'dono') return (clinicaAtual?.recibo_registro || '').trim();
+  const p = (profissionais || []).find(x => x.id === meuProfissionalId);
+  return (p?.registro || '').trim();
 }
 
 async function salvarEvolucao() {
   if (!pacienteAtual || !clinicaId) return;
   const texto = document.getElementById('evolucao-nova-texto').value.trim();
   if (!texto) { toast('Escreva algo antes de salvar'); return; }
+  if (!MODO_DEMO && !meuRegistroProfissional()) {
+    toast(meuPapel === 'dono'
+      ? 'Dica: informe seu CREFITO em Minha Clínica → Dados para o recibo — ele identifica suas evoluções (COFFITO 414).'
+      : 'Seu CREFITO não está cadastrado no seu profissional. Peça ao dono para preencher em Configurações → Profissionais.');
+  }
   const { error } = await db.from('evolucoes').insert({
     clinica_id: clinicaId, paciente_id: pacienteAtual.id, texto
   });
@@ -7243,7 +7313,7 @@ async function marcarIsento() {
 // ===== RECIBO =====
 const RECIBO_FORMA_LABEL = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Cartão de crédito', cartao_debito:'Cartão de débito', convenio:'Convênio', transferencia:'Transferência', boleto:'Boleto' };
 
-// Monta e abre o Recibo de pagamento (sem CNPJ — serve p/ pessoa física/autônomo).
+// Monta e abre o Recibo de pagamento (comprovante; a dedução no IR exige Receita Saúde ou NFS-e).
 // dados: { titulo, tomadorNome, tomadorCpf, valor, forma, dataPagamento, descricao, extras:[[label,valor]] }
 function _abrirRecibo(dados) {
   if (!clinicaAtual) { toast('Não foi possível gerar o recibo'); return; }
@@ -7297,7 +7367,7 @@ function _abrirRecibo(dados) {
     ${dados.dataPagamento?`<tr><td>Data do pagamento</td><td>${esc(dados.dataPagamento)}</td></tr>`:''}
     ${extras}
   </table>
-  ${doc?`<div class="ir">Documento válido como comprovante de despesa com saúde para <strong>dedução no Imposto de Renda</strong> do paciente${cpfTomador?'':' (informe o CPF do paciente para maior validade)'}.</div>`:''}
+  <div class="ir">Comprovante de pagamento. Para <strong>dedução no Imposto de Renda</strong>, a despesa precisa constar no <strong>Receita Saúde</strong> (profissional autônomo) ou em <strong>nota fiscal</strong> (clínica com CNPJ), conforme as regras da Receita Federal.</div>
   <div class="assinatura"><div class="linha"></div><div class="an">${esc(emissorNome)}</div>${(doc||registro)?`<div class="ad">${[doc?'CPF/CNPJ '+esc(doc):'', registro?esc(registro):''].filter(Boolean).join(' · ')}</div>`:''}</div>
   <div class="rodape">Recibo gerado pelo NastaDesk — ${new Date().toLocaleDateString('pt-BR', { timeZone: TZ })}</div>
   <div class="no-print"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
@@ -10044,15 +10114,61 @@ async function falarSobreSite(tipo) {
   carregarSite();
 }
 
-// Cancelar a assinatura. Cakto: gerenciada pela própria Cakto. MP (legado): cancela via API.
+// Plano B quando a API da Cakto falha: portal do assinante ou WhatsApp do suporte.
+function cancelarAssinaturaPlanoB(motivo) {
+  const portal = (typeof cfgPublica === 'object' && cfgPublica && cfgPublica.cakto_portal_url) || '';
+  abrirModalConfirm(
+    'Não conseguimos cancelar automaticamente',
+    (motivo ? motivo + ' ' : '') +
+    (portal
+      ? 'Abra a área do assinante da Cakto (entre com o e-mail da compra) e clique em Cancelar assinatura.'
+      : 'Mande o pedido pelo WhatsApp do suporte — a mensagem já vai escrita e a gente cancela no mesmo dia.'),
+    portal ? 'Abrir área do assinante' : 'Pedir pelo WhatsApp',
+    async () => {
+      if (portal) { window.open(portal, '_blank', 'noopener'); return; }
+      abrirWhatsAppNastaclin(
+        `Olá! Aqui é ${clinicaAtual?.responsavel || 'o responsável'} da clínica ${clinicaAtual?.nome || ''}.\n` +
+        `Quero CANCELAR minha assinatura do NastaDesk (e-mail da conta: ${(clinicaAtual && clinicaAtual.email) || '—'}).`
+      );
+    }
+  );
+}
+
+// Cancelar a assinatura. Cakto: cancela via edge function cakto-cancelar. MP (legado): cancela via API.
 async function cancelarAssinatura() {
   const prov = assinaturaAtual && assinaturaAtual.provedor;
   if (prov !== 'mercadopago') {
+    // Cancelamento em 1 clique direto na Cakto (edge function cakto-cancelar, que
+    // usa a API da Cakto no servidor). Se a Cakto não responder, oferece o portal
+    // do assinante (config_publica.cakto_portal_url) ou o WhatsApp do suporte.
+    if (meuPapel !== 'dono') { toast('Só o responsável pela clínica pode cancelar a assinatura.'); return; }
+    const venc = assinaturaAtual?.proximo_pagamento
+      ? new Date(assinaturaAtual.proximo_pagamento).toLocaleDateString('pt-BR', { timeZone: TZ }) : null;
     abrirModalConfirm(
+      'Cancelar assinatura?',
+      'A cobrança recorrente na Cakto é cancelada agora e nada mais é cobrado. ' +
+      (venc ? `Você continua usando o NastaDesk até ${venc} (período já pago). ` : 'Você continua usando o NastaDesk até o fim do período já pago. ') +
+      'Seus dados ficam salvos e você pode voltar quando quiser.',
       'Cancelar assinatura',
-      'Sua assinatura é gerenciada pela Cakto. Para cancelar, use o link de gerenciamento enviado no seu e-mail de compra da Cakto, ou fale com o nosso suporte. Seu acesso continua até o fim do período já pago e seus dados ficam salvos.',
-      'Entendi',
-      async () => {}
+      async () => {
+        if (MODO_DEMO) { toast('Na demonstração o cancelamento é só simulado ✓'); return; }
+        try {
+          const { data: { session } } = await db.auth.getSession();
+          const r = await fetch(`${SUPA_URL}/functions/v1/cakto-cancelar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPA_KEY },
+            body: '{}',
+          });
+          const j = await r.json().catch(() => ({}));
+          if (j.ok) {
+            toast('Assinatura cancelada ✓ Nada mais será cobrado.');
+            await verificarAssinatura();
+            if (secAtiva === 'planos') carregarPlanos();
+            return;
+          }
+          cancelarAssinaturaPlanoB(j.erro);
+        } catch (e) { cancelarAssinaturaPlanoB(); }
+      }
     );
     return;
   }
@@ -10151,7 +10267,7 @@ function mostrarSelecaoPlano() {
     sub = 'Esperamos que tenha gostado do NastaDesk! Todos os seus dados (agenda, pacientes, financeiro) continuam salvos — é só escolher um plano para continuar de onde parou.';
   } else if (pendente) {
     titulo = 'Estamos confirmando seu pagamento';
-    sub = 'Assim que o Mercado Pago confirmar, sua conta é liberada automaticamente — pode deixar esta tela aberta por alguns instantes. Se precisar, escolha um plano novamente abaixo.';
+    sub = 'Assim que a Cakto confirmar o pagamento, sua conta é liberada automaticamente — pode deixar esta tela aberta por alguns instantes. Se precisar, escolha um plano novamente abaixo.';
   } else if (temPlanoAntes) {
     titulo = 'Sua assinatura está suspensa';
     sub = 'Não identificamos o pagamento do seu plano. Reative para voltar a usar o NastaDesk — seus dados continuam salvos.';

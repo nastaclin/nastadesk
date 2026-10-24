@@ -592,6 +592,21 @@ Acima do teto + contadores de "só menu" e limite diário), **formulário dos li
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-10-24** — **🛡️ Correções bloqueantes do checkup pré-anúncios (BRANCH `claude/correcoes-bloqueantes-checkup` — ainda NÃO está em produção).**
+  **Por quê:** checkup completo do produto antes de rodar anúncios (relatório em `Claude/NastaClin/CHECKUP_NASTADESK_2026-10-23.md` no Drive do dono).
+  **Achado grave de segurança:** a policy `clinica_propria` (ALL) deixava o **dono de qualquer clínica dar UPDATE em `clinicas.ativo/plano/cortesia/cortesia_expira_em` pela API** — ou seja, liberar Premium de graça para sempre. Confirmado em produção dentro de transação desfeita.
+  **O que entrou na branch:**
+  - Migration `20261024120000_prontuario_cobranca_cancelamento.sql` (aditiva, rollback no topo):
+    (A) **prontuário COFFITO 414**: colunas `autor_user_id/profissional_id/autor_nome/autor_registro` em `evolucoes` (e autor em `avaliacoes`) preenchidas por trigger no servidor; evolução **imutável**; **guarda de 5 anos** — DELETE em `evolucoes`/`avaliacoes` bloqueado no prazo (vale para `paciente_excluir`/`paciente_anonimizar`; tolerância de 24h; flag de sessão `nastadesk.permitir_exclusao_prontuario` para o suporte);
+    (B) trigger `trg_clinicas_campos_cobranca`: usuário logado comum (não admin) **não muda** ativo/plano/cortesia/cortesia_expira_em/user_id (backend, cron e signup seguem livres);
+    (C) função `encerrar_assinaturas_canceladas()` + cron **`nastadesk-cancelamento-fim-periodo`** (hora em hora, min 17).
+  - `cakto-webhook` **v6**: grava `assinaturas.proximo_pagamento` ao liberar; no **cancelamento puro** mantém o acesso até essa data (reembolso/chargeback seguem cortando na hora).
+  - Edge function nova **`cakto-cancelar`**: o dono cancela dentro do app e a assinatura é cancelada na Cakto pela API pública (`POST /public_api/subscriptions/{id}/cancel/`). Precisa dos secrets `CAKTO_CLIENT_ID`/`CAKTO_CLIENT_SECRET` (chave da Cakto com escopo subscriptions).
+  - Front: assinatura "✍️ Nome — CREFITO" em cada evolução (painel e portal); aviso ao evoluir sem CREFITO; trava de 5 anos no Excluir/Eliminar dados (checada antes de apagar os exames); recibo não promete mais dedução no IR (Receita Saúde/NFS-e); botão Cancelar assinatura chama `cakto-cancelar` com plano B (portal Cakto em `config_publica.cakto_portal_url` ou WhatsApp); texto do paywall sem Mercado Pago; `vercel.json` com nosniff/Referrer-Policy/X-Frame-Options (exceto `/agendar`) e CSP **Report-Only**.
+  - Workflow novo `preview-vercel.yml`: push em branch ≠ main publica **preview** (não produção).
+  **Testes:** migration inteira testada em produção dentro de transação desfeita — dono não se dá plano (antes: conseguia até 2099); backend ainda libera; autor do dono e do profissional preenchidos; autor forjado ignorado; evolução imutável; apagar <24h ok; prontuário em guarda não apaga nem via `paciente_excluir`/`paciente_anonimizar`; paciente sem prontuário exclui normal; cron mantém acesso com mês pago e corta depois, sem tocar outras clínicas nem cortesia. Front testado no modo demo.
+  **Pendente:** aplicar migration + deploy das 2 edge functions + merge na main (após OK do dono); secrets da Cakto; teste ponta a ponta do cancelamento com produto de R$ 1; replicar esta entrada no CLAUDE.md do `dashboard`.
+
 - **2026-10-19** — **🔒 Trava de IA do robô: cota mensal por plano + limite diário por telefone + aba "Trava de IA" no painel admin.** *(Pedido da Roberta, que assumiu a tarefa iniciada pelo Eduardo.)*
   **Por quê:** não havia trava nenhuma — o custo de IA de uma clínica podia passar do valor da assinatura.
   **Achado ao conferir `ia_uso` vazia:** o registro estava ligado, mas **o robô não rodou desde 16/06** (as 6 conexões de WhatsApp estão desconectadas; a tabela foi criada em 29/06). E havia um defeito escondido: o `try/catch` do registro nunca pegava erro, porque o supabase-js devolve `{ error }` em vez de lançar exceção — agora o erro é conferido e logado.
