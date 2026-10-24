@@ -8,6 +8,8 @@
 //   body.data.subscription.id     -> id da assinatura recorrente (provider_id)
 //   body.data.subscription.status -> active/canceled/...
 // Segurança: valida o secret; mapeia por e-mail; NUNCA derruba clínica em cortesia.
+// v6 (2026-10-24): cancelamento mantém o acesso até o fim do período pago
+// (proximo_pagamento); só reembolso/chargeback cortam na hora.
 //
 // O secret esperado e o mapa opcional de planos vêm de public.admin_config:
 //   key 'cakto_webhook_secret' -> { "secret": "..." }
@@ -90,6 +92,22 @@ function periodoPorValor(v: any, plano: string): string {
   return "mensal";
 }
 
+// Data ISO válida ou null (a Cakto pode mandar null ou omitir).
+function dataValida(v: any): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+// Fallback quando a Cakto não manda next_payment_date: hoje + o período do plano
+// (+1 dia de folga para a renovação cair antes do corte).
+function fimDoPeriodo(periodo: string): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + (periodo === "anual" ? 12 : periodo === "trimestral" ? 3 : 1));
+  d.setDate(d.getDate() + 1);
+  return d.toISOString();
+}
+
 async function segredoEsperado(): Promise<string> {
   const env = Deno.env.get("CAKTO_WEBHOOK_SECRET");
   if (env) return env;
@@ -146,6 +164,8 @@ Deno.serve(async (req) => {
   const subId = pick(body, ["data.subscription.id", "data.subscription_id", "data.id"]);
   const payStatus = String(pick(body, ["data.status"]) || "").toLowerCase();
   const subStatus = String(pick(body, ["data.subscription.status"]) || "").toLowerCase();
+  // Até quando o período já pago vale (a Cakto manda no objeto da assinatura).
+  const proxPagamento = dataValida(pick(body, ["data.subscription.next_payment_date", "data.subscription.nextPaymentDate"]));
 
   const esperado = await segredoEsperado();
   const recebidoSecret = String(pick(body, ["secret", "data.secret"]) || req.headers.get("x-cakto-signature") || req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
@@ -153,11 +173,21 @@ Deno.serve(async (req) => {
   const secretConfigurado = !!esperado;
   const secretOk = await segredoConfere(recebidoSecret, esperado);
 
-  const corta = /cancel|refund|reembols|charge|estorn/.test(evento) || /cancel|refund|charge/.test(subStatus);
-  const atraso = !corta && /refus|recus|atras/.test(evento);
-  const libera = !corta && !atraso && (/created|renew|renov|approved|aprovad|paid|pago|active|ativ/.test(evento) || payStatus === "paid" || subStatus === "active");
+  // v6 (2026-10-24): cancelamento ≠ reembolso.
+  //  - reembolso/chargeback: o dinheiro voltou → corta o acesso na hora (como sempre foi).
+  //  - cancelamento (assinante, produtor ou API/cakto-cancelar): só para a recorrência;
+  //    a clínica usa até o fim do período pago. Quem corta depois é o pg_cron
+  //    nastadesk-assinatura-expira (encerrar_assinaturas_vencidas()).
+  //  - refund_requested: só um pedido (o comprador ainda pode desistir) → não mexe em nada;
+  //    o corte vem no evento "refund" se o reembolso for efetivado.
+  const pedidoReembolso = evento === "refund_requested";
+  const reembolso = !pedidoReembolso && (/refund|reembols|charge|estorn/.test(evento) || /refund|charge/.test(subStatus) || ["refunded", "chargedback"].includes(payStatus));
+  const cancelamento = !pedidoReembolso && !reembolso && (/cancel/.test(evento) || /cancel/.test(subStatus));
+  const corta = reembolso || cancelamento;
+  const atraso = !corta && !pedidoReembolso && (/refus|recus|atras/.test(evento) || evento === "subscription_late");
+  const libera = !corta && !atraso && !pedidoReembolso && (/created|renew|renov|approved|aprovad|paid|pago|active|ativ/.test(evento) || payStatus === "paid" || subStatus === "active");
 
-  await auditar({ ts: agora(), event: evento, email, valor, sub_id: subId ? String(subId) : null, secret_ok: secretOk, classe: corta ? "corta" : atraso ? "atraso" : libera ? "libera" : "nenhuma" });
+  await auditar({ ts: agora(), event: evento, email, valor, sub_id: subId ? String(subId) : null, secret_ok: secretOk, classe: reembolso ? "corta" : cancelamento ? "cancela_fim_periodo" : pedidoReembolso ? "pedido_reembolso" : atraso ? "atraso" : libera ? "libera" : "nenhuma" });
 
   if (!secretConfigurado) {
     console.error("CAKTO: segredo do webhook NÃO configurado — recusando por segurança (fail-closed). Defina admin_config.cakto_webhook_secret ou a env CAKTO_WEBHOOK_SECRET.");
@@ -185,7 +215,7 @@ Deno.serve(async (req) => {
         const { data: ex2 } = await db.from("assinaturas").select("id").eq("provedor", "cakto").eq("clinica_id", clinica.id).in("status", ["ativa", "pendente", "em_atraso"]).order("criado_em", { ascending: false }).limit(1).maybeSingle();
         assId = ex2?.id || null;
       }
-      const patch: any = { clinica_id: clinica.id, plano, periodo, provedor: "cakto", provider_id: subId ? String(subId) : null, status: "ativa", em_atraso_desde: null, valor: PRECO[periodo]?.[plano] ?? null, payer_email: email, atualizado_em: agora() };
+      const patch: any = { clinica_id: clinica.id, plano, periodo, provedor: "cakto", provider_id: subId ? String(subId) : null, status: "ativa", em_atraso_desde: null, cancelada_em: null, valor: PRECO[periodo]?.[plano] ?? null, payer_email: email, atualizado_em: agora(), proximo_pagamento: proxPagamento || fimDoPeriodo(periodo) };
       if (assId) await db.from("assinaturas").update(patch).eq("id", assId);
       else await db.from("assinaturas").insert(patch);
       await confirmarCupom(clinica.id);
@@ -203,19 +233,36 @@ Deno.serve(async (req) => {
       return new Response("ok", { headers: cors });
     }
 
+    if (pedidoReembolso) {
+      console.log("CAKTO: reembolso solicitado (acesso mantido até o reembolso ser efetivado)", email);
+      return new Response("ok", { headers: cors });
+    }
+
     if (corta) {
+      const cancelPatch: any = { status: "cancelada", cancelada_em: agora(), atualizado_em: agora() };
+      // Só no cancelamento: guarda até quando vale o período pago, se a Cakto mandou.
+      if (cancelamento && proxPagamento) cancelPatch.proximo_pagamento = proxPagamento;
       if (subId) {
-        await db.from("assinaturas").update({ status: "cancelada", cancelada_em: agora(), atualizado_em: agora() }).eq("provedor", "cakto").eq("provider_id", String(subId));
+        await db.from("assinaturas").update(cancelPatch).eq("provedor", "cakto").eq("provider_id", String(subId));
       } else {
-        await db.from("assinaturas").update({ status: "cancelada", cancelada_em: agora(), atualizado_em: agora() }).eq("provedor", "cakto").eq("clinica_id", clinica.id).in("status", ["ativa", "pendente", "em_atraso"]);
+        await db.from("assinaturas").update(cancelPatch).eq("provedor", "cakto").eq("clinica_id", clinica.id).in("status", ["ativa", "pendente", "em_atraso"]);
       }
       if (clinica.cortesia === true) {
         console.log("CAKTO: cortesia — acesso preservado", email);
       } else {
-        const { data: ativa } = await db.from("assinaturas").select("id").eq("clinica_id", clinica.id).eq("status", "ativa").maybeSingle();
-        if (!ativa) await db.from("clinicas").update({ ativo: false }).eq("id", clinica.id);
+        const { data: ativa } = await db.from("assinaturas").select("id").eq("clinica_id", clinica.id).eq("status", "ativa").limit(1).maybeSingle();
+        let pagoAte: string | null = null;
+        if (cancelamento) {
+          const { data: ult } = await db.from("assinaturas").select("proximo_pagamento").eq("clinica_id", clinica.id).eq("provedor", "cakto").eq("status", "cancelada").order("atualizado_em", { ascending: false }).limit(1).maybeSingle();
+          pagoAte = ult?.proximo_pagamento || null;
+        }
+        if (!ativa && pagoAte && new Date(pagoAte) > new Date()) {
+          console.log("CAKTO: cancelada — acesso mantido até", pagoAte, email);
+        } else if (!ativa) {
+          await db.from("clinicas").update({ ativo: false }).eq("id", clinica.id);
+        }
       }
-      console.log("CAKTO: cancelado/reembolso/chargeback", email);
+      console.log(reembolso ? "CAKTO: reembolso/chargeback" : "CAKTO: cancelado", email);
       return new Response("ok", { headers: cors });
     }
 

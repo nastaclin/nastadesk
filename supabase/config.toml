@@ -35,3 +35,7 @@ verify_jwt = true
 # Exclusão de login de funcionário — exige login do dono (JWT)
 [functions.equipe-remover]
 verify_jwt = true
+
+# Cancelamento da assinatura pela API da Cakto — exige login do dono (JWT); confere o dono no código
+[functions.cakto-cancelar]
+verify_jwt = true

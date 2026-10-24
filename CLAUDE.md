@@ -33,7 +33,7 @@ Esta seção fixa (entre os marcadores 🔒) NÃO deve ser alterada.
 
 # NastaDesk — Contexto da ferramenta
 
-> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-10-19**.
+> Documento de contexto mantido para continuidade entre chats. Última atualização: **2026-10-24**.
 
 > ⭐ **COMO O DONO GOSTA DE TRABALHAR (ler sempre, vale para qualquer chat):**
 > - **Pode deixar as melhorias APARENTES para os clientes.** A intenção é que eles
@@ -121,7 +121,8 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
 | `lembretes-auto` | Lembretes automáticos (disparados por cron a cada 10 min). |
 | `mercadopago-checkout` | Cria checkout de assinatura no Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
 | `mercadopago-webhook` | Recebe eventos de cobrança do Mercado Pago. *(sendo aposentada — migração p/ Cakto)* |
-| `cakto-webhook` | Recebe eventos da Cakto (compra aprovada, assinatura criada/renovada/cancelada, reembolso, chargeback) e libera/suspende o acesso da clínica. Mapeia o comprador pelo **e-mail**, identifica **plano E período** pelo **valor** (mensal 97/197/347 · trimestral 262/532/937 · anual 931/1891/3331, aceitando reais ou centavos), grava `assinaturas.periodo`, **confirma o cupom de parceiro** do cliente e **nunca derruba clínica em cortesia**. **v5 (períodos + cupom) deployada em 2026-08-30.** |
+| `cakto-webhook` | Recebe eventos da Cakto (compra aprovada, assinatura criada/renovada/cancelada, reembolso, chargeback) e libera/suspende o acesso da clínica. Mapeia o comprador pelo **e-mail**, identifica **plano E período** pelo **valor** (mensal 97/197/347 · trimestral 262/532/937 · anual 931/1891/3331, aceitando reais ou centavos), grava `assinaturas.periodo`, **confirma o cupom de parceiro** do cliente e **nunca derruba clínica em cortesia**. **v5 (períodos + cupom) deployada em 2026-08-30.** **v6 (2026-10-24):** cancelamento mantém o acesso até `proximo_pagamento` (corte pelo cron `nastadesk-assinatura-expira`); só reembolso/chargeback cortam na hora; `refund_requested` não mexe em nada; `subscription_late` vira `em_atraso`; grava `proximo_pagamento` (da Cakto ou hoje + período). |
+| `cakto-cancelar` | *(v1 deployada em 2026-10-24, `verify_jwt=true`)* Botão "Cancelar assinatura" do app. Só o **dono** (JWT → `clinicas.user_id`); acha a assinatura na Cakto (`provider_id` ou busca pelo e-mail) e chama `POST /public_api/subscriptions/{id}/cancel/`; marca `assinaturas.status='cancelada'` + `cancelada_em` e guarda `proximo_pagamento` — **não** tira o acesso (quem corta é o cron `nastadesk-assinatura-expira`). Secrets `CAKTO_CLIENT_ID`/`CAKTO_CLIENT_SECRET`. Se falhar, o app oferece o portal da Cakto ou o WhatsApp. |
 | `agendar-publico` | Porteiro anti-robô do agendamento online. Recebe o booking + token do hCaptcha, verifica o token no servidor (secret em `admin_config`) e, se válido, delega à RPC `agendar_online` — repassando também a **versão do consentimento LGPD + IP** para registro. `verify_jwt=false`. |
 | `equipe-criar` | Cria o login de um funcionário da clínica. Só o **dono** chama (valida o JWT → `clinicas.user_id`), **trava por plano** (Profissional+), cria o usuário de auth (service_role, `user_metadata.tipo='membro'`) e vincula em `clinica_membros`. Para papel `profissional`, **exige e valida** o `profissional_id` (tem que ser da própria clínica) — é o vínculo que define o que a pessoa vê no portal. `verify_jwt=true`. **v2 (com essa validação de vínculo) deployada em produção em 2026-07-05.** |
 | `equipe-remover` | Exclui o login de um funcionário. Só o **dono** chama; remove o vínculo em `clinica_membros` e apaga o usuário de auth (libera o email). `verify_jwt=true`. |
@@ -450,6 +451,12 @@ O dono fecha parceria com quem indica o NastaDesk. Cada parceiro tem um **códig
   (null) nunca é cortada.
 - O "porteiro" de acesso continua sendo o campo **`clinicas.ativo`**. Só com
   `ativo = true` a clínica usa o sistema.
+- **Trava (2026-10-24, migration `20261024120000`):** o dono **não** consegue alterar
+  `ativo`/`plano`/`cortesia`/`cortesia_expira_em` pela API (trigger
+  `trg_clinicas_proteger_acesso`). Só webhook, admin-api e funções `admin_*`/`encerrar_*`.
+- **Cancelou a assinatura?** O acesso vai até `assinaturas.proximo_pagamento`; o pg_cron
+  **`nastadesk-assinatura-expira`** (minuto 17 de cada hora) desliga depois. Reembolso e
+  chargeback cortam na hora.
 - O acesso também é liberado de duas formas:
   - **Cortesia** — o admin concede acesso grátis controlado (pode ter data de
     expiração, `cortesia_expira_em`). Feito pelo painel admin.
@@ -591,6 +598,20 @@ Acima do teto + contadores de "só menu" e limite diário), **formulário dos li
 ## 9. Histórico de mudanças
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
+
+- **2026-10-24** — **⚖️ Correções bloqueantes antes de voltar a anunciar (checkup de 23/10).** *(Feito com a Roberta.)* ✅ **ESTADO: APLICADO EM PRODUÇÃO em 2026-10-24.** Migrations `prontuario_autor_e_guarda` e `trava_plano_e_fim_do_periodo` (versões 20261024034911 e 20261024034933 no banco), `cakto-webhook` **v6**, `cakto-cancelar` **v1** e o front via merge na `main`.
+  **O que entra:**
+  (1) **Autor da evolução (COFFITO 414, art. 2º):** migration `20261023120000_prontuario_autor_e_guarda.sql` — colunas `autor_user_id`/`profissional_id`/`autor_nome`/`autor_registro` em `evolucoes` e `avaliacoes`, preenchidas por trigger no servidor (profissional vinculado → nome+registro do cadastro; dono → `responsavel`+`recibo_registro`; outros → e-mail); o navegador não consegue forjar. App mostra "✍️ Nome — CREFITO" e avisa se o CREFITO não está cadastrado.
+  (2) **Guarda de 5 anos (art. 6º):** trigger barra `DELETE` de evolução/avaliação dentro do prazo (inclusive via `paciente_excluir`/`paciente_anonimizar` — a RPC volta inteira); evolução registrada não muda (correção = adendo). Tolerância de 24h. Saída do suporte: `set local nastadesk.permitir_exclusao_prontuario = 'on'`. ⚠️ Excluir uma **clínica inteira** com prontuário em guarda também é barrado (FK em cascata).
+  (3) **Recibo:** texto não promete mais dedução no IR (Receita Saúde p/ autônomo, NFS-e p/ PJ).
+  (4) **Cancelar em 1 clique:** edge nova `cakto-cancelar` (só o dono; cancela pela API da Cakto; acesso até `proximo_pagamento`; plano B = portal da Cakto ou WhatsApp). Precisa dos secrets `CAKTO_CLIENT_ID`/`CAKTO_CLIENT_SECRET` (escopo subscriptions).
+  (5) **`cakto-webhook` v6:** cancelamento ≠ reembolso. `subscription_canceled` mantém o acesso até o fim do período pago; `refund`/`chargeback` cortam na hora (como antes); `refund_requested` não mexe em nada; `subscription_late` vira `em_atraso` (antes caía em "libera"). Passa a gravar `proximo_pagamento` (da Cakto ou hoje + período).
+  (6) **🔴 Trava de plano (falha real achada em 24/10):** a policy `clinica_propria` (ALL) deixava o dono dar `UPDATE` em `ativo`/`plano`/`cortesia`/`cortesia_expira_em` pela API → Premium de graça. Migration `20261024120000_trava_plano_e_fim_do_periodo.sql`: trigger `trg_clinicas_proteger_acesso` mantém esses 4 campos quando quem escreve é `authenticated`/`anon` (webhook, admin-api e funções admin_* seguem gravando). Mesma migration: função `encerrar_assinaturas_vencidas()` + **pg_cron `nastadesk-assinatura-expira`** (minuto 17) que corta quem cancelou depois que o período pago acaba.
+  (7) **`vercel.json`:** nosniff, Referrer-Policy, X-Frame-Options DENY (menos `/agendar`), CSP em Report-Only.
+  **Conferido em produção (só leitura):** colunas batem com o schema; `'cancelada'` é aceito; 0 evoluções/avaliações hoje; nenhuma clínica seria cortada pelo job novo; o app nunca grava plano/ativo/cortesia pelo navegador; profissional não lê despesas/mensalidades/pacotes (RLS ok); webhook valida o secret (fail-closed). **Supabase no plano Free = sem backup.**
+  **Teste (24/10, autorizado pela Roberta):** as 2 migrations rodaram no banco de produção dentro de transação desfeita, com login de dono e de profissional simulados por `request.jwt.claims` e `set local role authenticated`: **18/18 OK, nada gravado** (conferido depois). Cobriu: guarda vencida ou em vigor, alterar ou apagar bloqueado, tolerância de 24h, `paciente_excluir`/`paciente_anonimizar` barrados sem apagar pela metade, autor dono/profissional/forjado, flag de suporte, dono tentando se dar Premium, backend liberando, corte só após `proximo_pagamento`, cortesia e assinatura ativa preservadas, job agendado e insert direto nascendo sem acesso. Supabase continua no Free (decisão da Roberta) até ter clientes pagantes.
+  **Depois de aplicar:** os advisors de segurança não mostraram nada novo; o job novo rodou e não cortou ninguém; as 2 functions respondem (o `cakto-cancelar` recusa chamada sem login).
+  **Pendente:** (a) criar na Cakto uma chave de API com escopo subscriptions e cadastrar os secrets `CAKTO_CLIENT_ID`/`CAKTO_CLIENT_SECRET` — sem isso, o botão Cancelar cai no plano B (portal/WhatsApp); (b) cadastrar o CREFITO dos profissionais e o `recibo_registro` do dono; (c) testar com login real: registrar evolução, tentar excluir paciente, abrir o modal de cancelar; (d) depois de alguns dias sem violação no console, trocar a CSP de Report-Only para valendo.
 
 - **2026-10-19** — **🔒 Trava de IA do robô: cota mensal por plano + limite diário por telefone + aba "Trava de IA" no painel admin.** *(Pedido da Roberta, que assumiu a tarefa iniciada pelo Eduardo.)*
   **Por quê:** não havia trava nenhuma — o custo de IA de uma clínica podia passar do valor da assinatura.
