@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
       instanceName: instancia,
       integration: "WHATSAPP-BAILEYS",
       qrcode: true,
+      groupsIgnore: true,
       webhook: {
         url: webhookUrl,
         webhook_by_events: false,
@@ -87,6 +88,21 @@ Deno.serve(async (req) => {
         webhook: { enabled: true, url: webhookUrl, events: ["MESSAGES_UPSERT", "CONNECTION_UPDATE"] },
       });
     }
+
+    // Ignorar grupos NA EVOLUTION (2026-10-24): mensagem de grupo nem chega ao
+    // whatsapp-webhook. Antes cada mensagem de grupo virava uma chamada de função
+    // (descartada só lá dentro) e gastava a cota grátis do Supabase (500 mil/mês).
+    // Vale também para instância antiga, porque roda a cada "Conectar". Tolerante a
+    // falha: se a Evolution recusar, o QR segue normal e o webhook continua filtrando.
+    const ajustes = await evo(`/settings/set/${instancia}`, "POST", {
+      rejectCall: false,
+      groupsIgnore: true,
+      alwaysOnline: false,
+      readMessages: false,
+      readStatus: false,
+      syncFullHistory: false,
+    });
+    console.log("whatsapp-conexao settings/set", instancia, ajustes.status, ajustes.ok ? "ok" : JSON.stringify(ajustes.data).slice(0, 200));
 
     // 2) pega o QR code (na criação já vem; senão chama connect)
     let qr = criar.data?.qrcode?.base64 || criar.data?.base64 || null;
