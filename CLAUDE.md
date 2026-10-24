@@ -354,6 +354,18 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   **Resumo do mês (DRE simples)** — entradas − despesas por categoria = resultado; e
   **export CSV**. Usa a tabela `despesas` que já existia em produção (schema
   `competencia` + `status`). O financeiro por consulta/mensalidade/repasse é inalterado.
+- **Declaração de comparecimento e atestado em 1 clique** *(2026-10-24)* — botões
+  **📄 Declaração de comparecimento** e **🩺 Atestado** no modal de ações da consulta (grade
+  semanal/lista) e **📄** em cada consulta da ficha do paciente. Abre o modal `modal-documento`
+  (chegada/saída já preenchidas com o horário + `intervalo_consulta`; acompanhante opcional na
+  declaração; no atestado, dias de afastamento, observações e **CID/CIF só com o checkbox de
+  autorização do paciente** — dado sensível/LGPD) e gera uma página para **Imprimir/Salvar PDF**
+  no mesmo visual do recibo. **Quem assina:** o profissional da consulta (nome + `profissionais.registro`)
+  ou, sem profissional, o responsável + `clinicas.recibo_registro`. **Atestado sem CREFITO é
+  bloqueado** (Resolução COFFITO 381/2010; o rodapé cita a resolução); a declaração sai só com o
+  nome e um aviso. Avisa se a consulta não está "Atendido"/está cancelada. **Só leitura** — nada
+  é gravado além da trilha de auditoria (`logAcesso` → `emitiu_declaracao`/`emitiu_atestado`).
+  Funções: `abrirDocumentoConsulta`, `docAtualizarTipo`, `assinanteDocumento`, `gerarDocumentoConsulta`.
 - **Nota fiscal / recibo** — **Recibo de pagamento em PDF** (botão na consulta,
   **mensalidade e pacote** pagos) — **não exige CNPJ**, serve para pessoa física/autônomo.
   O recibo mostra os **dados do emissor** (CPF/CNPJ + registro profissional CREFITO/CRM,
@@ -598,6 +610,11 @@ Acima do teto + contadores de "só menu" e limite diário), **formulário dos li
 ## 9. Histórico de mudanças
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
+
+- **2026-10-24 (2)** — **📄 Declaração de comparecimento + 🩺 atestado em 1 clique, e correção do selo de status por cima do nome na Agenda do Dia.** *(Feito com a Roberta.)* Branch `atestado-declaracao-e-ajuste-agenda`. **Só front** (`index.html`): nenhuma mudança de banco.
+  **(1) Documentos:** ver seção 4 ("Declaração de comparecimento e atestado em 1 clique"). Era item de prioridade alta do checkup (todos os concorrentes têm).
+  **(2) Bug da Agenda do Dia (~901–1280px):** com a coluna do calendário ao lado, a lista ficava estreita (~290px em tela de 960px) e os selects de sala/profissional vazavam por cima do selo de status e dos botões; o nome sumia. **Causa:** a linha horizontal só virava "card" pela largura da **tela** (≤900px). **Correção:** `#lista-consultas` virou *container* (`container-type: inline-size`) e, com a **lista** abaixo de 640px, cada consulta usa o mesmo card de 2 linhas do celular (`@container`). Medido em 375/960/1100/1280/1366/1920px: 0 sobreposição; ≥1366px continua em linha como antes.
+  **Testes (modo demonstração, local):** botões no modal e na ficha (45/45); declaração com acompanhante; atestado com 3 dias, observações e CID autorizado; CID sem autorização bloqueado; atestado sem CREFITO bloqueado (declaração passa com aviso); saída antes da chegada bloqueada; aviso de consulta não atendida; layout no celular; console sem erros. O pop-up bloqueado mostra "Permita pop-ups…" e mantém o modal aberto, igual ao recibo.
 
 - **2026-10-24** — **⚖️ Correções bloqueantes antes de voltar a anunciar (checkup de 23/10).** *(Feito com a Roberta.)* ✅ **ESTADO: APLICADO EM PRODUÇÃO em 2026-10-24.** Migrations `prontuario_autor_e_guarda` e `trava_plano_e_fim_do_periodo` (versões 20261024034911 e 20261024034933 no banco), `cakto-webhook` **v6**, `cakto-cancelar` **v1** e o front via merge na `main`.
   **O que entra:**

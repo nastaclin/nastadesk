@@ -128,6 +128,15 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .ficha-consulta { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--cinza-claro); }
 .ficha-consulta-excluir { flex-shrink: 0; background: none; border: 1px solid var(--cinza-claro); border-radius: 8px; padding: 5px 8px; font-size: 13px; cursor: pointer; opacity: .65; transition: all .15s; }
 .ficha-consulta-excluir:hover { opacity: 1; border-color: var(--vermelho); background: #FDECEC; }
+.ficha-consulta-doc { flex-shrink: 0; background: none; border: 1px solid var(--cinza-claro); border-radius: 8px; padding: 5px 8px; font-size: 13px; cursor: pointer; opacity: .65; transition: all .15s; margin-right: 6px; }
+.ficha-consulta-doc:hover { opacity: 1; border-color: var(--verde-medio); background: var(--verde-suave); }
+/* Modal de documento da consulta (declaração / atestado) */
+.doc-tipo-opcao { flex: 1; display: flex; align-items: center; gap: 7px; padding: 10px 11px; border: 1.5px solid var(--cinza-claro); border-radius: 10px; font-size: 12.5px; font-weight: 600; color: var(--cinza-escuro); cursor: pointer; }
+.doc-tipo-opcao:has(input:checked) { border-color: var(--verde); background: var(--verde-suave); color: var(--verde-escuro); }
+.doc-tipo-opcao input { accent-color: var(--verde); }
+.doc-aviso { font-size: 12.5px; line-height: 1.5; padding: 9px 12px; border-radius: 9px; background: #FBF0D4; color: #7A5208; margin-bottom: 12px; }
+.doc-assinante { font-size: 12.5px; line-height: 1.5; color: var(--cinza-medio); background: #F5F7FA; border-radius: 9px; padding: 9px 12px; margin-top: 4px; }
+.doc-assinante.falta { background: #FDECEC; color: var(--vermelho); }
 .ficha-consulta:last-child { border-bottom: none; }
 .ficha-consulta-data { font-size: 13px; font-weight: 600; color: var(--verde); min-width: 86px; }
 .ficha-consulta-info { flex: 1; }
@@ -335,6 +344,21 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .consulta-item { display: flex; align-items: center; gap: 14px; padding: 14px 22px; border-bottom: 1px solid var(--cinza-claro); cursor: pointer; transition: background .15s; }
 .consulta-item:last-child { border-bottom: none; }
 .consulta-item:hover { background: var(--verde-suave); }
+/* Lista estreita (notebook pequeno/tablet com a coluna do calendário ao lado, ~901–1250px):
+   a linha horizontal não cabe e os selects de sala/profissional vazavam por cima do status.
+   Mede a LISTA, não a tela: abaixo de 640px vira o mesmo card de 2 linhas do celular. */
+#lista-consultas { container-type: inline-size; }
+@container (max-width: 640px) {
+  .consulta-item { display: grid; grid-template-columns: auto auto minmax(0,1fr); grid-template-areas: "hora avatar info" "pill pill acoes"; gap: 4px 12px; padding: 13px 16px; align-items: center; }
+  .consulta-hora { grid-area: hora; }
+  .consulta-item .avatar { grid-area: avatar; }
+  .consulta-info { grid-area: info; }
+  .consulta-item .status-pill { grid-area: pill; justify-self: start; margin-top: 6px; }
+  .consulta-acoes { grid-area: acoes; justify-self: end; margin-top: 6px; }
+  .consulta-nome { white-space: normal; flex-wrap: wrap; gap: 5px 7px; line-height: 1.35; }
+  .consulta-queixa { white-space: normal; }
+  .consulta-info select.sala-select { max-width: 100%; }
+}
 .consulta-hora { font-size: 13px; font-weight: 600; color: var(--verde); min-width: 46px; font-variant-numeric: tabular-nums; }
 .avatar { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; flex-shrink: 0; }
 .avatar.cancelado { background: var(--cinza-claro) !important; color: var(--cinza-medio); }
@@ -2984,7 +3008,42 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
     <div style="display:flex;flex-direction:column;gap:9px">
       <button class="btn btn-secundario" onclick="caVerFicha()">👤 Ver ficha do paciente</button>
       <button class="btn btn-secundario" onclick="caRemarcar()">📅 Remarcar consulta</button>
+      <button class="btn btn-secundario" onclick="caDocumento('declaracao')">📄 Declaração de comparecimento</button>
+      <button class="btn btn-secundario" onclick="caDocumento('atestado')">🩺 Atestado</button>
       <button class="btn btn-secundario" style="color:var(--vermelho)" onclick="caExcluir()">🗑 Excluir consulta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DOCUMENTO DA CONSULTA (declaração de comparecimento / atestado) -->
+<div class="overlay" id="modal-documento" onclick="if(event.target===this)fecharModalDocumento()">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><div><div class="modal-titulo">Emitir documento</div><div class="modal-sub" id="doc-sub">—</div></div><button class="modal-fechar" onclick="fecharModalDocumento()">×</button></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <label class="doc-tipo-opcao"><input type="radio" name="doc-tipo" value="declaracao" onchange="docAtualizarTipo()"> 📄 Declaração de comparecimento</label>
+      <label class="doc-tipo-opcao"><input type="radio" name="doc-tipo" value="atestado" onchange="docAtualizarTipo()"> 🩺 Atestado</label>
+    </div>
+    <div id="doc-aviso-status" class="doc-aviso" style="display:none"></div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Chegada</label><input type="time" id="doc-hora-ini"></div>
+      <div class="config-campo"><label>Saída</label><input type="time" id="doc-hora-fim"></div>
+    </div>
+    <div id="doc-campos-declaracao">
+      <div class="config-campo"><label>Acompanhante (opcional)</label><input type="text" id="doc-acomp" maxlength="80" placeholder="Ex: Maria Souza (mãe)"></div>
+    </div>
+    <div id="doc-campos-atestado" style="display:none">
+      <div class="config-campo"><label>Dias de afastamento (deixe vazio se não houver)</label><input type="number" id="doc-dias" min="0" max="60" placeholder="Ex: 2"></div>
+      <div class="config-campo"><label>Observações / recomendações (opcional)</label><textarea id="doc-obs" rows="3" maxlength="500" placeholder="Ex: Evitar esforço com o membro superior direito."></textarea></div>
+      <div class="config-campo"><label>CID ou CIF (opcional)</label><input type="text" id="doc-cid" maxlength="20" placeholder="Ex: M54.5"></div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--cinza-medio);cursor:pointer;margin:-4px 0 10px">
+        <input type="checkbox" id="doc-cid-ok" style="margin-top:2px;accent-color:var(--verde)">
+        <span>O paciente autorizou incluir o diagnóstico no atestado (dado sensível — LGPD).</span>
+      </label>
+    </div>
+    <div id="doc-assinante" class="doc-assinante"></div>
+    <div class="modal-acoes">
+      <button class="btn btn-secundario" onclick="fecharModalDocumento()">Cancelar</button>
+      <button class="btn btn-primario" onclick="gerarDocumentoConsulta()">Gerar PDF</button>
     </div>
   </div>
 </div>
@@ -5187,6 +5246,11 @@ function caExcluir() {
   fecharModalConsultaAcoes();
   if (c) excluirConsulta(c.id);
 }
+function caDocumento(tipo) {
+  const c = consultaAcoesCtx;
+  fecharModalConsultaAcoes();
+  if (c) abrirDocumentoConsulta(c.id, tipo);
+}
 
 // Excluir a partir da ficha do paciente: recarrega a lista de consultas da ficha depois
 function excluirConsultaFicha(consultaId) {
@@ -5994,6 +6058,7 @@ async function carregarConsultasFicha(pacienteId) {
         <div class="ficha-consulta-status">${hora} · <span style="color:${stColor[c.status]||'var(--cinza-medio)'}">${stLabel[c.status]||esc(c.status)}</span>${pagInfo}</div>
         ${tags?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px">${tags}</div>`:''}
       </div>
+      <button type="button" class="ficha-consulta-doc" title="Declaração de comparecimento / atestado" onclick="abrirDocumentoConsulta('${c.id}', 'declaracao')">📄</button>
       <button type="button" class="ficha-consulta-excluir" title="Excluir consulta" onclick="excluirConsultaFicha('${c.id}')">🗑</button>
     </div>`;
   }).join('');
@@ -7413,6 +7478,168 @@ function gerarReciboPacote(pacoteId) {
     valor: p.valor_pago != null ? p.valor_pago : p.valor, forma: p.forma_pagamento, dataPagamento,
     descricao: `Pacote${n?` de ${n} sessões`:''} de fisioterapia.`,
   });
+}
+
+// ===== DECLARAÇÃO DE COMPARECIMENTO / ATESTADO (a partir de uma consulta) =====
+// Só lê dados e abre uma página para imprimir/salvar em PDF — nada é gravado, além
+// do registro na trilha de auditoria (LGPD). Atestado do fisioterapeuta: Resolução
+// COFFITO nº 381/2010; exige nome + CREFITO de quem assina.
+let docConsulta = null; // consulta (com pacientes(nome,cpf)) do documento aberto
+
+const NUM_EXTENSO = ['zero','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','catorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+const DEZENAS_EXTENSO = ['', '', 'vinte','trinta','quarenta','cinquenta','sessenta'];
+function numeroPorExtenso(n) {
+  if (n < 20) return NUM_EXTENSO[n];
+  const d = Math.floor(n / 10), u = n % 10;
+  return DEZENAS_EXTENSO[d] + (u ? ' e ' + NUM_EXTENSO[u] : '');
+}
+
+// Quem assina: o profissional da consulta (com o registro do cadastro) ou, sem
+// profissional, o responsável da clínica com o registro de "Dados para o recibo".
+function assinanteDocumento(c) {
+  const p = profissionalPorId(c.profissional_id);
+  if (p) return { nome: p.nome || '', registro: (p.registro || '').trim() };
+  return { nome: clinicaAtual?.responsavel || clinicaAtual?.nome || '', registro: (clinicaAtual?.recibo_registro || '').trim() };
+}
+
+function docTipoAtual() {
+  return document.querySelector('input[name="doc-tipo"]:checked')?.value || 'declaracao';
+}
+
+async function abrirDocumentoConsulta(consultaId, tipo) {
+  if (!clinicaAtual) { toast('Não foi possível carregar os dados da clínica'); return; }
+  const { data: c, error } = await db.from('consultas').select('*, pacientes(nome,cpf)').eq('id', consultaId).single();
+  if (error || !c) { toast('Não foi possível carregar a consulta'); return; }
+  docConsulta = c;
+  const dur = clinicaAtual.intervalo_consulta || 60;
+  document.getElementById('doc-sub').textContent =
+    `${c.pacientes?.nome || 'Paciente'} · ${new Date(c.data_hora).toLocaleDateString('pt-BR', { timeZone: TZ })} às ${horaSP(c.data_hora)}`;
+  document.getElementById('doc-hora-ini').value = horaSP(c.data_hora);
+  document.getElementById('doc-hora-fim').value = horaSP(new Date(new Date(c.data_hora).getTime() + dur * 60000).toISOString());
+  ['doc-acomp', 'doc-dias', 'doc-obs', 'doc-cid'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('doc-cid-ok').checked = false;
+  const radio = document.querySelector(`input[name="doc-tipo"][value="${tipo === 'atestado' ? 'atestado' : 'declaracao'}"]`);
+  if (radio) radio.checked = true;
+  const aviso = document.getElementById('doc-aviso-status');
+  if (c.status === 'cancelado') {
+    aviso.textContent = '⚠️ Esta consulta está cancelada. Confira se o paciente realmente compareceu antes de emitir.';
+    aviso.style.display = 'block';
+  } else if (c.status !== 'atendido') {
+    aviso.textContent = 'Esta consulta ainda não está como "Atendido". Se o paciente já foi atendido, pode emitir normalmente.';
+    aviso.style.display = 'block';
+  } else {
+    aviso.style.display = 'none';
+  }
+  docAtualizarTipo();
+  document.getElementById('modal-documento').classList.add('aberto');
+}
+
+function fecharModalDocumento() {
+  document.getElementById('modal-documento').classList.remove('aberto');
+  docConsulta = null;
+}
+
+// Mostra os campos do tipo escolhido e quem vai assinar (avisa se falta o CREFITO)
+function docAtualizarTipo() {
+  const tipo = docTipoAtual();
+  document.getElementById('doc-campos-declaracao').style.display = tipo === 'declaracao' ? '' : 'none';
+  document.getElementById('doc-campos-atestado').style.display = tipo === 'atestado' ? '' : 'none';
+  if (!docConsulta) return;
+  const a = assinanteDocumento(docConsulta);
+  const el = document.getElementById('doc-assinante');
+  const ondeCadastrar = profissionalPorId(docConsulta.profissional_id)
+    ? 'Cadastre em Configurações → Profissionais.' : 'Cadastre em Minha Clínica → Dados para o recibo.';
+  if (!a.registro) {
+    el.className = 'doc-assinante falta';
+    el.innerHTML = tipo === 'atestado'
+      ? `✍️ Assina: <b>${esc(a.nome)}</b> — <b>sem CREFITO cadastrado</b>. O atestado precisa do registro de quem assina. ${ondeCadastrar}`
+      : `✍️ Assina: <b>${esc(a.nome)}</b> — sem CREFITO cadastrado (a declaração sai só com o nome). ${ondeCadastrar}`;
+  } else {
+    el.className = 'doc-assinante';
+    el.innerHTML = `✍️ Assina: <b>${esc(a.nome)}</b> — ${esc(a.registro)}`;
+  }
+}
+
+function gerarDocumentoConsulta() {
+  const c = docConsulta;
+  if (!c || !clinicaAtual) return;
+  const tipo = docTipoAtual();
+  const a = assinanteDocumento(c);
+  const ini = document.getElementById('doc-hora-ini').value;
+  const fim = document.getElementById('doc-hora-fim').value;
+  if (!ini || !fim) { toast('Informe o horário de chegada e de saída'); return; }
+  if (fim <= ini) { toast('A saída precisa ser depois da chegada'); return; }
+
+  const nome = c.pacientes?.nome || '—';
+  const cpf = formatarCPF(c.pacientes?.cpf || '');
+  const pacienteTxt = `<strong>${esc(nome)}</strong>${cpf ? `, CPF ${esc(cpf)},` : ''}`;
+  const dataBR = new Date(c.data_hora).toLocaleDateString('pt-BR', { timeZone: TZ });
+  const dataExtenso = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ });
+
+  let titulo, corpo, extra = '';
+  if (tipo === 'atestado') {
+    if (!a.registro) { toast('Cadastre o CREFITO de quem assina antes de emitir o atestado'); return; }
+    const diasTxt = document.getElementById('doc-dias').value.trim();
+    const dias = diasTxt === '' ? 0 : parseInt(diasTxt, 10);
+    if (isNaN(dias) || dias < 0 || dias > 60) { toast('Dias de afastamento: de 0 a 60'); return; }
+    const cid = document.getElementById('doc-cid').value.trim();
+    if (cid && !document.getElementById('doc-cid-ok').checked) { toast('Para incluir o CID/CIF, marque que o paciente autorizou'); return; }
+    const obs = document.getElementById('doc-obs').value.trim();
+    titulo = 'ATESTADO';
+    corpo = `Atesto, para os devidos fins, que ${pacienteTxt} esteve em atendimento fisioterapêutico no dia <strong>${esc(dataBR)}</strong>, das ${esc(ini)} às ${esc(fim)}`
+      + (dias > 0
+        ? `, necessitando de afastamento de suas atividades por <strong>${dias} (${numeroPorExtenso(dias)}) dia${dias > 1 ? 's' : ''}</strong>, a partir desta data.`
+        : '.');
+    if (obs) extra += `<p class="obs"><strong>Observações:</strong> ${esc(obs)}</p>`;
+    if (cid) extra += `<p class="obs"><strong>CID/CIF:</strong> ${esc(cid)} <span class="nota">(incluído com autorização do paciente)</span></p>`;
+  } else {
+    const acomp = document.getElementById('doc-acomp').value.trim();
+    titulo = 'DECLARAÇÃO DE COMPARECIMENTO';
+    corpo = `Declaro, para os devidos fins, que ${pacienteTxt} compareceu a atendimento de fisioterapia nesta clínica no dia <strong>${esc(dataBR)}</strong>, das ${esc(ini)} às ${esc(fim)}`
+      + (acomp ? `, acompanhado(a) de <strong>${esc(acomp)}</strong>.` : '.');
+  }
+
+  const win = window.open('', '_blank');
+  if (!win) { toast('Permita pop-ups para gerar o documento'); return; }
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${titulo === 'ATESTADO' ? 'Atestado' : 'Declaração de comparecimento'} — ${esc(nome)}</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 640px; margin: 40px auto; padding: 0 24px; color: #1B221E; }
+    .topo { border-bottom: 3px solid #0B6E4F; padding-bottom: 16px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+    .marca { font-size: 18px; font-weight: bold; color: #0B6E4F; }
+    .clinica { font-size: 13px; line-height: 1.6; text-align: right; color: #33403A; }
+    h1 { font-size: 21px; color: #0B6E4F; text-align: center; letter-spacing: .06em; margin: 0 0 36px; }
+    .corpo { font-size: 16px; line-height: 2; text-align: justify; }
+    .obs { font-size: 14px; line-height: 1.7; margin-top: 18px; }
+    .nota { font-size: 12px; color: #66706A; }
+    .local { margin-top: 40px; font-size: 15px; text-align: right; }
+    .assinatura { margin-top: 72px; text-align: center; }
+    .linha { border-top: 1px solid #1B221E; width: 320px; margin: 0 auto 6px; }
+    .assinatura .an { font-size: 14px; }
+    .assinatura .ad { font-size: 12.5px; color: #66706A; }
+    .rodape { margin-top: 50px; font-size: 11px; color: #66706A; text-align: center; }
+    @media print { .no-print { display: none; } }
+    .no-print { text-align: center; margin-top: 30px; }
+    .no-print button { background: #0B6E4F; color: white; border: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; cursor: pointer; }
+  </style></head><body>
+  <div class="topo">
+    <div class="marca">${esc(clinicaAtual.nome || '')}</div>
+    <div class="clinica">
+      ${clinicaAtual.recibo_cpf_cnpj ? 'CPF/CNPJ: ' + esc(clinicaAtual.recibo_cpf_cnpj) + '<br>' : ''}
+      ${clinicaAtual.endereco ? esc(clinicaAtual.endereco) + (clinicaAtual.endereco_complemento ? ' — ' + esc(clinicaAtual.endereco_complemento) : '') + '<br>' : ''}
+      ${clinicaAtual.whatsapp ? 'WhatsApp: ' + esc(clinicaAtual.whatsapp) : ''}
+    </div>
+  </div>
+  <h1>${titulo}</h1>
+  <p class="corpo">${corpo}</p>
+  ${extra}
+  <div class="local">${esc(dataExtenso)}.</div>
+  <div class="assinatura"><div class="linha"></div><div class="an">${esc(a.nome)}</div>${a.registro ? `<div class="ad">Fisioterapeuta — ${esc(a.registro)}</div>` : ''}</div>
+  <div class="rodape">${tipo === 'atestado' ? 'Atestado emitido conforme a Resolução COFFITO nº 381/2010. ' : ''}Documento gerado pelo NastaDesk — ${new Date().toLocaleDateString('pt-BR', { timeZone: TZ })}</div>
+  <div class="no-print"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
+  </body></html>`);
+  win.document.close();
+  logAcesso(c.paciente_id, tipo === 'atestado' ? 'emitiu_atestado' : 'emitiu_declaracao', `consulta de ${dataBR}`);
+  fecharModalDocumento();
 }
 
 // ===== RELATÓRIO =====
