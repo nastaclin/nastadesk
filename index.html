@@ -799,6 +799,8 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 /* ===== MODAL ===== */
 .overlay { position: fixed; inset: 0; background: rgba(10,25,18,0.45); backdrop-filter: blur(2px); z-index: 500; display: none; align-items: center; justify-content: center; padding: 16px; }
 .overlay.aberto { display: flex; }
+/* Confirmações também abrem a partir da tela de planos bloqueada (#paywall-overlay, z 99999). */
+#modal-confirm { z-index: 100000; }
 .modal { background: white; border-radius: 20px; padding: 30px; width: 460px; max-width: 94vw; max-height: 92vh; overflow-y: auto; animation: slideUp .22s ease; box-shadow: var(--sombra-alta); }
 @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
@@ -4268,11 +4270,13 @@ function limparFormCadastro() {
   atualizarReqSenha();
 }
 
-function abrirModalConfirm(titulo, texto, btnLabel, callback) {
+// opcoes.positivo: botão verde (ex.: "Ir para o pagamento"); sem isso fica vermelho (confirmação de risco).
+function abrirModalConfirm(titulo, texto, btnLabel, callback, opcoes) {
   document.getElementById('confirm-titulo').textContent = titulo;
   document.getElementById('confirm-texto').textContent = texto;
   const btn = document.getElementById('confirm-btn');
   btn.textContent = btnLabel;
+  btn.style.background = (opcoes && opcoes.positivo) ? '' : 'var(--vermelho)';
   btn.onclick = () => { fecharModalConfirm(); callback(); };
   document.getElementById('modal-confirm').classList.add('aberto');
 }
@@ -10179,10 +10183,6 @@ async function assinarPlano(chave, periodo) {
   const link = linkCheckout(chave, periodo);
   if (!link) { avisarPeriodoIndisponivel(chave, periodo); return; }
 
-  // Registra o cupom ANTES de sair da página (o cliente vai embora no redirect).
-  await registrarUsoCupom(cupomAssinatura, 'assinatura', chave, periodo);
-
-  toast('Abrindo o pagamento...');
   // Pré-preenche o e-mail da conta: é por ele que o pagamento é vinculado à sua clínica.
   // Importante: pague com este mesmo e-mail para a liberação ser automática.
   let email = (clinicaAtual && clinicaAtual.email) || '';
@@ -10190,6 +10190,27 @@ async function assinarPlano(chave, periodo) {
     if (!email) { const { data: { user } } = await db.auth.getUser(); email = (user && user.email) || ''; }
   } catch (_e) { /* sem e-mail: segue sem pré-preencher */ }
 
+  // O cakto-webhook acha a clínica pelo e-mail do comprador: se a pessoa trocar o
+  // e-mail no checkout, o pagamento entra mas a clínica não é liberada sozinha.
+  // Por isso o aviso fica antes de sair da página.
+  if (email) {
+    abrirModalConfirm(
+      'Use este e-mail no pagamento',
+      `No checkout, pague com o e-mail ${email} (já vai preenchido). É por ele que a sua clínica é liberada automaticamente, na hora. Se trocar o e-mail lá, o pagamento entra mas a liberação não acontece sozinha — aí é só falar com a gente.`,
+      'Ir para o pagamento',
+      () => irParaPagamento(link, email, chave, periodo),
+      { positivo: true }
+    );
+    return;
+  }
+  await irParaPagamento(link, email, chave, periodo);
+}
+
+async function irParaPagamento(link, email, chave, periodo) {
+  // Registra o cupom ANTES de sair da página (o cliente vai embora no redirect).
+  await registrarUsoCupom(cupomAssinatura, 'assinatura', chave, periodo);
+
+  toast('Abrindo o pagamento...');
   let destino = link;
   try {
     const u = new URL(link);
