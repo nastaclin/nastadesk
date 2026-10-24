@@ -53,8 +53,12 @@ async function tokenCakto(): Promise<string> {
   if (!r.ok) {
     // Diagnóstico sem expor o segredo: início do client_id (não é secreto) e tamanhos.
     const det = await r.text().catch(() => '');
+    // Nomes (nunca valores) das variáveis com "cakto" que a função enxerga: mostra
+    // se o secret foi salvo com outro nome (minúscula, espaço, prefixo...).
+    const nomes = Object.keys(Deno.env.toObject()).filter((k) => /cakto/i.test(k)).map((k) => JSON.stringify(k)).join(', ');
     console.error('token Cakto', r.status, det.slice(0, 200),
-      `client_id=${clientId.slice(0, 6)}… (${clientId.length} car.) secret=${clientSecret.length} car.`);
+      `client_id=${clientId.slice(0, 6)}… (${clientId.length} car.) secret=${clientSecret.length} car.`,
+      `variáveis com "cakto": [${nomes}]`);
     throw new Error(`token Cakto ${r.status}`);
   }
   const j = await r.json();
