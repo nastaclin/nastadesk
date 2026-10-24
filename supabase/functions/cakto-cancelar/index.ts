@@ -1,22 +1,29 @@
 // =============================================================================
 // cakto-cancelar — o dono da clínica cancela a assinatura dentro do NastaDesk e
-// o cancelamento acontece direto na Cakto (API pública).
+// tudo acontece direto na Cakto (API pública), sem passar pelo suporte.
+//
+// v3 (2026-10-24): DIREITO DE ARREPENDIMENTO (CDC art. 49).
+//   - Até 7 dias corridos da PRIMEIRA compra paga da assinatura: o cancelamento
+//     vira REEMBOLSO integral (POST /orders/{id}/refund/). Na Cakto, reembolsar
+//     devolve o dinheiro e encerra a assinatura; o acesso pago acaba na hora
+//     (o cakto-webhook recebe "refund" e corta, preservando o teste grátis se houver).
+//   - Depois disso: só CANCELA (POST /subscriptions/{id}/cancel/). Nada mais é
+//     cobrado e a clínica usa até o fim do período já pago (proximo_pagamento);
+//     quem corta depois é o pg_cron nastadesk-assinatura-expira.
+//   - Renovações (2ª cobrança em diante) não têm arrependimento: só cancelam.
 //
 // Fluxo:
 //   1. Valida o login (JWT do usuário) e confirma que ele é o DONO da clínica.
 //   2. Pega a assinatura Cakto viva da clínica (tabela assinaturas).
 //   3. Obtém token OAuth da Cakto (client_id/secret em secrets do Supabase).
-//   4. Acha o id da assinatura na Cakto (provider_id; se não bater, busca pelo
-//      e-mail do pagador) e chama POST /subscriptions/{id}/cancel/.
-//   5. Marca a assinatura como 'cancelada' no NastaDesk SEM tirar o acesso:
-//      a clínica usa até o fim do período já pago (proximo_pagamento).
+//   4. Acha a assinatura na Cakto (provider_id; se não bater, busca pelo e-mail).
+//   5. Reembolsa (dentro dos 7 dias) ou cancela, e atualiza a tabela assinaturas.
 //
-// Secrets necessários (supabase secrets set ...):
-//   CAKTO_CLIENT_ID, CAKTO_CLIENT_SECRET  — chave de API criada no painel da
-//   Cakto com escopo "subscriptions" (read + write).
-//   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY já existem.
+// Secrets necessários: CAKTO_CLIENT_ID, CAKTO_CLIENT_SECRET — chave de API criada
+// no painel da Cakto com os escopos "subscriptions" e "orders" (leitura e escrita).
+// SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY já existem.
 //
-// Docs Cakto: https://docs.cakto.com.br/api-reference/subscriptions/cancel.md
+// Docs Cakto: api-reference/subscriptions/cancel · api-reference/orders/refund
 // =============================================================================
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -27,6 +34,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const VIVAS_CAKTO = ['active', 'late', 'trial', 'paused'];
+const PRAZO_ARREPENDIMENTO_MS = 7 * 24 * 60 * 60 * 1000;
 
 function resposta(corpo: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(corpo), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -66,6 +74,23 @@ async function acharAssinaturaCakto(token: string, providerId: string | null, em
   return null;
 }
 
+// A primeira compra paga da assinatura ainda está dentro dos 7 dias?
+// Devolve o pedido a reembolsar, ou null (fora do prazo / já renovou / sem dado).
+async function pedidoReembolsavel(token: string, sub: any): Promise<{ id: string; valor: number | null } | null> {
+  const pagos = Number(sub.paid_payments_quantity ?? 0);
+  if (pagos > 1) return null;                       // já renovou: arrependimento é só da contratação
+  const pedidoId = sub.parent_order;
+  if (!pedidoId) return null;
+  const r = await fetch(`${CAKTO_API}/orders/${encodeURIComponent(pedidoId)}/`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!r.ok) return null;
+  const pedido = await r.json();
+  if (String(pedido.status ?? '').toLowerCase() !== 'paid') return null;
+  const pagoEm = Date.parse(pedido.paidAt ?? '');
+  if (isNaN(pagoEm) || Date.now() - pagoEm > PRAZO_ARREPENDIMENTO_MS) return null;
+  const valor = Number(pedido.amount ?? pedido.baseAmount);
+  return { id: pedidoId, valor: isNaN(valor) ? null : valor };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return resposta({ ok: false, erro: 'Método não permitido' }, 405);
@@ -93,11 +118,38 @@ Deno.serve(async (req) => {
     const sub = await acharAssinaturaCakto(token, ass.provider_id, ass.payer_email ?? user.email ?? null);
     if (!sub) return resposta({ ok: false, erro: 'Não localizamos a assinatura na Cakto.', fallback: true }, 404);
 
+    const agora = new Date().toISOString();
+    const h = { Authorization: `Bearer ${token}` };
+
+    // ---- Dentro dos 7 dias: reembolso integral (direito de arrependimento) ----
+    const reembolsavel = sub.status !== 'canceled' ? await pedidoReembolsavel(token, sub) : null;
+    if (reembolsavel) {
+      const r = await fetch(`${CAKTO_API}/orders/${encodeURIComponent(reembolsavel.id)}/refund/`, { method: 'POST', headers: h });
+      if (!r.ok) {
+        const det = await r.json().catch(() => ({}));
+        console.error('cakto refund', r.status, det);
+        return resposta({ ok: false, erro: 'A Cakto não aceitou o reembolso agora.', fallback: true }, 502);
+      }
+      // O reembolso já encerra a assinatura na Cakto; por garantia, pede o cancelamento
+      // também (um 400 aqui só quer dizer que ela já estava cancelada).
+      await fetch(`${CAKTO_API}/subscriptions/${sub.id}/cancel/`, { method: 'POST', headers: h }).catch(() => null);
+
+      const { error: errUpd } = await admin.from('assinaturas').update({
+        status: 'cancelada', cancelada_em: agora, atualizado_em: agora, proximo_pagamento: agora,
+      }).eq('id', ass.id);
+      if (errUpd) console.error('assinaturas update', errUpd); // o webhook "refund" sincroniza
+
+      await admin.from('auditoria').insert({
+        clinica_id: clinica.id, user_id: user.id, paciente_id: null,
+        acao: 'reembolsou_assinatura', detalhe: `cakto:${sub.id} pedido:${reembolsavel.id} valor:${reembolsavel.valor ?? '-'}`, user_agent: 'edge:cakto-cancelar',
+      }).then(() => {}, () => {});
+
+      return resposta({ ok: true, reembolsado: true, valor: reembolsavel.valor });
+    }
+
+    // ---- Fora dos 7 dias: só cancela; o acesso vai até o fim do período pago ----
     if (sub.status !== 'canceled') {
-      const r = await fetch(`${CAKTO_API}/subscriptions/${sub.id}/cancel/`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const r = await fetch(`${CAKTO_API}/subscriptions/${sub.id}/cancel/`, { method: 'POST', headers: h });
       if (!r.ok) {
         const det = await r.json().catch(() => ({}));
         console.error('cakto cancel', r.status, det);
@@ -105,10 +157,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Acesso continua até o fim do período pago: só muda o status da assinatura.
     // Quem corta depois é o pg_cron nastadesk-assinatura-expira, quando
     // proximo_pagamento passar. O cakto-webhook v6 também não corta no cancelamento.
-    const agora = new Date().toISOString();
     const acessoAte: string | null = ass.proximo_pagamento ?? sub.next_payment_date ?? null;
     const { error: errUpd } = await admin.from('assinaturas').update({
       status: 'cancelada',
@@ -124,7 +174,7 @@ Deno.serve(async (req) => {
       acao: 'cancelou_assinatura', detalhe: `cakto:${sub.id} acesso_ate:${acessoAte ?? '-'}`, user_agent: 'edge:cakto-cancelar',
     }).then(() => {}, () => {});
 
-    return resposta({ ok: true, acesso_ate: acessoAte });
+    return resposta({ ok: true, reembolsado: false, acesso_ate: acessoAte });
   } catch (e) {
     console.error('cakto-cancelar', e);
     return resposta({ ok: false, erro: 'Erro ao cancelar. Tente novamente.', fallback: true }, 500);

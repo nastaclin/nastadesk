@@ -3166,7 +3166,7 @@ const FORMA_LABEL = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito',
 function nomeCompetencia(comp) { const p = String(comp).split('-'); return `${MESES[parseInt(p[1],10)-1]} ${p[0]}`; }
 const CORES = ['av-1','av-2','av-3','av-4','av-5','av-6'];
 const TZ = 'America/Sao_Paulo';
-const POLITICA_VERSAO = '1.1 (2026-10-24)'; // versão dos Termos/Política registrada no consentimento (1.1: cláusula do WhatsApp não oficial nos Termos)
+const POLITICA_VERSAO = '1.2 (2026-10-24)'; // versão dos Termos/Política registrada no consentimento (1.1: WhatsApp não oficial; 1.2: cancelamento no app + reembolso em 7 dias)
 const { createClient } = supabase;
 let db = createClient(SUPA_URL, SUPA_KEY);  // 'let': o modo demonstração troca por um cliente falso
 
@@ -10425,14 +10425,22 @@ async function cancelarAssinatura() {
     if (meuPapel !== 'dono') { toast('Só o responsável pela clínica pode cancelar a assinatura.'); return; }
     const venc = assinaturaAtual?.proximo_pagamento
       ? new Date(assinaturaAtual.proximo_pagamento).toLocaleDateString('pt-BR', { timeZone: TZ }) : null;
+    // Direito de arrependimento (CDC art. 49): até 7 dias da primeira compra, cancelar
+    // = reembolso integral. Quem decide de verdade é o servidor (pela data do pagamento
+    // na Cakto); aqui é só o texto, pela data em que a assinatura foi criada.
+    const criada = assinaturaAtual?.criado_em ? new Date(assinaturaAtual.criado_em).getTime() : 0;
+    const dentroDosSete = criada && (Date.now() - criada) < 7 * 864e5;
     abrirModalConfirm(
       'Cancelar assinatura?',
-      'A cobrança recorrente na Cakto é cancelada agora e nada mais é cobrado. ' +
-      (venc ? `Você continua usando o NastaDesk até ${venc} (período já pago). ` : 'Você continua usando o NastaDesk até o fim do período já pago. ') +
-      'Seus dados ficam salvos e você pode voltar quando quiser.',
-      'Cancelar assinatura',
+      dentroDosSete
+        ? 'Você está dentro dos 7 dias de garantia: ao cancelar, devolvemos todo o valor pago (Pix volta na hora; cartão, na próxima fatura) e o plano pago termina agora. Se ainda estiver no teste grátis, ele continua até o fim. Seus dados ficam salvos.'
+        : 'A cobrança recorrente é cancelada agora e nada mais é cobrado. ' +
+          (venc ? `Você continua usando o NastaDesk até ${venc} (período já pago). ` : 'Você continua usando o NastaDesk até o fim do período já pago. ') +
+          'Seus dados ficam salvos e você pode voltar quando quiser.',
+      dentroDosSete ? 'Cancelar e reembolsar' : 'Cancelar assinatura',
       async () => {
         if (MODO_DEMO) { toast('Na demonstração o cancelamento é só simulado ✓'); return; }
+        toast('Cancelando...');
         try {
           const { data: { session } } = await db.auth.getSession();
           const r = await fetch(`${SUPA_URL}/functions/v1/cakto-cancelar`, {
@@ -10442,7 +10450,10 @@ async function cancelarAssinatura() {
           });
           const j = await r.json().catch(() => ({}));
           if (j.ok) {
-            toast('Assinatura cancelada ✓ Nada mais será cobrado.');
+            toast(j.reembolsado
+              ? `Assinatura cancelada e ${j.valor ? fmtBRL(j.valor) : 'o valor'} devolvido ✓`
+              : 'Assinatura cancelada ✓ Nada mais será cobrado.');
+            await carregarInfoClinica();
             await verificarAssinatura();
             if (secAtiva === 'planos') carregarPlanos();
             return;
