@@ -41,15 +41,22 @@ function resposta(corpo: Record<string, unknown>, status = 200) {
 }
 
 async function tokenCakto(): Promise<string> {
+  // trim: espaço/quebra de linha colados junto com a chave no painel do Supabase
+  // fazem a Cakto responder 401 invalid_client.
+  const clientId = (Deno.env.get('CAKTO_CLIENT_ID') ?? '').trim().replace(/^["']|["']$/g, '');
+  const clientSecret = (Deno.env.get('CAKTO_CLIENT_SECRET') ?? '').trim().replace(/^["']|["']$/g, '');
   const r = await fetch(`${CAKTO_API}/token/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: Deno.env.get('CAKTO_CLIENT_ID') ?? '',
-      client_secret: Deno.env.get('CAKTO_CLIENT_SECRET') ?? '',
-    }),
+    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret }),
   });
-  if (!r.ok) throw new Error(`token Cakto ${r.status}`);
+  if (!r.ok) {
+    // Diagnóstico sem expor o segredo: início do client_id (não é secreto) e tamanhos.
+    const det = await r.text().catch(() => '');
+    console.error('token Cakto', r.status, det.slice(0, 200),
+      `client_id=${clientId.slice(0, 6)}… (${clientId.length} car.) secret=${clientSecret.length} car.`);
+    throw new Error(`token Cakto ${r.status}`);
+  }
   const j = await r.json();
   return j.access_token;
 }
