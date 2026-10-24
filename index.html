@@ -112,6 +112,16 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .ficha-tab { font-size: 13px; font-weight: 500; padding: 11px 14px; cursor: pointer; color: var(--cinza-medio); border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
 .ficha-tab:hover { color: var(--cinza-escuro); }
 .ficha-tab.ativa { color: var(--verde); border-bottom-color: var(--verde); }
+/* Abas da ficha: com mouse não dá para "arrastar" a barra (a rolagem é escondida) e
+   Docs/Anamnese sumiam à direita → no computador as abas quebram linha e ficam todas
+   visíveis. No toque continua deslizando, com esmaecido na borda indicando que há mais. */
+@media (hover: hover) and (pointer: fine) {
+  .ficha-tabs { flex-wrap: wrap; overflow-x: visible; }
+  .cfg-tabs { flex-wrap: wrap; overflow-x: visible !important; } /* Configurações: mesmo caso (Salas…Documentos sumiam em ~1000px) */
+}
+.ficha-tabs.mais-dir { -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); }
+.ficha-tabs.mais-esq { -webkit-mask-image: linear-gradient(to right, transparent, #000 18%); mask-image: linear-gradient(to right, transparent, #000 18%); }
+.ficha-tabs.mais-esq.mais-dir { -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent); }
 .ficha-corpo { flex: 1; overflow-y: auto; padding: 20px 24px; }
 .ficha-secao { margin-bottom: 22px; }
 .ficha-secao-titulo { font-size: 11px; font-weight: 600; color: var(--cinza-medio); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
@@ -1403,7 +1413,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
           </div>
           <div class="onb-feature">
             <div class="onb-feature-icon" style="background:var(--laranja)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
-            <div class="onb-feature-info"><h4>Próximo passo</h4><p>A equipe Nastaclin entra em contato em até 24h para ativar as automações completas do WhatsApp.</p></div>
+            <div class="onb-feature-info"><h4>Próximo passo: conecte seu WhatsApp</h4><p>Em Configurações → WhatsApp &amp; Chatbot, clique em "Conectar WhatsApp" e escaneie o QR Code com o celular da clínica — igual ao WhatsApp Web. Leva 1 minuto e o robô já começa a atender.</p></div>
           </div>
         </div>
       </div>
@@ -1907,7 +1917,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
     <!-- CONFIGURAÇÕES -->
     <section id="sec-configuracoes" class="sec">
       <div class="topbar"><div class="topbar-titulo"><h1>Configurações</h1><p>Gerencie sua clínica, mensagens e agendamento online</p></div></div>
-      <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--cinza-claro);padding-bottom:0;overflow-x:auto">
+      <div class="cfg-tabs" style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--cinza-claro);padding-bottom:0;overflow-x:auto">
         <div class="cfg-tab ativa" data-cfg="mensagens" onclick="cfgTab('mensagens',this)">Mensagens</div>
         <div class="cfg-tab" data-cfg="online" onclick="cfgTab('online',this)">Agendamento online</div>
         <div class="cfg-tab" data-cfg="whatsapp" onclick="cfgTab('whatsapp',this)">WhatsApp & Chatbot</div>
@@ -3154,7 +3164,7 @@ const FORMA_LABEL = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito',
 function nomeCompetencia(comp) { const p = String(comp).split('-'); return `${MESES[parseInt(p[1],10)-1]} ${p[0]}`; }
 const CORES = ['av-1','av-2','av-3','av-4','av-5','av-6'];
 const TZ = 'America/Sao_Paulo';
-const POLITICA_VERSAO = '1.0 (2026-07-03)'; // versão dos Termos/Política registrada no consentimento
+const POLITICA_VERSAO = '1.1 (2026-10-24)'; // versão dos Termos/Política registrada no consentimento (1.1: cláusula do WhatsApp não oficial nos Termos)
 const { createClient } = supabase;
 let db = createClient(SUPA_URL, SUPA_KEY);  // 'let': o modo demonstração troca por um cliente falso
 
@@ -5936,6 +5946,9 @@ async function abrirFicha(pacienteId) {
   fichaTab('dados', document.querySelector('.ficha-tab'));
   document.getElementById('ficha-overlay').classList.add('aberto');
   document.getElementById('ficha-painel').classList.add('aberto');
+  const barraAbas = document.querySelector('.ficha-tabs');
+  if (barraAbas) barraAbas.scrollLeft = 0;
+  setTimeout(abasFichaAtualizar, 350); // depois da animação de abertura do painel
 
   carregarConsultasFicha(pacienteId);
   carregarEvolucoes(pacienteId);
@@ -5960,13 +5973,33 @@ function fecharFicha() {
   pacienteAtual = null;
 }
 
+// Esmaecido nas bordas da barra de abas da ficha quando há abas escondidas (celular)
+function abasFichaAtualizar() {
+  const t = document.querySelector('.ficha-tabs');
+  if (!t) return;
+  const max = t.scrollWidth - t.clientWidth;
+  t.classList.toggle('mais-esq', max > 4 && t.scrollLeft > 4);
+  t.classList.toggle('mais-dir', max > 4 && t.scrollLeft < max - 4);
+}
+document.querySelector('.ficha-tabs')?.addEventListener('scroll', abasFichaAtualizar, { passive: true });
+window.addEventListener('resize', abasFichaAtualizar);
+
 function fichaTab(tab, el) {
   ['dados','consultas','pacotes','evolucao','avaliacoes','exames','documentos','anamnese'].forEach(t => {
     const e = document.getElementById(`ficha-tab-${t}`);
     if (e) e.style.display = t === tab ? 'block' : 'none';
   });
   document.querySelectorAll('.ficha-tab').forEach(t => t.classList.remove('ativa'));
-  if (el) el.classList.add('ativa');
+  if (el) {
+    el.classList.add('ativa');
+    // No celular (barra deslizante): traz a aba escolhida para o meio
+    const barra = el.parentElement, r = el.getBoundingClientRect(), rb = barra.getBoundingClientRect();
+    if (barra.scrollWidth > barra.clientWidth) {
+      const alvo = Math.max(0, Math.min(barra.scrollWidth - barra.clientWidth, barra.scrollLeft + (r.left - rb.left) - (rb.width - r.width) / 2));
+      barra.scrollTo({ left: alvo, behavior: 'smooth' });
+      setTimeout(() => { if (Math.abs(barra.scrollLeft - alvo) > 2) barra.scrollLeft = alvo; abasFichaAtualizar(); }, 400);
+    }
+  }
   if (tab === 'pacotes' && pacienteAtual) carregarPacotesFicha(pacienteAtual.id);
   if (tab === 'avaliacoes' && pacienteAtual) carregarAvaliacoes(pacienteAtual.id);
   if (tab === 'exames' && pacienteAtual) carregarExames(pacienteAtual.id);
