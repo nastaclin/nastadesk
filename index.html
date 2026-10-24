@@ -3166,7 +3166,7 @@ const FORMA_LABEL = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito',
 function nomeCompetencia(comp) { const p = String(comp).split('-'); return `${MESES[parseInt(p[1],10)-1]} ${p[0]}`; }
 const CORES = ['av-1','av-2','av-3','av-4','av-5','av-6'];
 const TZ = 'America/Sao_Paulo';
-const POLITICA_VERSAO = '1.2 (2026-10-24)'; // versão dos Termos/Política registrada no consentimento (1.1: WhatsApp não oficial; 1.2: cancelamento no app + reembolso em 7 dias)
+const POLITICA_VERSAO = '1.3 (2026-10-24)'; // versão dos Termos/Política registrada no consentimento (1.1: WhatsApp não oficial; 1.2: cancelamento no app + reembolso em 7 dias; 1.3: Nastaclin identificada com CNPJ)
 const { createClient } = supabase;
 let db = createClient(SUPA_URL, SUPA_KEY);  // 'let': o modo demonstração troca por um cliente falso
 
