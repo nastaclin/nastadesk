@@ -641,6 +641,27 @@ Acima do teto + contadores de "só menu" e limite diário), **formulário dos li
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-10-25 (5)** — **CSP valendo em produção + bateria de testes na conta real do Eduardo (ClinicaTeste).** *(Eduardo.)*
+  **CSP:** a branch `csp-valendo` entrou na main no merge `c4b7d80`, que só mexe no `vercel.json`. O `nastadesk.com.br` agora manda o `Content-Security-Policy` valendo, com a mesma regra que estava em só-relatório.
+  **Teste logado com o dono, no navegador do Claude e com o CSP valendo:** nenhum bloqueio e nenhum erro no console em todos estes pontos:
+  - as 11 telas;
+  - a ficha do paciente (abas Evolução e Docs);
+  - a geração do QR do WhatsApp (imagem `data:`; ninguém escaneou, a instância `nasta_141ad5e2` segue "conectando");
+  - o link da teleconsulta (abre `meet.jit.si` em nova aba);
+  - o `/agendar/clinicateste-2` com o hCaptcha carregando.
+  **DPA:** o Eduardo aceitou pelo modal obrigatório (registro em `consentimentos`, 2026-10-25 22:39 UTC).
+  **Profissional:** simulado pelo JWT, numa transação desfeita, com o membro "Cortes", cujo `user_id` não existe mais em `auth.users` (o login foi apagado). Ele vê 2 de 9 pacientes e só as consultas dele, não altera nem exclui paciente de outro e vê 0 mensalidades.
+  **Reposição:** 8/8 numa transação desfeita, com o dono e o profissional pelo JWT:
+  - aviso com 24h gera crédito;
+  - repetir é recusado;
+  - aviso com 2h (regra de 3h) fica sem crédito;
+  - modalidade fora da lista fica sem crédito;
+  - reposição de aula paga sai a R$ 0, com etiqueta;
+  - cancelar a reposição devolve o crédito;
+  - o alerta é criado;
+  - o profissional não registra falta nem vê créditos.
+  Sem resíduo no banco. A reposição continua **desligada** na ClinicaTeste (nenhuma linha em `reposicao_config`).
+
 - **2026-10-25 (4)** — **Teste grátis com a cota de IA do Profissional, aviso de cadastro repetido, DPA obrigatório; selos no site; CSP pronto para valer.** *(Eduardo.)*
   **Site institucional (publicado com o OK do Eduardo):** o fonte agora fica no Drive, em `Claude/NastaClin/Site institucional/` (`index.html` + `.vercel/project.json`; `.vercelignore` tira os `.bak`). Para republicar, o Eduardo roda `npx vercel@latest deploy --prod --yes` nessa pasta, logado na CLI dele. Mudanças: o botão foi para `nastadesk.com.br`, os travessões "—" saíram do texto e entraram os selos "Prontuário conforme a Resolução COFFITO 414" e "Dados tratados conforme a LGPD" na seção do NastaDesk.
   **Branch `teste-gratis-ia-e-cadastro`, já na main (merge `81eca16`), com a migration aplicada em produção em 2026-10-25, com o OK do Eduardo.** Antes de aplicar, os 10 testes rodaram de novo no banco real, numa transação desfeita (10/10). Depois de aplicada, a config `plano_teste_gratis` ficou `profissional`, as permissões ficaram só `postgres` e `service_role`, e o advisor não trouxe nada novo.
