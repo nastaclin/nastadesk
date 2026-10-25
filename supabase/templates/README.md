@@ -11,7 +11,7 @@ Os e-mails automáticos de conta (confirmação de cadastro e recuperação de s
 Cole o arquivo **inteiro** no campo *Message body* e salve. As variáveis `{{ .ConfirmationURL }}`
 e `{{ .Email }}` são preenchidas pelo Supabase — **não troque nem apague**.
 
-A logo vem de `https://nastadesk.vercel.app/logo.png` (público, servido pela Vercel). Se um dia
+A logo vem de `https://nastadesk.com.br/logo.png` (público, servido pela Vercel). Se um dia
 o domínio mudar, atualize o `src` nos dois arquivos.
 
 ---
@@ -86,9 +86,9 @@ teste em **Authentication → Users**.
 > Se o e-mail cair no spam, quase sempre falta o **DMARC** ou o domínio ainda não está
 > *Verified* no Resend.
 
-### Depois (opcional, não é necessário para o e-mail)
+### Domínio do app
 
-Com o domínio na mão, dá para apontar `app.nastadesk.com.br` para a Vercel no lugar de
-`nastadesk.vercel.app`. Se fizer isso, atualize **Authentication → URL Configuration**
-(*Site URL* e *Redirect URLs*) no Supabase, senão o link de confirmação volta para o
-endereço antigo.
+Desde 25/10/2026 o app responde em `https://nastadesk.com.br` (o `nastadesk.vercel.app`
+continua funcionando). O *Site URL* e os *Redirect URLs* em **Authentication → URL
+Configuration** já apontam para o domínio novo. Se o domínio mudar de novo, atualize os dois
+lá, senão o link de confirmação volta para o endereço antigo.
