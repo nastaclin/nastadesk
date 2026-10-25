@@ -1261,7 +1261,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
       <!-- Consentimento LGPD (obrigatório): aceite registrado com data/hora/versão no banco -->
       <label class="auth-consent" for="cad-consent">
         <input type="checkbox" id="cad-consent">
-        <span>Li e concordo com os <a href="/termos.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Termos de Uso</a> e com a <a href="/privacidade.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Política de Privacidade</a> do NastaDesk.</span>
+        <span>Li e concordo com os <a href="/termos.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Termos de Uso</a>, a <a href="/privacidade.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Política de Privacidade</a> e o <a href="/dpa.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">Acordo de Tratamento de Dados (DPA)</a> do NastaDesk.</span>
       </label>
       <button class="auth-btn" id="cadastro-btn" onclick="fazerCadastro()">Criar minha conta</button>
       <div class="auth-troca">Já tem conta? <a onclick="alternarForm('login')">Entrar</a></div>
@@ -3093,6 +3093,20 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
   </div>
 </div>
 
+<!-- MODAL DPA OBRIGATÓRIO (conta antiga sem aceite; não fecha clicando fora) -->
+<div class="overlay" id="modal-dpa-obrigatorio">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-titulo" style="margin-bottom:10px">Aceite do Acordo de Tratamento de Dados</div>
+    <p style="font-size:14px;color:var(--cinza-medio);margin-bottom:12px;line-height:1.6">Para continuar usando o NastaDesk, a sua clínica precisa aceitar o <strong>Acordo de Tratamento de Dados (DPA)</strong>: o contrato que define como a Nastaclin trata os dados dos seus pacientes, só em nome da clínica e seguindo as suas instruções, como pede a LGPD.</p>
+    <p style="font-size:14px;margin-bottom:20px"><a href="/dpa.html" target="_blank" rel="noopener" style="color:var(--verde);font-weight:700">Ler o DPA completo →</a></p>
+    <p style="font-size:12px;color:var(--cinza-medio);margin-bottom:18px;line-height:1.5">O aceite fica registrado com data, hora e versão.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secundario" style="flex:1" onclick="sairSemAceitarDpa()">Sair</button>
+      <button class="btn btn-primario" id="dpa-obrig-btn" style="flex:1" onclick="aceitarDpaObrigatorio()">Aceitar e continuar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CONFIRMAÇÃO -->
 <div class="overlay" id="modal-confirm" onclick="fecharModalConfirm(event)">
   <div class="modal" style="max-width:380px">
@@ -4446,26 +4460,46 @@ async function fazerCadastro() {
   if (!clinica || !nome || !email || !senha) { erro.textContent = 'Preencha todos os campos obrigatórios.'; erro.classList.add('visivel'); return; }
   const errSenha = erroSenha(senha);
   if (errSenha) { erro.textContent = errSenha; erro.classList.add('visivel'); document.getElementById('cad-senha').focus(); return; }
-  // LGPD: aceite obrigatório dos Termos + Política (registrado no banco pelo trigger de signup)
+  // LGPD: aceite obrigatório dos Termos + Política + DPA. Termos/Política são
+  // registrados pelo trigger de signup; o DPA, no primeiro login (garantirAceiteDpa).
   if (!document.getElementById('cad-consent').checked) {
-    erro.textContent = 'Para criar a conta, aceite os Termos de Uso e a Política de Privacidade.';
+    erro.textContent = 'Para criar a conta, aceite os Termos de Uso, a Política de Privacidade e o DPA.';
     erro.classList.add('visivel');
     return;
   }
   btn.disabled = true; btn.textContent = 'Criando conta...';
-  const { error } = await db.auth.signUp({
+  const { data, error } = await db.auth.signUp({
     email, password: senha,
     options: {
-      data: { nome_clinica: clinica, responsavel: nome, whatsapp: wpp, lgpd_consent_versao: POLITICA_VERSAO },
+      data: { nome_clinica: clinica, responsavel: nome, whatsapp: wpp, lgpd_consent_versao: POLITICA_VERSAO, dpa_consent_versao: POLITICA_VERSAO },
       emailRedirectTo: location.origin + '/confirmado.html'
     }
   });
   btn.disabled = false; btn.textContent = 'Criar minha conta';
   if (error) { erro.textContent = traduzirErro(error.message); erro.classList.add('visivel'); return; }
+  // E-mail já confirmado em outra conta: o Supabase não dá erro (para não revelar
+  // quem tem conta) e não manda e-mail nenhum — devolve o usuário sem "identities".
+  // Antes a pessoa caía em "Falta só confirmar" e ficava esperando um e-mail que não vinha.
+  if (data && data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    limparFormCadastro();
+    mostrarContaJaExiste(email);
+    return;
+  }
   // Sucesso: a tela inteira muda para a de "confirme seu e-mail" — antes era só uma
   // faixa verde no topo, que muita gente não reparava e ficava sem confirmar a conta.
   limparFormCadastro();
   mostrarConfirmeEmail(email);
+}
+
+function mostrarContaJaExiste(email) {
+  alternarForm('login');
+  document.getElementById('login-email').value = email;
+  document.getElementById('login-senha').value = '';
+  document.getElementById('login-sucesso').classList.remove('visivel');
+  const erro = document.getElementById('login-erro');
+  erro.textContent = 'Este e-mail já tem uma conta no NastaDesk. Entre com a sua senha ou clique em "Esqueci minha senha" para criar uma nova.';
+  erro.classList.add('visivel');
+  document.getElementById('login-senha').focus();
 }
 
 function limparFormCadastro() {
@@ -4666,7 +4700,7 @@ async function carregarDados(user) {
     if (meuPapel === 'dono' && !clinica.onboarding_completo) mostrarOnboarding(clinica);
     aplicarGatesDePlano();
     gatearPorPapel();
-    if (meuPapel === 'dono') { verificarAssinatura(); tratarRetornoPagamento(); }
+    if (meuPapel === 'dono') { verificarAssinatura(); tratarRetornoPagamento(); garantirAceiteDpa(user); }
   }
 
   await carregarSalas();
@@ -8782,6 +8816,38 @@ async function carregarStatusDpa() {
     }
   } catch (e) { box.textContent = 'Indisponível'; }
 }
+// Todo dono precisa ter o DPA aceito. Quem marcou no cadastro (metadado
+// dpa_consent_versao) tem o aceite gravado aqui, no primeiro login, sem pergunta.
+// Conta antiga, sem esse metadado: modal que só fecha aceitando (ou saindo).
+async function garantirAceiteDpa(user) {
+  if (MODO_DEMO || !clinicaId || meuPapel !== 'dono') return;
+  try {
+    const { data, error } = await db.from('consentimentos')
+      .select('id').eq('contexto', 'dpa').eq('clinica_id', clinicaId).limit(1);
+    if (error || (data && data.length)) return; // na dúvida, não trava o app
+    const versaoCadastro = user && user.user_metadata && user.user_metadata.dpa_consent_versao;
+    if (versaoCadastro) {
+      await db.rpc('registrar_aceite_dpa', { p_versao: versaoCadastro });
+      return;
+    }
+    document.getElementById('modal-dpa-obrigatorio').classList.add('aberto');
+  } catch (e) { /* falha de rede não bloqueia o uso */ }
+}
+async function aceitarDpaObrigatorio() {
+  const btn = document.getElementById('dpa-obrig-btn');
+  btn.disabled = true; btn.textContent = 'Registrando...';
+  const { data, error } = await db.rpc('registrar_aceite_dpa', { p_versao: POLITICA_VERSAO });
+  btn.disabled = false; btn.textContent = 'Aceitar e continuar';
+  if (error || !(data && data.ok)) { toast('Não foi possível registrar agora. Tente de novo.'); return; }
+  document.getElementById('modal-dpa-obrigatorio').classList.remove('aberto');
+  toast('Aceite do DPA registrado ✓');
+  carregarStatusDpa();
+}
+async function sairSemAceitarDpa() {
+  document.getElementById('modal-dpa-obrigatorio').classList.remove('aberto');
+  await fazerLogout();
+}
+
 function aceitarDpa() {
   abrirModalConfirm(
     'Registrar aceite do DPA',
