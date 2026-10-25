@@ -631,7 +631,11 @@ Acima do teto + contadores de "só menu" e limite diário), **formulário dos li
 - Rastreio de custo real da IA (`ia_uso` + registro no webhook + card no painel)
   **deployado e ativo** desde 2026-06-29.
 - **Trava de IA** (cota por plano + limite diário + aba no painel): ver Histórico
-  2026-10-19 para o estado do deploy.
+  2026-10-19 para o estado do deploy. Desde 2026-10-25, o **teste grátis** (cortesia
+  com data, sem assinatura) usa a cota do plano em `ia_limites.plano_teste_gratis`
+  (`profissional`) via `ia__plano_efetivo`, sem mudar `clinicas.plano`.
+- **DPA:** obrigatório para o dono desde 2026-10-25. O aceite vem do cadastro ou de um
+  modal no login, que só fecha com "Aceitar" ou "Sair" (`garantirAceiteDpa`).
 
 ## 9. Histórico de mudanças
 
@@ -639,7 +643,7 @@ Acima do teto + contadores de "só menu" e limite diário), **formulário dos li
 
 - **2026-10-25 (4)** — **Teste grátis com a cota de IA do Profissional, aviso de cadastro repetido, DPA obrigatório; selos no site; CSP pronto para valer.** *(Eduardo.)*
   **Site institucional (publicado com o OK do Eduardo):** o fonte agora fica no Drive, em `Claude/NastaClin/Site institucional/` (`index.html` + `.vercel/project.json`; `.vercelignore` tira os `.bak`). Para republicar, o Eduardo roda `npx vercel@latest deploy --prod --yes` nessa pasta, logado na CLI dele. Mudanças: o botão foi para `nastadesk.com.br`, os travessões "—" saíram do texto e entraram os selos "Prontuário conforme a Resolução COFFITO 414" e "Dados tratados conforme a LGPD" na seção do NastaDesk.
-  **Branch `teste-gratis-ia-e-cadastro`, que NÃO está na main, com a migration NÃO aplicada.**
+  **Branch `teste-gratis-ia-e-cadastro`, já na main (merge `81eca16`), com a migration aplicada em produção em 2026-10-25, com o OK do Eduardo.** Antes de aplicar, os 10 testes rodaram de novo no banco real, numa transação desfeita (10/10). Depois de aplicada, a config `plano_teste_gratis` ficou `profissional`, as permissões ficaram só `postgres` e `service_role`, e o advisor não trouxe nada novo.
   - (a) A migration `20261025220000_ia_teste_gratis_profissional.sql` cria `ia__plano_efetivo(clinica)`. Ela vale para a clínica com cortesia com data e sem assinatura `ativa`/`em_atraso`: nesse caso, a trava e os avisos de 80%/100% usam o plano de `admin_config.ia_limites.plano_teste_gratis` (padrão `profissional`), com texto próprio do teste grátis. O `clinicas.plano` continua `premium`. Para desligar, o valor fica `''`. Testada 10/10 numa transação desfeita.
   - (b) Cadastro com e-mail já confirmado: o `signUp` não dá erro e volta `identities: []`. Agora o app leva para "Entrar" com o e-mail preenchido e um aviso, em vez de dizer "falta só confirmar".
   - (c) DPA no cadastro: a caixa do cadastro passou a citar o DPA, e a versão vai em `dpa_consent_versao` nos metadados. No primeiro login do dono, `garantirAceiteDpa` grava o aceite com `registrar_aceite_dpa`. Conta antiga sem aceite vê um modal obrigatório ("Sair" ou "Aceitar e continuar"). Até aqui havia **zero** aceites de DPA no banco, porque o botão era opcional.
