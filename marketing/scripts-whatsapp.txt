@@ -11,7 +11,7 @@ COMO USAR
      [NOME]        = nome da pessoa ou da clinica
      [DIAS]        = duracao da cortesia (sugestao: 30 dias)
      [horario]     = horario sugerido pra demo
-  Link do sistema: nastadesk.vercel.app
+  Link do sistema: nastadesk.com.br
   WhatsApp de contato: +55 21 98407-2359
 
 DICAS RAPIDAS
@@ -100,7 +100,7 @@ Prontinho, [NOME]! Sua clinica ja esta configurada e o acesso
 liberado por [DIAS] dias, sem custo nenhum. 🙌
 
 Pode comecar a usar hoje:
-nastadesk.vercel.app
+nastadesk.com.br
 
 Qualquer duvida me chama aqui que eu te ajudo na hora. Combinado:
 ao final voce me conta com sinceridade o que achou, beleza?
@@ -238,5 +238,5 @@ crescer mais redonda, e o agendamento online + WhatsApp ajudam
 justamente a trazer mais paciente. Quer ver como ficaria?
 
 ============================================================
-   NastaDesk - nastadesk.vercel.app - +55 21 98407-2359
+   NastaDesk - nastadesk.com.br - +55 21 98407-2359
 ============================================================

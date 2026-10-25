@@ -1,7 +1,7 @@
 # NastaDesk
 
 Painel web de gestão para clínicas de fisioterapia.
-by [Nastaclin](https://nastaclin.vercel.app)
+by [Nastaclin](https://nastaclin.com.br)
 
 ## Funcionalidades
 

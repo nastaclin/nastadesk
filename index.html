@@ -183,6 +183,18 @@ input, select, textarea { font-family: 'DM Sans', sans-serif; }
 .tele-badge { display: inline-flex; align-items: center; gap: 3px; background: #EAF2FF; color: #2563EB; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
 .fixo-badge { display: inline-flex; align-items: center; gap: 3px; background: #E9F7EF; color: #0F7A4F; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
 .exp-badge { display: inline-flex; align-items: center; gap: 3px; background: #FFF4E0; color: #B4690E; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.repo-badge { display: inline-flex; align-items: center; gap: 3px; background: #EEF0FF; color: #4B4FC9; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.repo-resumo { background: #F5F7FA; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; color: var(--cinza-escuro); margin: 4px 0 16px; }
+.repo-cred { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--cinza-claro); font-size: 13px; }
+.repo-cred:last-child { border-bottom: none; }
+.repo-cred-info { flex: 1; min-width: 0; line-height: 1.45; }
+.repo-cred-sub { font-size: 11.5px; color: var(--cinza-medio); }
+.repo-cred .btn { padding: 6px 11px; font-size: 12.5px; }
+.repo-aviso { border-radius: 10px; padding: 11px 13px; font-size: 13px; line-height: 1.5; margin: 4px 0 12px; }
+.repo-aviso.ok { background: #E9F7EF; color: #0F5E3D; }
+.repo-aviso.nao { background: #FFF4E0; color: #8A4B06; }
+.config-campo label.repo-opcao { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; font-weight: 400; color: var(--cinza-escuro); text-transform: none; letter-spacing: 0; cursor: pointer; margin: 6px 0 8px; }
+.config-campo .repo-opcao input { width: auto; padding: 0; margin-top: 2px; accent-color: var(--verde); flex: 0 0 auto; }
 .dia-chip { border: 1.5px solid var(--cinza-claro); background: white; color: var(--cinza-medio); font-size: 12.5px; font-weight: 700; padding: 6px 11px; border-radius: 20px; cursor: pointer; transition: all .12s; }
 .dia-chip.ativo { border-color: var(--verde); background: var(--verde); color: white; }
 .espera-item { background: white; border: 1px solid var(--cinza-claro); border-radius: var(--raio-p); padding: 11px 13px; margin-bottom: 8px; }
@@ -1927,6 +1939,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
         <div class="cfg-tab" data-cfg="agenda" onclick="cfgTab('agenda',this)">Agenda</div>
         <div class="cfg-tab" data-cfg="salas" onclick="cfgTab('salas',this)">Salas</div>
         <div class="cfg-tab" data-cfg="modalidades" onclick="cfgTab('modalidades',this)">Modalidades</div>
+        <div class="cfg-tab" data-cfg="reposicao" onclick="cfgTab('reposicao',this)">Reposição de aulas</div>
         <div class="cfg-tab" data-cfg="profissionais" onclick="cfgTab('profissionais',this)">Profissionais</div>
         <div class="cfg-tab" data-cfg="documentos" onclick="cfgTab('documentos',this)">Documentos</div>
       </div>
@@ -2048,6 +2061,47 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
             <button class="btn btn-primario" onclick="adicionarModalidade()">Adicionar</button>
           </div>
           <div id="modalidades-lista"></div>
+        </div>
+      </div>
+
+      <!-- ABA REPOSIÇÃO DE AULAS -->
+      <div id="cfg-tab-reposicao" style="display:none;max-width:580px">
+        <div class="card" style="padding:28px;margin-bottom:16px">
+          <div class="card-titulo" style="margin-bottom:6px">Reposição de aulas</div>
+          <div class="card-sub" style="margin-bottom:8px">Quando o aluno avisa que vai faltar com antecedência, ele ganha um crédito para repor a aula em outro dia. Você define as regras da sua clínica.</div>
+          <div id="repo-indisponivel" style="display:none;font-size:13px;color:var(--cinza-medio);padding:6px 0">Recurso de reposição ainda não ativado no banco de dados.</div>
+          <div id="repo-form">
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>Reposição com crédito ativa</h4><p>Desligada, faltas avisadas são só canceladas, sem gerar crédito.</p></div>
+              <label class="switch"><input type="checkbox" id="repo-ativo" onchange="repoAtualizarResumo()"><span class="switch-slider"></span></label>
+            </div>
+            <div class="modal-grid" style="margin-top:16px">
+              <div class="config-campo"><label>Aviso mínimo (horas antes da aula)</label><input type="number" id="repo-antecedencia" min="0" max="168" step="1" placeholder="3" oninput="repoAtualizarResumo()"></div>
+              <div class="config-campo"><label>Validade do crédito (dias)</label><input type="number" id="repo-validade" min="1" max="365" step="1" placeholder="30" oninput="repoAtualizarResumo()"></div>
+            </div>
+            <div class="config-campo"><label>Quem marca a reposição</label>
+              <label class="repo-opcao">
+                <input type="radio" name="repo-quem" value="recepcao" checked onchange="repoAtualizarResumo()">
+                <span><b>Só a recepção</b><br><span style="font-size:11.5px;color:var(--cinza-medio)">O aluno pede e a recepção escolhe o horário no NastaDesk.</span></span>
+              </label>
+              <label class="repo-opcao">
+                <input type="radio" name="repo-quem" value="aluno" onchange="repoAtualizarResumo()">
+                <span><b>Recepção e o próprio aluno</b><br><span style="font-size:11.5px;color:var(--cinza-medio)">O aluno também marca sozinho pelo seu link de agendamento online, com CPF e WhatsApp.</span></span>
+              </label>
+            </div>
+            <div class="config-campo" id="repo-vagas-wrap" style="display:none"><label>Alunos por horário (vagas da turma)</label><input type="number" id="repo-vagas" min="1" max="50" step="1" placeholder="1" oninput="repoAtualizarResumo()"><div class="cfg-vars">O aluno só consegue marcar em horários que ainda tenham vaga.</div></div>
+            <div class="config-campo"><label>Vale para quais modalidades</label>
+              <div id="repo-modalidades" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:4px"></div>
+            </div>
+            <div class="repo-resumo" id="repo-resumo"></div>
+            <button class="btn btn-primario" id="repo-salvar-btn" onclick="salvarReposicaoConfig()">Salvar regras</button>
+            <div id="repo-so-dono" style="display:none;font-size:12.5px;color:var(--cinza-medio);margin-top:10px">Só o dono da clínica altera estas regras.</div>
+          </div>
+        </div>
+        <div class="card" style="padding:28px" id="repo-creditos-card">
+          <div class="card-titulo" style="margin-bottom:6px">Créditos em aberto</div>
+          <div class="card-sub" style="margin-bottom:12px">Alunos com aula para repor. Créditos vencidos ficam no histórico do aluno.</div>
+          <div id="repo-creditos-lista"><div style="font-size:13px;color:var(--cinza-medio)">Nenhum crédito em aberto.</div></div>
         </div>
       </div>
 
@@ -2399,6 +2453,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
 
     <!-- TAB: CONSULTAS -->
     <div id="ficha-tab-consultas" style="display:none">
+      <div id="ficha-repo-creditos"></div>
       <div id="ficha-lista-consultas"><div class="loading"><div class="loading-spinner"></div></div></div>
     </div>
 
@@ -2947,6 +3002,44 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
   </div>
 </div>
 
+<!-- MODAL ALUNO AVISOU A FALTA (reposição com crédito) -->
+<div class="overlay" id="modal-falta" onclick="if(event.target===this)fecharModalFalta()">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><div><div class="modal-titulo">🔄 Aluno avisou a falta</div><div class="modal-sub" id="falta-sub">—</div></div><button class="modal-fechar" onclick="fecharModalFalta()">×</button></div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Avisou em (dia)</label><input type="date" id="falta-data" onchange="faltaPrever()"></div>
+      <div class="config-campo"><label>Às (hora)</label><input type="time" id="falta-hora" onchange="faltaPrever()"></div>
+    </div>
+    <div id="falta-previa" class="repo-aviso ok"></div>
+    <div class="config-campo"><label>Observação (opcional)</label><input type="text" id="falta-obs" placeholder="Ex: avisou pelo WhatsApp"></div>
+    <div class="modal-acoes" style="flex-wrap:wrap">
+      <button class="btn btn-secundario" onclick="fecharModalFalta()">Voltar</button>
+      <button class="btn btn-secundario" id="falta-btn-excecao" style="display:none" onclick="confirmarFalta(true)">Dar crédito mesmo assim</button>
+      <button class="btn btn-primario" id="falta-btn-ok" onclick="confirmarFalta(false)">Registrar falta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGENDAR REPOSIÇÃO (usa um crédito) -->
+<div class="overlay" id="modal-repo-agendar" onclick="if(event.target===this)fecharModalRepoAgendar()">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><div><div class="modal-titulo">Agendar reposição</div><div class="modal-sub" id="ra-sub">—</div></div><button class="modal-fechar" onclick="fecharModalRepoAgendar()">×</button></div>
+    <div class="modal-grid">
+      <div class="config-campo"><label>Data</label><input type="date" id="ra-data"></div>
+      <div class="config-campo"><label>Horário</label><input type="time" id="ra-hora"></div>
+    </div>
+    <div class="modal-grid">
+      <div class="config-campo" id="ra-prof-wrap"><label>Profissional</label><select id="ra-prof"></select></div>
+      <div class="config-campo" id="ra-sala-wrap"><label>Sala</label><select id="ra-sala"></select></div>
+    </div>
+    <div id="ra-info" style="font-size:12.5px;color:var(--cinza-medio);line-height:1.5;margin-bottom:6px"></div>
+    <div class="modal-acoes">
+      <button class="btn btn-secundario" onclick="fecharModalRepoAgendar()">Cancelar</button>
+      <button class="btn btn-primario" onclick="confirmarRepoAgendar()">Agendar reposição</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOVO PACOTE -->
 <div class="overlay" id="modal-pacote" onclick="if(event.target===this)fecharModalPacote()">
   <div class="modal">
@@ -3020,6 +3113,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid v
     <div style="display:flex;flex-direction:column;gap:9px">
       <button class="btn btn-secundario" onclick="caVerFicha()">👤 Ver ficha do paciente</button>
       <button class="btn btn-secundario" onclick="caRemarcar()">📅 Remarcar consulta</button>
+      <button class="btn btn-secundario" id="ca-falta-btn" style="display:none" onclick="caFalta()">🔄 Aluno avisou a falta</button>
       <button class="btn btn-secundario" onclick="caDocumento('declaracao')">📄 Declaração de comparecimento</button>
       <button class="btn btn-secundario" onclick="caDocumento('atestado')">🩺 Atestado</button>
       <button class="btn btn-secundario" style="color:var(--vermelho)" onclick="caExcluir()">🗑 Excluir consulta</button>
@@ -3166,7 +3260,7 @@ const FORMA_LABEL = { dinheiro:'Dinheiro', pix:'Pix', cartao_credito:'Crédito',
 function nomeCompetencia(comp) { const p = String(comp).split('-'); return `${MESES[parseInt(p[1],10)-1]} ${p[0]}`; }
 const CORES = ['av-1','av-2','av-3','av-4','av-5','av-6'];
 const TZ = 'America/Sao_Paulo';
-const POLITICA_VERSAO = '1.2 (2026-10-24)'; // versão dos Termos/Política registrada no consentimento (1.1: WhatsApp não oficial; 1.2: cancelamento no app + reembolso em 7 dias)
+const POLITICA_VERSAO = '1.3 (2026-10-24)'; // versão dos Termos/Política registrada no consentimento (1.1: WhatsApp não oficial; 1.2: cancelamento no app + reembolso em 7 dias; 1.3: Nastaclin identificada com CNPJ)
 const { createClient } = supabase;
 let db = createClient(SUPA_URL, SUPA_KEY);  // 'let': o modo demonstração troca por um cliente falso
 
@@ -3301,6 +3395,7 @@ async function onbConcluir() {
   if (clinicaAtual && clinicaAtual.ativo === true) {
     await carregarSalas();
     await carregarModalidades();
+    await carregarReposicao();
     await carregarProfissionais();
     await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
     atualizarBadgeLembretes();
@@ -3395,6 +3490,7 @@ const DEMO_REL = {
   evolucoes:       { pacientes: ['paciente_id', 'pacientes'] },
   clinica_membros: { clinicas: ['clinica_id', 'clinicas'] },
   nps_respostas:   { pacientes: ['paciente_id', 'pacientes'] },
+  reposicao_creditos: { pacientes: ['paciente_id', 'pacientes'] },
 };
 
 function demoBanco() {
@@ -3712,6 +3808,36 @@ function demoSemente() {
     }
   }
 
+  // --- Reposição de aulas (Pilates): regras + créditos de exemplo ---
+  // Helena tem 1 crédito em aberto; Juliana já usou o dela (reposição marcada);
+  // o de Vinícius venceu sem ser usado.
+  const ddmm = (dias) => dia(dias).slice(8, 10) + '/' + dia(dias).slice(5, 7);
+  const reposicao_config = [{ clinica_id: CLI, ativo: true, antecedencia_horas: 3, validade_dias: 30,
+    quem_remarca: 'recepcao', vagas_por_horario: 3, modalidades: [id('mod-pilates')], atualizado_em: dh(-20, 9) }];
+  const reposicao_creditos = [];
+  const creditoRepo = (pac, prof, diasAula, hora, extra) => {
+    const origem = demoUid();
+    novaConsulta({ id: origem, paciente_id: id(pac), profissional_id: id(prof), modalidade_id: id('mod-pilates'),
+      sala_id: id('sala-3'), data_hora: dh(diasAula, hora), status: 'cancelado', valor: 95,
+      pagamento_status: 'pago', forma_pagamento: 'pix', pago_em: dh(diasAula - 2, 10) });
+    const cr = Object.assign({ id: demoUid(), clinica_id: CLI, paciente_id: id(pac), consulta_origem_id: origem,
+      data_aula_origem: dh(diasAula, hora), avisado_em: dh(diasAula - 1, 18), antecedencia_horas: 24 - 18 + hora,
+      excecao: false, expira_em: dia(diasAula + 30) + 'T23:59:59-03:00', status: 'disponivel',
+      modalidade_id: id('mod-pilates'), profissional_id: id(prof), sala_id: id('sala-3'),
+      valor_origem: 95, pagamento_origem: 'pago', consulta_reposicao_id: null, reposicoes_anteriores: [],
+      usado_em: null, usado_por: null, observacao: 'Avisou pelo WhatsApp', criado_por: 'demo-user-0001',
+      criado_em: dh(diasAula - 1, 18) }, extra || {});
+    reposicao_creditos.push(cr);
+    return cr;
+  };
+  creditoRepo('pac-1', 'prof-ana', -2, 7);
+  const crJuliana = creditoRepo('pac-7', 'prof-marina', -6, 10, { status: 'usado', usado_em: dh(-5, 11), usado_por: 'recepcao' });
+  crJuliana.consulta_reposicao_id = demoUid();
+  novaConsulta({ id: crJuliana.consulta_reposicao_id, paciente_id: id('pac-7'), profissional_id: id('prof-marina'),
+    modalidade_id: id('mod-pilates'), sala_id: id('sala-3'), data_hora: dh(2, 18), status: 'agendado',
+    valor: 0, pagamento_status: 'isento', observacoes: '🔄 Reposição da aula de ' + ddmm(-6) + ' 10:00' });
+  creditoRepo('pac-12', 'prof-marina', -40, 16);
+
   // Estatísticas dos pacientes a partir do histórico
   pacientes.forEach(p => {
     const dele = consultas.filter(c => c.paciente_id === p.id && c.status === 'atendido');
@@ -3865,6 +3991,7 @@ function demoSemente() {
     pacientes, consultas, profissionais, modalidades, salas,
     mensalidades, pacotes, despesas, estoque_itens, estoque_movimentos,
     nps_respostas, conversas, mensagens, avaliacoes, evolucoes, lista_espera, alertas,
+    reposicao_config, reposicao_creditos,
     configuracoes: [{ id: demoUid(), clinica_id: CLI, antecedencia_lembrete_1: 24, antecedencia_lembrete_2: 1,
       bot_ativo: true, lembrete_auto: true, atualizado_em: dh(-30, 9),
       bot_faq: 'Atendemos de segunda a sábado. Estacionamento conveniado na esquina. Aceitamos Unimed e Bradesco Saúde.' }],
@@ -3962,7 +4089,7 @@ function demoRpc(nome, args) {
   if (nome === 'paciente_anonimizar' || nome === 'paciente_excluir') {
     const pid = args.p_paciente_id || args.paciente_id;
     if (nome === 'paciente_excluir') {
-      ['consultas', 'evolucoes', 'avaliacoes', 'mensalidades', 'pacotes', 'nps_respostas', 'lista_espera'].forEach(t => {
+      ['consultas', 'evolucoes', 'avaliacoes', 'mensalidades', 'pacotes', 'nps_respostas', 'lista_espera', 'reposicao_creditos'].forEach(t => {
         banco[t] = (banco[t] || []).filter(r => r.paciente_id !== pid);
       });
       banco.pacientes = (banco.pacientes || []).filter(p => p.id !== pid);
@@ -3983,6 +4110,87 @@ function demoRpc(nome, args) {
     banco.sites = [{ id: demoUid(), clinica_id: CLI, status: 'solicitado', url: null, valor_cobrado: 500,
       valor_pago: null, gratuito: false, cupom_codigo: null, origem: 'cliente',
       solicitado_em: new Date().toISOString(), criado_em: new Date().toISOString() }];
+    demoSalvar(banco);
+    return { data: { ok: true }, error: null };
+  }
+  // --- Reposição de aulas: imita as RPCs reposicao_* do banco (mesmas regras) ---
+  if (nome === 'reposicao_registrar_falta') {
+    const c = (banco.consultas || []).find(x => x.id === args.p_consulta_id);
+    const cfg = (banco.reposicao_config || []).find(r => r.clinica_id === CLI);
+    if (!banco.reposicao_creditos) banco.reposicao_creditos = [];
+    const creds = banco.reposicao_creditos;
+    if (!c) return { data: { ok: false, erro: 'Consulta não encontrada ou sem permissão.' }, error: null };
+    if (!cfg || !cfg.ativo) return { data: { ok: false, erro: 'A reposição de aulas está desligada nesta clínica (Configurações → Reposição de aulas).' }, error: null };
+    const aviso = new Date(args.p_avisado_em || Date.now());
+    if (aviso > new Date(Date.now() + 5 * 60000)) return { data: { ok: false, erro: 'A hora do aviso não pode estar no futuro.' }, error: null };
+    if (creds.some(cr => cr.consulta_origem_id === c.id)) return { data: { ok: false, erro: 'Esta aula já gerou um crédito de reposição.' }, error: null };
+    const horas = Math.round((new Date(c.data_hora) - aviso) / 36e5 * 10) / 10;
+    const noPrazo = aviso < new Date(c.data_hora) && horas >= cfg.antecedencia_horas;
+    const base = { horas, regra_horas: cfg.antecedencia_horas };
+    const cancelar = () => { c.status = 'cancelado'; };
+    const usado = creds.find(cr => cr.consulta_reposicao_id === c.id && cr.status === 'usado');
+    if (usado) {
+      cancelar();
+      if (noPrazo || args.p_forcar) {
+        usado.reposicoes_anteriores = (usado.reposicoes_anteriores || []).concat(c.id);
+        Object.assign(usado, { status: 'disponivel', consulta_reposicao_id: null, usado_em: null, usado_por: null });
+        demoSalvar(banco);
+        return { data: Object.assign({ ok: true, credito: true, devolvido: true, credito_id: usado.id, expira_em: usado.expira_em, excecao: !noPrazo }, base), error: null };
+      }
+      demoSalvar(banco);
+      return { data: Object.assign({ ok: true, credito: false, motivo: 'fora_do_prazo', era_reposicao: true }, base), error: null };
+    }
+    if (creds.some(cr => (cr.reposicoes_anteriores || []).includes(c.id))) return { data: { ok: false, erro: 'Esta aula era uma reposição e o crédito já voltou para o aluno.' }, error: null };
+    if (c.pacote_id) { cancelar(); demoSalvar(banco); return { data: Object.assign({ ok: true, credito: false, motivo: 'pacote' }, base), error: null }; }
+    const pac = (banco.pacientes || []).find(p => p.id === c.paciente_id) || {};
+    const mod = c.modalidade_id || pac.modalidade_id || null;
+    const modOk = !!mod && (cfg.modalidades || []).includes(mod);
+    if (!modOk && !args.p_forcar) { cancelar(); demoSalvar(banco); return { data: Object.assign({ ok: true, credito: false, motivo: 'modalidade' }, base), error: null }; }
+    if (!noPrazo && !args.p_forcar) { cancelar(); demoSalvar(banco); return { data: Object.assign({ ok: true, credito: false, motivo: 'fora_do_prazo' }, base), error: null }; }
+    cancelar();
+    const fim = new Date(new Date(c.data_hora).getTime() + cfg.validade_dias * 864e5);
+    const expira = dataLocalISO(fim) + 'T23:59:59-03:00';
+    const cr = { id: demoUid(), clinica_id: CLI, paciente_id: c.paciente_id, consulta_origem_id: c.id,
+      data_aula_origem: c.data_hora, avisado_em: aviso.toISOString(), antecedencia_horas: horas,
+      excecao: !noPrazo || !modOk, expira_em: expira, status: 'disponivel', modalidade_id: mod,
+      profissional_id: c.profissional_id || null, sala_id: c.sala_id || null, valor_origem: c.valor,
+      pagamento_origem: c.pagamento_status, consulta_reposicao_id: null, reposicoes_anteriores: [],
+      usado_em: null, usado_por: null, observacao: args.p_observacao || null, criado_por: 'demo-user-0001',
+      criado_em: new Date().toISOString() };
+    creds.push(cr);
+    if (!banco.alertas) banco.alertas = [];
+    banco.alertas.push({ id: demoUid(), clinica_id: CLI, tipo: 'cancelamento', lido: false, criado_em: new Date().toISOString(),
+      mensagem: '🔄 Falta avisada: ' + (pac.nome || 'aluno') + ' ganhou 1 crédito de reposição (vale até ' + expira.slice(8, 10) + '/' + expira.slice(5, 7) + ')' });
+    demoSalvar(banco);
+    return { data: Object.assign({ ok: true, credito: true, credito_id: cr.id, expira_em: expira, excecao: cr.excecao }, base), error: null };
+  }
+  if (nome === 'reposicao_agendar') {
+    const cr = (banco.reposicao_creditos || []).find(x => x.id === args.p_credito_id);
+    if (!cr) return { data: { ok: false, erro: 'Crédito não encontrado ou sem permissão.' }, error: null };
+    if (cr.status !== 'disponivel') return { data: { ok: false, erro: 'Este crédito já foi usado ou cancelado.' }, error: null };
+    const quando = new Date(args.p_data_hora), validade = new Date(cr.expira_em);
+    const fmt = (d) => d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    if (validade < new Date()) return { data: { ok: false, erro: 'Este crédito venceu em ' + fmt(validade) + '.' }, error: null };
+    if (quando <= new Date()) return { data: { ok: false, erro: 'Escolha uma data e horário futuros.' }, error: null };
+    if (quando > validade) return { data: { ok: false, erro: 'A reposição precisa ser até ' + fmt(validade) + ' (validade do crédito).' }, error: null };
+    const pago = cr.pagamento_origem === 'pago';
+    const orig = new Date(cr.data_aula_origem);
+    const nova = { id: demoUid(), clinica_id: CLI, paciente_id: cr.paciente_id, data_hora: args.p_data_hora,
+      status: 'agendado', origem: 'manual', valor: pago ? 0 : cr.valor_origem, pagamento_status: pago ? 'isento' : (cr.pagamento_origem || 'pendente'),
+      forma_pagamento: null, pago_em: null, modalidade_id: cr.modalidade_id, profissional_id: args.p_profissional_id || cr.profissional_id,
+      sala_id: args.p_sala_id || cr.sala_id, queixa: null, satisfacao: null, pacote_id: null, teleconsulta: false, serie_id: null,
+      experimental: false, criado_em: new Date().toISOString(),
+      observacoes: '🔄 Reposição da aula de ' + orig.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' }) + ' ' + orig.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) };
+    banco.consultas.push(nova);
+    Object.assign(cr, { status: 'usado', consulta_reposicao_id: nova.id, usado_em: new Date().toISOString(), usado_por: 'recepcao' });
+    demoSalvar(banco);
+    return { data: { ok: true, consulta_id: nova.id }, error: null };
+  }
+  if (nome === 'reposicao_cancelar_credito') {
+    const cr = (banco.reposicao_creditos || []).find(x => x.id === args.p_credito_id);
+    if (!cr) return { data: { ok: false, erro: 'Crédito não encontrado ou sem permissão.' }, error: null };
+    if (cr.status !== 'disponivel') return { data: { ok: false, erro: 'Só dá para anular um crédito disponível.' }, error: null };
+    Object.assign(cr, { status: 'cancelado', observacao: (cr.observacao ? cr.observacao + ' · ' : '') + 'Anulado pela clínica' + (args.p_motivo ? ': ' + args.p_motivo : '') });
     demoSalvar(banco);
     return { data: { ok: true }, error: null };
   }
@@ -4463,6 +4671,7 @@ async function carregarDados(user) {
 
   await carregarSalas();
   await carregarModalidades();
+  await carregarReposicao();
   await carregarProfissionais();
   await Promise.all([carregarConsultas(), carregarAlertas(), carregarPacientes()]);
   renderCalendario();
@@ -4716,6 +4925,284 @@ async function mudarModalidadeConsulta(id, valor) {
   recarregarSecaoAtual();
 }
 
+// ===== REPOSIÇÃO DE AULAS (crédito por falta avisada com antecedência) =====
+// Regras por clínica em reposicao_config (só o dono altera); créditos em
+// reposicao_creditos, escritos só pelas RPCs reposicao_*. Sem a migration no banco
+// o recurso fica escondido (reposicaoDisponivel = false), como nas modalidades.
+const REPO_PADRAO = { ativo: false, antecedencia_horas: 3, validade_dias: 30, quem_remarca: 'recepcao', vagas_por_horario: 1, modalidades: [] };
+let reposicaoDisponivel = false;
+let repoCfg = null;          // linha de reposicao_config (null = nunca configurado)
+let repoCreditos = [];       // créditos disponíveis (não vencidos) da clínica
+let faltaCtx = null;         // consulta do modal "aluno avisou a falta"
+let repoAgendarCtx = null;   // crédito do modal "agendar reposição"
+
+function repoAtiva() { return reposicaoDisponivel && !!(repoCfg && repoCfg.ativo); }
+function repoRegras() { return Object.assign({}, REPO_PADRAO, repoCfg || {}); }
+function repoVencido(cr) { return cr.status === 'disponivel' && new Date(cr.expira_em) < new Date(); }
+function repoDataCurta(iso) { return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: TZ }); }
+function ehReposicao(c) { return !!(c && typeof c.observacoes === 'string' && c.observacoes.startsWith('🔄 Reposição')); }
+function tagRepo(c) {
+  return ehReposicao(c) ? '<span class="repo-badge" title="Aula de reposição (usou um crédito)">🔄 reposição</span>' : '';
+}
+
+async function carregarReposicao() {
+  if (!clinicaId) return;
+  const { data, error } = await db.from('reposicao_config').select('*').eq('clinica_id', clinicaId).maybeSingle();
+  if (error) { reposicaoDisponivel = false; repoCfg = null; repoCreditos = []; renderReposicaoConfig(); return; }
+  reposicaoDisponivel = true;
+  repoCfg = data || null;
+  await carregarCreditosReposicao();
+  renderReposicaoConfig();
+}
+
+async function carregarCreditosReposicao() {
+  if (!reposicaoDisponivel || !clinicaId) { repoCreditos = []; return; }
+  const { data } = await db.from('reposicao_creditos').select('*, pacientes(nome,whatsapp)')
+    .eq('clinica_id', clinicaId).eq('status', 'disponivel').order('expira_em');
+  repoCreditos = (data || []).filter(cr => !repoVencido(cr));
+  renderCreditosReposicaoConfig();
+}
+
+function renderReposicaoConfig() {
+  const form = document.getElementById('repo-form');
+  if (!form) return;
+  document.getElementById('repo-indisponivel').style.display = reposicaoDisponivel ? 'none' : 'block';
+  form.style.display = reposicaoDisponivel ? 'block' : 'none';
+  document.getElementById('repo-creditos-card').style.display = reposicaoDisponivel ? 'block' : 'none';
+  if (!reposicaoDisponivel) return;
+  const r = repoRegras();
+  // Primeira vez: já sugere as modalidades com "pilates" no nome
+  const mods = repoCfg ? (r.modalidades || []) : modalidadesAtivas().filter(m => /pilates/i.test(m.nome)).map(m => m.id);
+  document.getElementById('repo-ativo').checked = !!r.ativo;
+  document.getElementById('repo-antecedencia').value = r.antecedencia_horas;
+  document.getElementById('repo-validade').value = r.validade_dias;
+  document.getElementById('repo-vagas').value = r.vagas_por_horario;
+  document.querySelectorAll('input[name="repo-quem"]').forEach(i => { i.checked = i.value === r.quem_remarca; });
+  const el = document.getElementById('repo-modalidades');
+  const ativas = modalidadesAtivas();
+  el.innerHTML = ativas.length
+    ? ativas.map(m => `<button type="button" class="dia-chip${mods.includes(m.id) ? ' ativo' : ''}" data-mod="${m.id}" onclick="this.classList.toggle('ativo');repoAtualizarResumo()">${esc(m.nome)}</button>`).join('')
+    : `<div style="font-size:12.5px;color:var(--cinza-medio)">Cadastre as modalidades (ex.: Pilates) na aba Modalidades para escolher aqui.</div>`;
+  const dono = meuPapel === 'dono';
+  form.querySelectorAll('input,button.dia-chip').forEach(i => { i.disabled = !dono; });
+  document.getElementById('repo-salvar-btn').style.display = dono ? '' : 'none';
+  document.getElementById('repo-so-dono').style.display = dono ? 'none' : 'block';
+  repoAtualizarResumo();
+  renderCreditosReposicaoConfig();
+}
+
+function repoLerForm() {
+  const n = (id, pad) => { const v = parseInt(document.getElementById(id).value, 10); return Number.isFinite(v) ? v : pad; };
+  return {
+    ativo: document.getElementById('repo-ativo').checked,
+    antecedencia_horas: n('repo-antecedencia', 3),
+    validade_dias: n('repo-validade', 30),
+    quem_remarca: document.querySelector('input[name="repo-quem"]:checked')?.value || 'recepcao',
+    vagas_por_horario: n('repo-vagas', 1),
+    modalidades: [...document.querySelectorAll('#repo-modalidades .dia-chip.ativo')].map(b => b.dataset.mod),
+  };
+}
+
+function repoAtualizarResumo() {
+  const f = repoLerForm();
+  document.getElementById('repo-vagas-wrap').style.display = f.quem_remarca === 'aluno' ? 'block' : 'none';
+  const nomes = f.modalidades.map(id => modalidadePorId(id)?.nome).filter(Boolean);
+  const el = document.getElementById('repo-resumo');
+  if (!f.ativo) { el.innerHTML = 'Reposição <b>desligada</b>: faltas avisadas são só canceladas, sem crédito.'; return; }
+  el.innerHTML = `Avisou com <b>${f.antecedencia_horas}h ou mais</b> de antecedência → ganha <b>1 crédito</b> que vale <b>${f.validade_dias} dias</b> a partir da data da aula.<br>`
+    + `Vale para: <b>${nomes.length ? nomes.map(esc).join(', ') : 'nenhuma modalidade escolhida'}</b>.<br>`
+    + (f.quem_remarca === 'aluno'
+      ? `A reposição é marcada pela recepção <b>ou pelo próprio aluno</b> no link de agendamento (até ${f.vagas_por_horario} aluno${f.vagas_por_horario > 1 ? 's' : ''} por horário).`
+      : 'A reposição é marcada <b>só pela recepção</b>.')
+    + '<br><span style="color:var(--cinza-medio);font-size:12px">Sessões de pacote não geram crédito: ao cancelar, a sessão já volta para o pacote.</span>';
+}
+
+async function salvarReposicaoConfig() {
+  if (!clinicaId || meuPapel !== 'dono') return;
+  const f = repoLerForm();
+  if (f.antecedencia_horas < 0 || f.antecedencia_horas > 168) { toast('Aviso mínimo: entre 0 e 168 horas'); return; }
+  if (f.validade_dias < 1 || f.validade_dias > 365) { toast('Validade: entre 1 e 365 dias'); return; }
+  if (f.vagas_por_horario < 1 || f.vagas_por_horario > 50) { toast('Vagas por horário: entre 1 e 50'); return; }
+  if (f.ativo && !f.modalidades.length) { toast('Escolha ao menos uma modalidade (ex.: Pilates)'); return; }
+  const { error } = await db.from('reposicao_config')
+    .upsert(Object.assign({ clinica_id: clinicaId, atualizado_em: new Date().toISOString() }, f), { onConflict: 'clinica_id' });
+  if (error) { toast('Erro ao salvar as regras'); return; }
+  toast('Regras de reposição salvas ✓');
+  await carregarReposicao();
+}
+
+function renderCreditosReposicaoConfig() {
+  const el = document.getElementById('repo-creditos-lista');
+  if (!el) return;
+  if (!repoCreditos.length) { el.innerHTML = '<div style="font-size:13px;color:var(--cinza-medio)">Nenhum crédito em aberto.</div>'; return; }
+  el.innerHTML = repoCreditos.map(cr => htmlCreditoRepo(cr, true)).join('');
+}
+
+function htmlCreditoRepo(cr, comNome) {
+  const venc = repoVencido(cr);
+  let sit;
+  if (cr.status === 'usado') sit = `Usado${cr.usado_por === 'aluno' ? ' (marcado pelo aluno)' : ''}${cr.usado_em ? ' em ' + repoDataCurta(cr.usado_em) : ''}`;
+  else if (cr.status === 'cancelado') sit = 'Anulado' + (cr.observacao ? ' — ' + esc(cr.observacao) : '');
+  else if (venc) sit = `Vencido em ${repoDataCurta(cr.expira_em)}`;
+  else sit = `Vale até <b>${repoDataCurta(cr.expira_em)}</b>`;
+  const podeUsar = cr.status === 'disponivel' && !venc;
+  const nome = comNome ? `<b>${esc(cr.pacientes?.nome || 'Aluno')}</b> · ` : '';
+  const mod = modalidadePorId(cr.modalidade_id);
+  return `<div class="repo-cred">
+    <div class="repo-cred-info">
+      <div>${nome}Aula de ${repoDataCurta(cr.data_aula_origem)} às ${horaSP(cr.data_aula_origem)}${cr.excecao ? ' <span class="exp-badge" style="margin-left:4px">exceção</span>' : ''}</div>
+      <div class="repo-cred-sub">${sit}${mod ? ' · ' + esc(mod.nome) : ''}</div>
+    </div>
+    ${podeUsar ? `<button class="btn btn-primario" onclick="abrirModalRepoAgendar('${cr.id}')">Agendar</button>
+    <button class="btn btn-secundario" title="Anular crédito" onclick="anularCreditoRepo('${cr.id}')">Anular</button>` : ''}
+  </div>`;
+}
+
+// --- Ficha do paciente: créditos do aluno ---
+async function carregarCreditosFicha(pacienteId) {
+  const el = document.getElementById('ficha-repo-creditos');
+  if (!el) return;
+  if (!reposicaoDisponivel) { el.innerHTML = ''; return; }
+  const { data } = await db.from('reposicao_creditos').select('*').eq('paciente_id', pacienteId).order('criado_em', { ascending: false });
+  const lista = data || [];
+  if (!lista.length) { el.innerHTML = ''; return; }
+  const abertos = lista.filter(cr => cr.status === 'disponivel' && !repoVencido(cr));
+  const outros = lista.filter(cr => !abertos.includes(cr)).slice(0, 5);
+  el.innerHTML = `<div class="card" style="padding:14px 16px;margin-bottom:14px">
+    <div style="font-weight:700;font-size:13.5px;margin-bottom:4px">🔄 Créditos de reposição ${abertos.length ? `<span class="repo-badge">${abertos.length} em aberto</span>` : ''}</div>
+    ${abertos.map(cr => htmlCreditoRepo(cr, false)).join('')}
+    ${outros.length ? `<div style="font-size:11.5px;color:var(--cinza-medio);margin-top:8px;font-weight:700">Histórico</div>${outros.map(cr => htmlCreditoRepo(cr, false)).join('')}` : ''}
+  </div>`;
+}
+
+function anularCreditoRepo(id) {
+  abrirModalConfirm('Anular crédito de reposição?', 'O aluno perde este crédito. Use quando a reposição foi combinada de outro jeito ou o crédito foi dado por engano.', 'Anular', async () => {
+    const { data, error } = await db.rpc('reposicao_cancelar_credito', { p_credito_id: id });
+    if (error || !data?.ok) { toast(data?.erro || 'Erro ao anular o crédito'); return; }
+    toast('Crédito anulado');
+    await repoRecarregarTudo();
+  });
+}
+
+async function repoRecarregarTudo() {
+  await carregarCreditosReposicao();
+  const fichaAberta = document.getElementById('ficha-painel')?.classList.contains('aberto');
+  if (pacienteAtual && fichaAberta) {
+    carregarCreditosFicha(pacienteAtual.id);
+    carregarConsultasFicha(pacienteAtual.id);
+  }
+  recarregarSecaoAtual();
+}
+
+// --- "Aluno avisou a falta" ---
+async function abrirModalFalta(consultaId) {
+  if (!repoAtiva()) { toast('Ligue a reposição em Configurações → Reposição de aulas'); return; }
+  const { data: c } = await db.from('consultas').select('*, pacientes(nome,modalidade_id)').eq('id', consultaId).maybeSingle();
+  if (!c) { toast('Consulta não encontrada'); return; }
+  if (c.status === 'atendido') { toast('Esta aula já foi marcada como atendida'); return; }
+  faltaCtx = c;
+  document.getElementById('falta-sub').textContent = `${c.pacientes?.nome || 'Aluno'} — aula de ${new Date(c.data_hora).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })} às ${horaSP(c.data_hora)}`;
+  const agora = new Date();
+  document.getElementById('falta-data').value = dataLocalISO(agora);
+  document.getElementById('falta-hora').value = horaSP(agora.toISOString());
+  document.getElementById('falta-obs').value = '';
+  faltaPrever();
+  document.getElementById('modal-falta').classList.add('aberto');
+}
+function fecharModalFalta() {
+  document.getElementById('modal-falta').classList.remove('aberto');
+  faltaCtx = null;
+}
+function faltaAvisoISO() {
+  const d = document.getElementById('falta-data').value, h = document.getElementById('falta-hora').value;
+  return d && h ? `${d}T${h}:00-03:00` : null;
+}
+// Prévia no navegador (quem decide de verdade é a RPC no banco)
+function faltaPrever() {
+  const c = faltaCtx; if (!c) return;
+  const r = repoRegras();
+  const aviso = faltaAvisoISO();
+  const el = document.getElementById('falta-previa');
+  const btnExc = document.getElementById('falta-btn-excecao');
+  const btnOk = document.getElementById('falta-btn-ok');
+  const horas = aviso ? Math.round((new Date(c.data_hora) - new Date(aviso)) / 36e5 * 10) / 10 : 0;
+  const hTxt = String(horas).replace('.', ',') + 'h';
+  const mod = c.modalidade_id || c.pacientes?.modalidade_id;
+  const ehRepo = ehReposicao(c);
+  let ok = true, msg;
+  if (c.pacote_id) { ok = false; msg = 'Sessão de pacote: a aula é cancelada e a sessão volta para o pacote (sem crédito).'; }
+  else if (!ehRepo && !(r.modalidades || []).includes(mod)) { ok = false; msg = 'Esta modalidade não está nas regras de reposição: a aula será só cancelada.'; }
+  else if (horas <= 0 || horas < r.antecedencia_horas) { ok = false; msg = `Avisou ${horas > 0 ? 'com ' + hTxt + ' de antecedência' : 'depois do horário da aula'} — a regra pede ${r.antecedencia_horas}h. A aula será cancelada sem crédito.`; }
+  else msg = ehRepo
+    ? `Avisou com ${hTxt} de antecedência: esta já era uma reposição, então o crédito <b>volta para o aluno</b>.`
+    : `Avisou com ${hTxt} de antecedência: a aula é cancelada e o aluno ganha <b>1 crédito de reposição</b> (vale ${r.validade_dias} dias).`;
+  el.className = 'repo-aviso ' + (ok ? 'ok' : 'nao');
+  el.innerHTML = msg;
+  btnExc.style.display = (!ok && !c.pacote_id) ? '' : 'none';
+  btnOk.textContent = ok ? (ehRepo ? 'Cancelar e devolver crédito' : 'Cancelar e gerar crédito') : 'Cancelar sem crédito';
+}
+async function confirmarFalta(forcar) {
+  const c = faltaCtx; if (!c) return;
+  const aviso = faltaAvisoISO();
+  if (!aviso) { toast('Informe quando o aluno avisou'); return; }
+  const { data, error } = await db.rpc('reposicao_registrar_falta', {
+    p_consulta_id: c.id, p_avisado_em: aviso, p_forcar: !!forcar,
+    p_observacao: document.getElementById('falta-obs').value.trim() || null,
+  });
+  if (error || !data?.ok) { toast(data?.erro || 'Erro ao registrar a falta'); return; }
+  fecharModalFalta();
+  if (data.credito) toast(data.devolvido ? 'Aula cancelada — o crédito voltou para o aluno ✓' : `Crédito de reposição gerado ✓ (vale até ${repoDataCurta(data.expira_em)})`);
+  else toast(data.motivo === 'pacote' ? 'Aula cancelada — a sessão voltou para o pacote' : 'Aula cancelada sem crédito');
+  await repoRecarregarTudo();
+}
+function caFalta() {
+  const c = consultaAcoesCtx;
+  fecharModalConsultaAcoes();
+  if (c) abrirModalFalta(c.id);
+}
+
+// --- Agendar a reposição (usa um crédito) ---
+async function abrirModalRepoAgendar(creditoId) {
+  let cr = repoCreditos.find(x => x.id === creditoId);
+  if (!cr) {
+    const { data } = await db.from('reposicao_creditos').select('*, pacientes(nome)').eq('id', creditoId).maybeSingle();
+    cr = data;
+  }
+  if (!cr || cr.status !== 'disponivel' || repoVencido(cr)) { toast('Este crédito não está mais disponível'); return; }
+  repoAgendarCtx = cr;
+  const nome = cr.pacientes?.nome || (pacienteAtual && pacienteAtual.id === cr.paciente_id ? pacienteAtual.nome : 'Aluno');
+  document.getElementById('ra-sub').textContent = `${nome} — repõe a aula de ${repoDataCurta(cr.data_aula_origem)}`;
+  const inpData = document.getElementById('ra-data');
+  inpData.min = dataLocalISO(new Date()); inpData.max = dataLocalISO(new Date(cr.expira_em)); inpData.value = '';
+  document.getElementById('ra-hora').value = horaSP(cr.data_aula_origem);
+  const selP = document.getElementById('ra-prof'), selS = document.getElementById('ra-sala');
+  selP.innerHTML = optsProfissional(cr.profissional_id); selP.value = cr.profissional_id || '';
+  selS.innerHTML = optsSala(cr.sala_id); selS.value = cr.sala_id || '';
+  document.getElementById('ra-prof-wrap').style.display = profissionaisAtivos().length ? '' : 'none';
+  document.getElementById('ra-sala-wrap').style.display = salasAtivas().length ? '' : 'none';
+  document.getElementById('ra-info').innerHTML = `Escolha um dia até <b>${repoDataCurta(cr.expira_em)}</b> (validade do crédito). `
+    + (cr.pagamento_origem === 'pago' ? 'A aula original já foi paga: a reposição entra <b>isenta</b>.' : 'A cobrança da aula original passa para a reposição.');
+  document.getElementById('modal-repo-agendar').classList.add('aberto');
+}
+function fecharModalRepoAgendar() {
+  document.getElementById('modal-repo-agendar').classList.remove('aberto');
+  repoAgendarCtx = null;
+}
+async function confirmarRepoAgendar() {
+  const cr = repoAgendarCtx; if (!cr) return;
+  const data = document.getElementById('ra-data').value, hora = document.getElementById('ra-hora').value;
+  if (!data || !hora) { toast('Escolha a data e o horário'); return; }
+  const { data: res, error } = await db.rpc('reposicao_agendar', {
+    p_credito_id: cr.id, p_data_hora: `${data}T${hora}:00-03:00`,
+    p_profissional_id: document.getElementById('ra-prof').value || null,
+    p_sala_id: document.getElementById('ra-sala').value || null,
+  });
+  if (error || !res?.ok) { toast(res?.erro || 'Erro ao agendar a reposição'); return; }
+  fecharModalRepoAgendar();
+  toast('Reposição agendada ✓');
+  await repoRecarregarTudo();
+}
+
 // ===== PROFISSIONAIS (multi-profissional) =====
 async function carregarProfissionais() {
   if (!clinicaId) return;
@@ -4955,7 +5442,7 @@ function cardSalao(c, cor) {
       <span class="salao-card-hora">${hora}</span>
       <span class="status-pill ${ST_CLASS[c.status]||'status-agendado'}">${ST_LABEL[c.status]||esc(c.status)}</span>
     </div>
-    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}${tagNovoRec(c)}</div>
+    <div class="salao-card-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}${tagRepo(c)}${tagNovoRec(c)}</div>
     ${(tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id) || tagProfissional(c.profissional_id))?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}${tagProfissional(c.profissional_id)}</div>`:''}
     ${c.queixa?`<div class="salao-card-queixa">${esc(c.queixa)}</div>`:''}
     <div class="salao-card-acoes" onclick="event.stopPropagation()">
@@ -5013,7 +5500,7 @@ function renderConsultas(lista) {
       <span class="consulta-hora">${hora}</span>
       <div class="avatar ${CORES[i%CORES.length]}${cancelada?' cancelado':''}">${esc(iniciais)}</div>
       <div class="consulta-info">
-        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}${tagNovoRec(c)}</div>
+        <div class="consulta-nome" style="${cancelada?'color:var(--cinza-medio)':''}">${esc(nome)}${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)?` ${tagModalidade(c.modalidade_id || c.pacientes?.modalidade_id)}`:''}${tagProfissional(c.profissional_id)?` ${tagProfissional(c.profissional_id)}`:''}${c.origem==='online'?'<span class="origem-badge">online</span>':''}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}${tagRepo(c)}${tagNovoRec(c)}</div>
         <div class="consulta-queixa">${esc(c.queixa||'—')}</div>
         ${(salasDisponivel && salasAtivas().length)
           ? `<div style="margin-top:7px" onclick="event.stopPropagation()"><select class="sala-select" onchange="mudarSalaConsulta('${c.id}', this.value)">${optsSala(c.sala_id)}</select></div>`
@@ -5147,7 +5634,8 @@ function abrirMenuStatus(consultaId, btn) {
     <div class="menu-status-sep"></div>
     <div class="menu-status-item" onclick="abrirModalRemarcar('${consultaId}');this.closest('.menu-status').remove()">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Remarcar
-    </div>
+    </div>${repoAtiva() ? `
+    <div class="menu-status-item" onclick="abrirModalFalta('${consultaId}');this.closest('.menu-status').remove()">🔄 Aluno avisou a falta</div>` : ''}
     <div class="menu-status-item" style="color:var(--vermelho)" onclick="excluirConsulta('${consultaId}');this.closest('.menu-status').remove()">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>Excluir
     </div>`;
@@ -5236,9 +5724,10 @@ function abrirAcoesConsulta(consultaId) {
   const linhas = [];
   linhas.push(`Status: <b>${stLabel[c.status] || esc(c.status || '')}</b>`);
   if (c.queixa) linhas.push(esc(c.queixa));
-  const etiquetas = `${c.teleconsulta ? '<span class="tele-badge" style="margin-left:0">📹 vídeo</span> ' : ''}${tagFixo(c)}${tagExp(c)}`;
+  const etiquetas = `${c.teleconsulta ? '<span class="tele-badge" style="margin-left:0">📹 vídeo</span> ' : ''}${tagFixo(c)}${tagExp(c)}${tagRepo(c)}`;
   if (etiquetas.trim()) linhas.push(etiquetas);
   document.getElementById('ca-detalhe').innerHTML = linhas.join('<br>');
+  document.getElementById('ca-falta-btn').style.display = (repoAtiva() && c.status !== 'atendido') ? '' : 'none';
   document.getElementById('modal-consulta-acoes').classList.add('aberto');
 }
 function fecharModalConsultaAcoes() {
@@ -5803,6 +6292,11 @@ async function exportarDadosPaciente() {
       exames = arquivos.filter(f => !ehDocumento(f.name)).map(f => nomeArquivoExame(f.name));
       documentos = arquivos.filter(f => ehDocumento(f.name)).map(f => `${DOC_TIPOS[docTipoDe(f.name)].rotulo}: ${nomeArquivoDoc(f.name)}`);
     } catch (e) { /* tolerante */ }
+    let creditosRepo = [];
+    if (reposicaoDisponivel) {
+      const { data: crd } = await db.from('reposicao_creditos').select('*').eq('paciente_id', pid).order('criado_em');
+      creditosRepo = crd || [];
+    }
     const dump = {
       exportacao: {
         gerado_em: new Date().toISOString(),
@@ -5817,6 +6311,7 @@ async function exportarDadosPaciente() {
       documentos_anexados: documentos,
       pacotes: pac2.data || [],
       mensalidades: mens.data || [],
+      creditos_reposicao: creditosRepo,
       consentimentos: consent.data || [],
     };
     const nomeArq = `dados-paciente-${(pacienteAtual.nome || 'sem-nome').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')}-${new Date().toISOString().slice(0,10)}.json`;
@@ -5955,6 +6450,7 @@ async function abrirFicha(pacienteId) {
   setTimeout(abasFichaAtualizar, 350); // depois da animação de abertura do painel
 
   carregarConsultasFicha(pacienteId);
+  carregarCreditosFicha(pacienteId);
   carregarEvolucoes(pacienteId);
   logAcesso(pacienteId, 'visualizou_ficha');
   carregarAuditoriaFicha(pacienteId);
@@ -6091,7 +6587,7 @@ async function carregarConsultasFicha(pacienteId) {
     return `<div class="ficha-consulta">
       <div class="ficha-consulta-data">${data}</div>
       <div class="ficha-consulta-info">
-        <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}</div>
+        <div class="ficha-consulta-queixa">${esc(c.queixa || 'Sem descrição')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}${tagRepo(c)}</div>
         <div class="ficha-consulta-status">${hora} · <span style="color:${stColor[c.status]||'var(--cinza-medio)'}">${stLabel[c.status]||esc(c.status)}</span>${pagInfo}</div>
         ${tags?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px">${tags}</div>`:''}
       </div>
@@ -7947,7 +8443,7 @@ async function enviarLembrete(consultaId, tipo) {
 
 // ===== CONFIGURAÇÕES =====
 function cfgTab(nome, el) {
-  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades','profissionais','documentos'].forEach(t => {
+  ['mensagens','online','whatsapp','clinica','agenda','salas','modalidades','reposicao','profissionais','documentos'].forEach(t => {
     const tab = document.getElementById(`cfg-tab-${t}`);
     if (tab) tab.style.display = t===nome ? 'block' : 'none';
   });
@@ -7961,6 +8457,7 @@ function cfgTab(nome, el) {
   if (nome === 'agenda') atualizarLinkICS();
   if (nome === 'documentos') carregarModelos();
   if (nome === 'modalidades') renderModalidadesConfig();
+  if (nome === 'reposicao') renderReposicaoConfig();
   if (nome === 'profissionais') { renderProfissionaisConfig(); carregarEquipe(); }
 }
 
@@ -8567,7 +9064,7 @@ async function renderGradeSemanal() {
         html += consultasDia.map(c => `<div class="lista-agend-item" onclick="abrirAcoesConsulta('${c.id}')">
             <span class="lista-agend-hora">${horaSP(c.data_hora)}</span>
             <div class="lista-agend-info">
-              <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}</div>
+              <div class="lista-agend-nome">${esc(c.pacientes?.nome||'—')}${c.teleconsulta?'<span class="tele-badge">📹 vídeo</span>':''}${tagFixo(c)}${tagExp(c)}${tagRepo(c)}</div>
               <div class="lista-agend-queixa">${esc(c.queixa||'—')}</div>
               ${c.sala_id ? `<div class="sala-tag" style="margin-top:5px;color:${corSala(c.sala_id)};background:${corSala(c.sala_id)}1a"><span class="sala-dot"></span>${esc(nomeSala(c.sala_id))}</div>` : ''}
               ${tagProfissional(c.profissional_id)?`<div style="margin-top:5px">${tagProfissional(c.profissional_id)}</div>`:''}

@@ -186,6 +186,32 @@ A ferramenta é composta por **dois sites**, que conversam com o **mesmo backend
   Pilates, RPG…), com cor por modalidade. Vira etiqueta no paciente, na agenda do
   dia e no financeiro, e dá pra filtrar pacientes por modalidade. Gerenciada em
   Configurações → Modalidades (cada clínica já nasce com Fisioterapia + Pilates).
+- **Reposição de aulas com crédito (pilates)** *(2026-10-24 — migration `20261025015303_reposicao_aulas_creditos.sql`
+  **aplicada em produção**; no ar na `main`)* — aluno que
+  **avisa a falta com antecedência** ganha **1 crédito** para repor a aula. **Regras por clínica**
+  em Configurações → **Reposição de aulas** (só o **dono** altera; tabela `reposicao_config`):
+  liga/desliga (**nasce desligada**), **aviso mínimo** em horas (padrão 3h), **validade** em dias
+  contados da data da aula (padrão 30), **quem marca** (só recepção — padrão — ou também o aluno
+  pelo `/agendar`), **alunos por horário** (vagas da turma, só p/ o aluno marcar sozinho) e
+  **modalidades** que valem (sugere as que têm "pilates" no nome). **Uso:** no menu de status
+  da consulta e no modal de ações, **"🔄 Aluno avisou a falta"** → informa quando avisou →
+  prévia (gera crédito / fora do prazo / modalidade fora / pacote) → a RPC
+  `reposicao_registrar_falta` cancela a aula e cria o crédito (botão **"Dar crédito mesmo
+  assim"** = exceção, fica marcada). Créditos aparecem na **ficha do aluno** (aba Consultas) e
+  na lista **Créditos em aberto** da aba de config, com **Agendar** (RPC `reposicao_agendar`:
+  data até o vencimento; aula original paga → reposição **isenta R$ 0**; pendente → a cobrança
+  passa para a reposição) e **Anular**. Consulta de reposição leva a etiqueta **🔄 reposição**
+  (`observacoes` começa com "🔄 Reposição"). **Sessão de pacote não gera crédito** (cancelar já
+  devolve a sessão ao pacote). Se a reposição for cancelada/excluída, o crédito **volta**
+  (gatilho em `consultas`); se a aula original "descancelar", o crédito é anulado. Vencimento é
+  calculado (sem cron): `disponivel` com `expira_em` no passado = vencido. Tabela
+  `reposicao_creditos` só é escrita pelas RPCs (RLS: dono/recepção leem; profissional não vê).
+  **Aluno marcando sozinho** (`quem_remarca='aluno'`): o `/agendar/<slug>` mostra "Repor aula" →
+  CPF + WhatsApp (os dois têm que bater com o cadastro) → dias só até o vencimento, horários
+  escondidos só quando a turma lota → RPC pública `reposicao_publica_agendar` (usa o crédito
+  que vence primeiro; alerta "🔄 Reposição marcada pelo aluno"). RPCs públicas:
+  `reposicao_publica_info/creditos/lotados/agendar` (**sem hCaptcha** — ver follow-up no
+  histórico). Sem a migration no banco, tudo fica escondido (front tolerante).
 - **Profissionais + logins de equipe** (multi-profissional) — **recurso do plano
   Profissional+** (no Básico a aba fica escondida). Lista configurável de quem atende
   (nome, registro/CREFITO, cor), em Configurações → Profissionais: etiqueta colorida na
@@ -610,6 +636,28 @@ Acima do teto + contadores de "só menu" e limite diário), **formulário dos li
 ## 9. Histórico de mudanças
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
+
+- **2026-10-25 (3)** — **Site institucional em `nastaclin.com.br` + rodapés do app apontando para ele (com o OK do Eduardo).** *(Eduardo.)* Só front/infra.
+  Domínio comprado pelo Eduardo na GoDaddy (DNS ns13/ns14.domaincontrol.com). Projeto Vercel `nastaclin-site-institucional-27da8601…` com `nastaclin.com.br` (principal) e `www.nastaclin.com.br` (308 → principal). DNS: A `@` → `216.198.79.1` e `64.29.17.1`, CNAME `www` → `2f5ac2e2f0ace86d.vercel-dns-017.com`. O certificado não saiu sozinho; foi emitido pela API da Vercel (`cert_uULTdViQrPvBJjaeAvzOtJUz`, renovação automática). Conferido: HTTPS 200, `www` e `http` → 308.
+  App (branch `rodape-nastaclin-com-br`): rodapés de `agendar.html`, `termos.html`, `privacidade.html`, `dpa.html` e o `README.md` trocaram `nastaclin.vercel.app` por `https://nastaclin.com.br`.
+  **Pendente:** o site institucional não tem repositório (deploy direto na Vercel, HTML único) e o botão dele ainda leva para `nastadesk.vercel.app`; Eduardo troca a "Página de vendas" dos 3 produtos na Cakto para `https://nastaclin.com.br`.
+
+- **2026-10-25 (2)** — **URLs fixas `nastadesk.vercel.app` trocadas por `nastadesk.com.br` (com o OK do Eduardo).** *(Eduardo.)* Só front/infra; banco não mudou.
+  Supabase Auth → *Site URL* `https://nastadesk.com.br` e *Redirect URLs* com o domínio novo (feito pelo Eduardo; os do vercel.app continuam na lista). Os links de confirmação e de recuperação de senha usam `location.origin`, e as edge functions respondem CORS `*`, então os dois domínios funcionam.
+  **nastadesk** (branch `dominio-nastadesk-com-br`): templates de e-mail (logo, link, Termos, Privacidade) + README dos templates, `confirmado.html`, `DOMINIO` do workflow `deploy-vercel.yml` (checagem pós-deploy), `marketing/apresentacao.html`, `marketing/scripts.html`, `marketing/scripts-whatsapp.txt`. **dashboard:** mensagem do convite da demo. Cópias dos e-mails no Drive atualizadas; o Eduardo cola em Authentication → Email Templates.
+  **Ainda em `nastaclin.vercel.app`** (esperando o domínio `nastaclin.com.br` do site institucional): rodapés de `agendar.html`, `termos.html`, `privacidade.html`, `dpa.html` e o `README.md`. O `nastadesk.vercel.app` segue no ar (sem redirecionar) até tudo apontar para o domínio novo.
+
+- **2026-10-25 (1)** — **CNPJ nos documentos legais + app no domínio próprio `nastadesk.com.br`.** *(Eduardo.)* Só front e infraestrutura; banco não mudou.
+  **Documentos:** Termos **1.3**, Política **1.1**, DPA **1.1**: "Eduardo Moraes do Nascimento, pessoa física" virou **"68.110.529 EDUARDO MORAES DO NASCIMENTO, empresário individual, CNPJ 68.110.529/0001-00, com sede em Rio de Janeiro/RJ"** (preâmbulo dos Termos, seção 1 e contato da Política, seção 1 do DPA). `POLITICA_VERSAO` = `1.3 (2026-10-24)` (só fica gravada no aceite, não força novo aceite). Resolve o pendente do item 2026-10-24 (3). Rua e número não estão nos dados públicos do CNPJ; ficou só a cidade. Branch `cnpj-nos-documentos`, preview conferido pelo Eduardo antes do merge.
+  **Domínio:** projeto Vercel `nastadeskexemplo` com `nastadesk.com.br` (principal) e `www.nastadesk.com.br` (308 → principal). DNS na GoDaddy: A `@` → `216.198.79.1` e `64.29.17.1`, CNAME `www` → `15ec623e86316af2.vercel-dns-017.com`; registros do Resend intactos. Conferido: HTTPS 200 no domínio, `www` e `http` redirecionam 308.
+  **Pendente:** Supabase Auth → Site URL/Redirect URLs para o domínio novo; trocar as URLs fixas `nastadesk.vercel.app` (templates de e-mail, `confirmado.html`, `dashboard`, marketing) e só depois redirecionar o vercel.app; comprar `nastaclin.com.br` (livre no RDAP em 24/10) para o site institucional e trocar os rodapés que hoje apontam para `nastaclin.vercel.app`.
+
+- **2026-10-24 (9)** — **Reposição de aulas com crédito para pilates (regras configuráveis por clínica) — NO AR: migration APLICADA em produção e merge na `main` (com o OK do Eduardo).** *(Pedido do Eduardo.)*
+  **Banco (migration `20261025015303_reposicao_aulas_creditos.sql`, só aditivo):** tabelas `reposicao_config` (1 linha por clínica; dono SELECT/INSERT/UPDATE, recepção só SELECT) e `reposicao_creditos` (dono/recepção SELECT; INSERT/UPDATE/DELETE revogados — escrita só por RPC); funções `reposicao_pode_gerir`, `reposicao_calcular_expira`; gatilho `trg_reposicao_consulta` em `consultas` (DELETE e UPDATE OF status: reposição cancelada/excluída devolve o crédito; aula original "descancelada" anula o crédito); RPCs autenticadas `reposicao_registrar_falta`, `reposicao_agendar`, `reposicao_cancelar_credito`; RPCs públicas (anon) `reposicao_publica_info`, `reposicao_publica_creditos`, `reposicao_publica_lotados`, `reposicao_publica_agendar` (+ `reposicao_publica_aluno` interna, sem grant). Nenhuma coluna/constraint de tabela existente muda. Coluna `reposicoes_anteriores` evita crédito em dobro (reposição cancelada pelo menu e depois "avisou a falta").
+  **Teste em produção numa transação desfeita: 41/41** — fixtures de 2 clínicas e papéis simulados por JWT: regras de prazo/modalidade/pacote/exceção, crédito em dobro bloqueado, devolução pelo gatilho, isolamento entre clínicas (dono não grava config de outra), limites das regras, escrita direta na tabela bloqueada, anon sem leitura da tabela e o fluxo público. Conferido depois: **zero resíduo** (nenhuma tabela/função/gatilho/linha de teste ficou).
+  **Front:** `index.html` (aba de config, "🔄 Aluno avisou a falta" no menu de status e no modal de ações, modais de falta e de agendar reposição, créditos na ficha, etiqueta 🔄 reposição, créditos no export LGPD, semente + RPCs simuladas no `MODO_DEMO`) e `agendar.html` (fluxo "Repor aula"). **Validado no navegador em modo demonstração** (salvar regras, falta fora do prazo → oferece exceção, falta no prazo → crédito + alerta, agendar reposição → isenta, cancelar a reposição → crédito volta, ficha com histórico/vencido; zero erro de JS) e o `/agendar` com RPCs simuladas (crédito, dias até o vencimento, lotados, confirmação).
+  **Publicado (com o OK do Eduardo):** migration aplicada → os 41 testes rodados de novo contra o banco já com a migration, numa transação desfeita: **41/41, zero resíduo** → advisors sem achado novo além do padrão já aceito (RPCs públicas do `/agendar` e RPCs SECURITY DEFINER do painel; as 2 tabelas novas com RLS e policies) → merge na `main`. A função nasce **desligada** em toda clínica: só aparece quando o dono liga em Configurações → Reposição de aulas.
+  **Follow-ups:** (a) as RPCs públicas de reposição (e a `agendar_online`, já hoje) são chamáveis direto pelo anon, **sem hCaptcha** — passar por uma edge com captcha; (b) a recepção não vê Configurações, então só enxerga créditos pela ficha do aluno — avaliar um botão "🔄 Reposições" em Agendamentos; (c) a demo usa status `faltou`, que não existe no banco.
 
 - **2026-10-24 (8)** — **WhatsApp ignora grupos na Evolution + trava de IA re-testada + e-mail próprio em andamento.** *(Eduardo.)*
   **(1) `whatsapp-conexao` v11 (deployada):** no "Conectar", a instância é criada com `groupsIgnore: true` e, a cada conexão, a função chama `POST /settings/set/{instância}` com `groupsIgnore: true` (e `rejectCall/alwaysOnline/readMessages/readStatus/syncFullHistory: false`). **Por quê:** a Evolution mandava **toda mensagem de grupo** ao `whatsapp-webhook` (o código só descartava lá dentro) — cada uma é 1 chamada de Edge Function, e o Supabase Free tem **500 mil/mês**. É o equivalente no NastaDesk ao estouro do Upstash do robô do Avalia Aí (500 mil comandos/mês, painel recarregando a cada 20 s). Tolerante a falha (se a Evolution recusar, o QR segue; o webhook continua filtrando). Loga `whatsapp-conexao settings/set <instância> <status>`. ⚠️ **Falta confirmar o status 200 no log** depois do próximo "Conectar WhatsApp" (nenhuma clínica conectada hoje).

@@ -89,6 +89,8 @@ body { font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); min-heigh
 .consent-lgpd input { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--verde); flex-shrink: 0; cursor: pointer; }
 .consent-lgpd span { font-size: 13px; line-height: 1.5; color: var(--cinza-medio); }
 .consent-lgpd a { color: var(--verde); font-weight: 600; }
+.repo-convite { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 18px; font-size: 14px; line-height: 1.5; }
+.repo-convite span { color: var(--cinza-medio); font-size: 13px; }
 .rodape-legal { margin-top: 6px; }
 .rodape-legal a { color: var(--verde); text-decoration: none; font-weight: 500; }
 </style>
@@ -116,16 +118,34 @@ body { font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); min-heigh
     </div>
   </div>
 
+  <!-- REPOSIÇÃO DE AULA (só aparece se a clínica deixa o aluno remarcar) -->
+  <div class="card repo-convite oculto" id="card-repo-convite">
+    <div><b>🔄 Faltou com aviso e tem crédito de reposição?</b><br><span>Marque aqui a sua aula de reposição.</span></div>
+    <button class="btn-sec" style="margin-top:0;width:auto;padding:10px 16px" onclick="entrarModoRepo()">Repor aula</button>
+  </div>
+  <div class="card oculto" id="card-repo">
+    <div class="passo-titulo">Passo 1 de 4</div>
+    <div class="passo-sub">Seu crédito de reposição</div>
+    <div class="erro-box" id="erro-repo"></div>
+    <div id="repo-identificacao">
+      <div class="campo"><label>CPF do aluno</label><input type="text" id="repo-cpf" placeholder="000.000.000-00" inputmode="numeric" autocomplete="off" maxlength="14" oninput="mascararCPF(this)"></div>
+      <div class="campo"><label>WhatsApp cadastrado na clínica</label><input type="tel" id="repo-wpp" placeholder="Ex: 11 99999-0000" autocomplete="tel" inputmode="tel"></div>
+      <button class="btn-confirmar" id="btn-repo-buscar" onclick="buscarCreditoRepo()">Ver meu crédito</button>
+    </div>
+    <div class="resumo" id="repo-saldo"></div>
+    <button class="btn-sec" onclick="sairModoRepo()">Voltar ao agendamento normal</button>
+  </div>
+
   <!-- FLUXO DE AGENDAMENTO -->
   <div id="tela-agendar" class="oculto">
     <div class="card">
-      <div class="passo-titulo">Passo 1 de 3</div>
+      <div class="passo-titulo" id="pt-dias">Passo 1 de 3</div>
       <div class="passo-sub">Escolha o dia</div>
       <div class="dias-scroll" id="dias-lista"></div>
     </div>
 
     <div class="card oculto" id="card-horarios">
-      <div class="passo-titulo">Passo 2 de 3</div>
+      <div class="passo-titulo" id="pt-horas">Passo 2 de 3</div>
       <div class="passo-sub">Escolha o horário</div>
       <div class="slots-grid" id="slots-lista"></div>
       <div class="slots-vazio oculto" id="slots-vazio">Nenhum horário livre neste dia. 😕<br>Escolha outra data acima.</div>
@@ -151,13 +171,21 @@ body { font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); min-heigh
       <div class="hcap-wrap"><div class="h-captcha" data-sitekey="cde6c12e-9672-4db4-a0e2-02b4ef060b5a"></div></div>
       <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarAgendamento()">Confirmar agendamento</button>
     </div>
+
+    <div class="card oculto" id="card-repo-confirmar">
+      <div class="passo-titulo">Passo 4 de 4</div>
+      <div class="passo-sub">Confirme a reposição</div>
+      <div class="resumo visivel" id="resumo-repo"></div>
+      <div class="erro-box" id="erro-repo-confirmar"></div>
+      <button class="btn-confirmar" id="btn-repo-confirmar" onclick="confirmarReposicao()">Confirmar reposição</button>
+    </div>
   </div>
 
   <!-- SUCESSO -->
   <div class="card oculto" id="tela-sucesso">
     <div class="sucesso">
       <div class="sucesso-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
-      <h2>Consulta agendada!</h2>
+      <h2 id="sucesso-titulo">Consulta agendada!</h2>
       <p>Guarde os detalhes abaixo. A clínica pode entrar em contato pelo WhatsApp para confirmar.</p>
       <div class="sucesso-detalhes" id="sucesso-detalhes"></div>
       <a class="btn-sec" id="btn-calendario" target="_blank" rel="noopener">Adicionar ao calendário</a>
@@ -166,7 +194,7 @@ body { font-family: 'DM Sans', sans-serif; color: var(--cinza-escuro); min-heigh
     </div>
   </div>
 
-  <div class="rodape">Agendamento online por <a href="https://nastaclin.vercel.app" target="_blank" rel="noopener">Nastaclin</a>
+  <div class="rodape">Agendamento online por <a href="https://nastaclin.com.br" target="_blank" rel="noopener">Nastaclin</a>
     <div class="rodape-legal"><a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a> · <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a></div>
   </div>
 </div>
@@ -184,6 +212,9 @@ let slug = null;
 let clinica = null;
 let dataSelecionada = null;
 let horaSelecionada = null;
+// Reposição de aula: o aluno com crédito marca a reposição (se a clínica permitir)
+let modoRepo = false;
+let repoAluno = null; // { cpf, wpp, creditos, expira_em: 'YYYY-MM-DD', expira_fmt }
 
 function esc(s) {
   if (s === null || s === undefined) return '';
@@ -269,6 +300,96 @@ async function init() {
   document.getElementById('tela-loading').classList.add('oculto');
   document.getElementById('tela-agendar').classList.remove('oculto');
   renderDias();
+  verificarReposicao();
+}
+
+// A clínica deixa o aluno remarcar a reposição sozinho? (sem a migration, a RPC
+// não existe e o convite simplesmente não aparece)
+async function verificarReposicao() {
+  try {
+    const info = await rpc('reposicao_publica_info', { p_slug: slug });
+    if (info && info.ativo) document.getElementById('card-repo-convite').classList.remove('oculto');
+  } catch (e) { /* recurso indisponível: segue o agendamento normal */ }
+}
+
+function entrarModoRepo() {
+  modoRepo = true;
+  repoAluno = null;
+  document.getElementById('card-repo-convite').classList.add('oculto');
+  document.getElementById('tela-agendar').classList.add('oculto');
+  document.getElementById('card-repo').classList.remove('oculto');
+  document.getElementById('repo-identificacao').classList.remove('oculto');
+  document.getElementById('repo-saldo').classList.remove('visivel');
+  document.getElementById('erro-repo').classList.remove('visivel');
+  document.getElementById('pt-dias').textContent = 'Passo 2 de 4';
+  document.getElementById('pt-horas').textContent = 'Passo 3 de 4';
+  document.getElementById('repo-cpf').focus();
+}
+
+function sairModoRepo() {
+  modoRepo = false;
+  repoAluno = null;
+  document.getElementById('card-repo').classList.add('oculto');
+  document.getElementById('card-repo-confirmar').classList.add('oculto');
+  document.getElementById('card-repo-convite').classList.remove('oculto');
+  document.getElementById('pt-dias').textContent = 'Passo 1 de 3';
+  document.getElementById('pt-horas').textContent = 'Passo 2 de 3';
+  document.getElementById('tela-agendar').classList.remove('oculto');
+  renderDias();
+}
+
+function erroRepo(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('visivel');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function buscarCreditoRepo() {
+  document.getElementById('erro-repo').classList.remove('visivel');
+  const cpf = document.getElementById('repo-cpf').value.replace(/\D/g, '');
+  const wpp = document.getElementById('repo-wpp').value.replace(/\D/g, '');
+  if (!cpfValido(cpf)) { erroRepo('erro-repo', 'Informe um CPF válido — o do aluno.'); return; }
+  if (wpp.length < 10 || wpp.length > 13) { erroRepo('erro-repo', 'Informe o WhatsApp com DDD, o mesmo cadastrado na clínica.'); return; }
+  const btn = document.getElementById('btn-repo-buscar');
+  btn.disabled = true; btn.textContent = 'Buscando...';
+  let r;
+  try { r = await rpc('reposicao_publica_creditos', { p_slug: slug, p_cpf: cpf, p_whatsapp: wpp }); }
+  catch (e) { console.error(e); r = { ok: false, erro: 'Não foi possível consultar agora. Tente de novo em instantes.' }; }
+  btn.disabled = false; btn.textContent = 'Ver meu crédito';
+  if (!r?.ok) { erroRepo('erro-repo', r?.erro || 'Não encontramos crédito de reposição.'); return; }
+  repoAluno = { cpf, wpp, creditos: r.creditos, expira_em: r.expira_em, expira_fmt: r.expira_fmt };
+  document.getElementById('repo-identificacao').classList.add('oculto');
+  const saldo = document.getElementById('repo-saldo');
+  saldo.innerHTML = `✅ Você tem <strong>${Number(r.creditos)} crédito${r.creditos > 1 ? 's' : ''} de reposição</strong>.<br>`
+    + `Marque um dia até <strong>${esc(r.expira_fmt)}</strong> (validade do crédito).`;
+  saldo.classList.add('visivel');
+  document.getElementById('tela-agendar').classList.remove('oculto');
+  renderDias();
+}
+
+async function confirmarReposicao() {
+  document.getElementById('erro-repo-confirmar').classList.remove('visivel');
+  if (!repoAluno || !dataSelecionada || !horaSelecionada) { erroRepo('erro-repo-confirmar', 'Escolha o dia e o horário da reposição.'); return; }
+  const btn = document.getElementById('btn-repo-confirmar');
+  btn.disabled = true; btn.textContent = 'Marcando...';
+  let r;
+  try {
+    r = await rpc('reposicao_publica_agendar', { p_slug: slug, p_cpf: repoAluno.cpf, p_whatsapp: repoAluno.wpp,
+      p_data: dataSelecionada, p_hora: horaSelecionada });
+  } catch (e) { console.error(e); r = { ok: false, erro: 'Não foi possível marcar agora. Verifique sua conexão e tente novamente.' }; }
+  btn.disabled = false; btn.textContent = 'Confirmar reposição';
+  if (!r?.ok) {
+    erroRepo('erro-repo-confirmar', r?.erro || 'Não foi possível marcar. Tente outro horário.');
+    if ((r?.erro || '').includes('lotado')) {
+      const diaEl = document.querySelector(`.dia-card[data-data="${dataSelecionada}"]`);
+      if (diaEl) selecionarDia(dataSelecionada, diaEl);
+    }
+    return;
+  }
+  document.getElementById('card-repo').classList.add('oculto');
+  document.getElementById('sucesso-titulo').textContent = 'Reposição marcada!';
+  mostrarSucesso(r);
 }
 
 function mostrarIndisponivel() {
@@ -294,8 +415,9 @@ function renderDias() {
   for (let i = 0; i < 30; i++) {
     const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + i);
     const cod = DIAS_COD[d.getDay()];
-    const disponivel = diasAtend.includes(cod);
     const dataStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    // Na reposição, só até o vencimento do crédito
+    const disponivel = diasAtend.includes(cod) && !(modoRepo && repoAluno && dataStr > repoAluno.expira_em);
     if (disponivel && !primeiroDisponivel) primeiroDisponivel = dataStr;
     html += `<div class="dia-card ${disponivel?'':'indisponivel'}" data-data="${dataStr}" ${disponivel?`onclick="selecionarDia('${dataStr}', this)"`:''}>
       <div class="dsem">${DIAS_NOME[d.getDay()]}</div>
@@ -322,6 +444,7 @@ async function selecionarDia(dataStr, el) {
   document.querySelectorAll('.dia-card').forEach(c => c.classList.remove('selecionado'));
   el.classList.add('selecionado');
   document.getElementById('card-dados').classList.add('oculto');
+  document.getElementById('card-repo-confirmar').classList.add('oculto');
   const card = document.getElementById('card-horarios');
   card.classList.remove('oculto');
   const slotsEl = document.getElementById('slots-lista');
@@ -330,7 +453,8 @@ async function selecionarDia(dataStr, el) {
 
   let ocupados = [];
   try {
-    ocupados = await rpc('horarios_ocupados', { p_slug: slug, p_data: dataStr }) || [];
+    // Reposição: turma em grupo → só some o horário que já atingiu o limite de alunos
+    ocupados = await rpc(modoRepo ? 'reposicao_publica_lotados' : 'horarios_ocupados', { p_slug: slug, p_data: dataStr }) || [];
   } catch(e) { console.error(e); }
 
   const d = new Date(`${dataStr}T12:00:00`);
@@ -367,10 +491,18 @@ function selecionarHora(hora, el) {
   horaSelecionada = hora;
   document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selecionado'));
   el.classList.add('selecionado');
-  const card = document.getElementById('card-dados');
-  card.classList.remove('oculto');
   const d = new Date(`${dataSelecionada}T12:00:00`);
   const dataFmt = d.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
+  if (modoRepo) {
+    const cardR = document.getElementById('card-repo-confirmar');
+    cardR.classList.remove('oculto');
+    document.getElementById('erro-repo-confirmar').classList.remove('visivel');
+    document.getElementById('resumo-repo').innerHTML = `🔄 Reposição em <strong>${dataFmt}</strong> às <strong>${hora}</strong><br>📍 ${esc(clinica.nome)}`;
+    cardR.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+  const card = document.getElementById('card-dados');
+  card.classList.remove('oculto');
   const resumo = document.getElementById('resumo-agendamento');
   resumo.innerHTML = `📅 <strong>${dataFmt}</strong> às <strong>${hora}</strong><br>📍 ${esc(clinica.nome)}`;
   resumo.classList.add('visivel');
