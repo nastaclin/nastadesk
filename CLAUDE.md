@@ -637,6 +637,11 @@ Acima do teto + contadores de "só menu" e limite diário), **formulário dos li
 
 > Adicione aqui toda alteração relevante (mais recente no topo).
 
+- **2026-10-25 (3)** — **Site institucional em `nastaclin.com.br` + rodapés do app apontando para ele (com o OK do Eduardo).** *(Eduardo.)* Só front/infra.
+  Domínio comprado pelo Eduardo na GoDaddy (DNS ns13/ns14.domaincontrol.com). Projeto Vercel `nastaclin-site-institucional-27da8601…` com `nastaclin.com.br` (principal) e `www.nastaclin.com.br` (308 → principal). DNS: A `@` → `216.198.79.1` e `64.29.17.1`, CNAME `www` → `2f5ac2e2f0ace86d.vercel-dns-017.com`. O certificado não saiu sozinho; foi emitido pela API da Vercel (`cert_uULTdViQrPvBJjaeAvzOtJUz`, renovação automática). Conferido: HTTPS 200, `www` e `http` → 308.
+  App (branch `rodape-nastaclin-com-br`): rodapés de `agendar.html`, `termos.html`, `privacidade.html`, `dpa.html` e o `README.md` trocaram `nastaclin.vercel.app` por `https://nastaclin.com.br`.
+  **Pendente:** o site institucional não tem repositório (deploy direto na Vercel, HTML único) e o botão dele ainda leva para `nastadesk.vercel.app`; Eduardo troca a "Página de vendas" dos 3 produtos na Cakto para `https://nastaclin.com.br`.
+
 - **2026-10-25 (2)** — **URLs fixas `nastadesk.vercel.app` trocadas por `nastadesk.com.br` (com o OK do Eduardo).** *(Eduardo.)* Só front/infra; banco não mudou.
   Supabase Auth → *Site URL* `https://nastadesk.com.br` e *Redirect URLs* com o domínio novo (feito pelo Eduardo; os do vercel.app continuam na lista). Os links de confirmação e de recuperação de senha usam `location.origin`, e as edge functions respondem CORS `*`, então os dois domínios funcionam.
   **nastadesk** (branch `dominio-nastadesk-com-br`): templates de e-mail (logo, link, Termos, Privacidade) + README dos templates, `confirmado.html`, `DOMINIO` do workflow `deploy-vercel.yml` (checagem pós-deploy), `marketing/apresentacao.html`, `marketing/scripts.html`, `marketing/scripts-whatsapp.txt`. **dashboard:** mensagem do convite da demo. Cópias dos e-mails no Drive atualizadas; o Eduardo cola em Authentication → Email Templates.
