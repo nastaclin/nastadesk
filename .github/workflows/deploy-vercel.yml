@@ -31,7 +31,7 @@ jobs:
     env:
       VERCEL_ORG_ID: team_IGpCnvhsGzja5D5DRJdh9ymb
       VERCEL_PROJECT_ID: prj_m3swHEhFnYs2aW5KLHY3E5CfA8Mp
-      DOMINIO: nastadesk.vercel.app
+      DOMINIO: nastadesk.com.br
 
     steps:
       - name: Conferir o token
